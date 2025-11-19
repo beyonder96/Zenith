@@ -3,6 +3,8 @@
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { BarChart3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { Skeleton } from "../ui/skeleton";
 
 type FinanceEntry = {
   id: number;
@@ -12,6 +14,11 @@ type FinanceEntry = {
 
 export function FinanceCard() {
   const [entries] = useLocalStorage<FinanceEntry[]>("zenith-vision-finance", []);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   
   const hasActivity = entries.length > 0;
   const totalSpent = entries.reduce((acc, entry) => acc + (entry.amount < 0 ? entry.amount : 0), 0);
@@ -27,7 +34,12 @@ export function FinanceCard() {
         <BarChart3 className="text-white/60" size={20}/>
       </CardHeader>
       <CardContent>
-        {hasActivity ? (
+        {!isClient ? (
+            <div className="space-y-2">
+                <Skeleton className="h-7 w-24" />
+                <Skeleton className="h-3 w-16" />
+            </div>
+        ) : hasActivity ? (
             <>
                 <p className="text-2xl font-bold">R$ {totalSpent.toFixed(2)}</p>
                 <p className="text-xs text-white/70">gastos hoje</p>

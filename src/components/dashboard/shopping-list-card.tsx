@@ -3,6 +3,8 @@
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { ShoppingCart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { Skeleton } from "../ui/skeleton";
 
 type ShoppingItem = {
   id: number;
@@ -12,7 +14,12 @@ type ShoppingItem = {
 
 export function ShoppingListCard() {
   const [items] = useLocalStorage<ShoppingItem[]>("zenith-vision-shopping-list", []);
-  
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const completedItems = items.filter(item => item.completed).length;
   const totalItems = items.length;
 
@@ -27,7 +34,12 @@ export function ShoppingListCard() {
         <ShoppingCart className="text-white/60" size={20}/>
       </CardHeader>
       <CardContent>
-        {items.length > 0 ? (
+        {!isClient ? (
+            <div className="space-y-2">
+                <Skeleton className="h-7 w-20" />
+                <Skeleton className="h-3 w-16" />
+            </div>
+        ) : items.length > 0 ? (
           <>
             <p className="text-2xl font-bold">{completedItems}/{totalItems}</p>
             <p className="text-xs text-white/70">concluídos</p>
