@@ -21,11 +21,15 @@ export function DateSelector() {
 
   useEffect(() => {
     const today = new Date();
-    const startOfWeek = addDays(today, -today.getDay()); // Start from Sunday
+    // Adjust to make the week start on Sunday for `date-fns` logic
+    const startOfWeek = addDays(today, -today.getDay()); 
+
     const weekDates = Array.from({ length: 7 }).map((_, i) => {
       const date = addDays(startOfWeek, i);
+      // Get the abbreviated day name key (e.g., 'seg', 'ter')
       const dayNameKey = format(date, 'EEE', { locale: ptBR }).replace('.', '').toLowerCase();
-      const dayName = dayAbbreviations[dayNameKey] || dayNameKey;
+      // Use the map to get the uppercase abbreviation
+      const dayName = dayAbbreviations[dayNameKey] || dayNameKey.toUpperCase();
       return {
         day: dayName,
         date: format(date, 'd'),
