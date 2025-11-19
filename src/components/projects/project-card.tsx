@@ -56,9 +56,12 @@ export function ProjectCard({ project, onToggleComplete, onEdit, onAiSplit, onDe
                         <p className="text-sm text-gray-500 dark:text-gray-400">{fullDate}</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                     <button onClick={() => onToggleComplete(project.id)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700">
                        {project.completed ? <CheckCircle2 size={20} className="text-green-500" /> : <Circle size={20} className="text-gray-400" />}
+                    </button>
+                    <button onClick={() => onEdit(project.id)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        <Pencil size={18} />
                     </button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -67,10 +70,6 @@ export function ProjectCard({ project, onToggleComplete, onEdit, onAiSplit, onDe
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48 bg-white/80 dark:bg-black/40 backdrop-blur-xl border-white/20 text-gray-800 dark:text-white">
-                            <DropdownMenuItem onSelect={() => onEdit(project.id)} className="focus:bg-gray-200/50 dark:focus:bg-white/10">
-                                <Pencil className="mr-2 h-4 w-4" />
-                                <span>Editar</span>
-                            </DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => onAiSplit(project.id)} className="focus:bg-gray-200/50 dark:focus:bg-white/10">
                                 <Sparkles className="mr-2 h-4 w-4" />
                                 <span>Dividir c/ IA</span>
