@@ -8,7 +8,7 @@ import { useState } from "react";
 const navItems = [
     { id: "dashboard", icon: Grid, label: "Dashboard", href: "/dashboard" },
     { id: "supermercado", icon: ShoppingCart, label: "Supermercado", href: "/supermercado" },
-    { id: "produtividade", icon: CheckCircle, label: "Produtividade", href: "/dashboard" },
+    { id: "produtividade", icon: CheckCircle, label: "Produtividade", href: "/projects" },
     { id: "financas", icon: BarChart, label: "Finanças", href: "/finance" },
 ];
 
