@@ -48,7 +48,7 @@ export function QuickAccessCard() {
     };
 
     const progress = (timeRemaining / initialTime) * 100;
-    const circumference = 2 * Math.PI * 52;
+    const circumference = 2 * Math.PI * 52; // 52 é o raio
     const strokeDashoffset = circumference - (progress / 100) * circumference;
 
     return (
@@ -73,13 +73,19 @@ export function QuickAccessCard() {
                             <ChevronDown size={20} />
                         </Button>
                         <div className="relative w-40 h-40 flex items-center justify-center">
-                            <svg className="absolute w-full h-full transform -rotate-90">
+                            <svg className="absolute w-full h-full transform -rotate-90 z-0">
+                                <defs>
+                                    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="hsl(var(--primary))" />
+                                        <stop offset="100%" stopColor="rgb(236, 72, 153)" />
+                                    </linearGradient>
+                                </defs>
                                 <circle cx="50%" cy="50%" r="52" stroke="currentColor" strokeWidth="8" className="text-gray-200 dark:text-zinc-700" fill="transparent" />
                                 <circle
                                     cx="50%"
                                     cy="50%"
                                     r="52"
-                                    stroke="hsl(var(--primary))"
+                                    stroke="url(#progressGradient)"
                                     strokeWidth="8"
                                     fill="transparent"
                                     strokeLinecap="round"
@@ -88,8 +94,7 @@ export function QuickAccessCard() {
                                     className="transition-all duration-1000 ease-linear"
                                 />
                             </svg>
-                             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary rounded-full" style={{ transform: `rotate(${((initialTime - timeRemaining) / initialTime) * 360}deg) translateY(-56px)` }}></div>
-                            <div className="text-center">
+                            <div className="relative z-10 text-center">
                                 <span className="text-4xl font-mono font-bold text-gray-800 dark:text-white">
                                     {formatTime(timeRemaining)}
                                 </span>
