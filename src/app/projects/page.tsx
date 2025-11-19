@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { getTaskBreakdown } from '../actions';
+import { useRouter } from 'next/navigation';
 
 const initialProjects: Project[] = [
   {
@@ -39,6 +40,7 @@ const initialProjects: Project[] = [
 ];
 
 export default function ProjectsPage() {
+  const router = useRouter();
   const [projects, setProjects] = useLocalStorage<Project[]>('zenith-vision-projects', initialProjects);
   const [projectToDelete, setProjectToDelete] = useState<number | null>(null);
   const [loadingProjectId, setLoadingProjectId] = useState<number | null>(null);
@@ -64,11 +66,7 @@ export default function ProjectsPage() {
   };
 
   const handleEdit = (id: number) => {
-    console.log(`Edit project ${id}`);
-    toast({
-      title: "Em desenvolvimento",
-      description: "A funcionalidade de edição será implementada em breve.",
-    });
+    router.push(`/tasks/new?id=${id}`);
   };
   
   const handleAiSplit = async (id: number) => {
