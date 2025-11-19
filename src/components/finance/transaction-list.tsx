@@ -9,7 +9,7 @@ import {
 import {
   Briefcase,
   Gift,
-  Heartbeat,
+  Heart,
   Home,
   Utensils,
   MoreHorizontal,
@@ -42,7 +42,7 @@ const transactions = [
   },
   {
     category: "Saúde",
-    icon: Heartbeat,
+    icon: Heart,
     description: "Farmácia",
     date: "15/05/2024",
     amount: -45.5,
@@ -62,7 +62,7 @@ const categoryIcons: { [key: string]: React.ElementType } = {
   Salário: Briefcase,
   Contas: Home,
   Alimentação: Utensils,
-  Saúde: Heartbeat,
+  Saúde: Heart,
   Lazer: Gift,
 };
 
