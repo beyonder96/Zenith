@@ -10,9 +10,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['PT Sans', 'sans-serif'],
-        headline: ['Poppins', 'sans-serif'],
-        code: ['monospace'],
+        sans: ['var(--font-inter)', 'sans-serif'],
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -88,10 +86,50 @@ export default {
             height: '0',
           },
         },
+        shine: {
+            '0%': { backgroundPosition: '200% center' },
+            '100%': { backgroundPosition: '-200% center' },
+        },
+        rotate: {
+            from: { transform: 'rotate(0deg)' },
+            to: { transform: 'rotate(360deg)' },
+        },
+        'bounce-click': {
+            '0%, 100%': { transform: 'scale(1)' },
+            '50%': { transform: 'scale(0.85)' },
+        },
+        'pulse-glow': {
+            '0%, 100%': { transform: 'scale(1)', opacity: '0.9' },
+            '50%': { transform: 'scale(1.08)', opacity: '1' },
+        },
+        popIn: {
+            '0%': { opacity: '0', transform: 'scale(0.8)' },
+            '80%': { opacity: '1', transform: 'scale(1.05)' },
+            '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        slideInUp: {
+            from: { transform: 'translateY(100%)' },
+            to: { transform: 'translateY(0)' },
+        },
+        fadeIn: { from: { opacity: '0' }, to: { opacity: '1' } },
+        scaleIn: { from: { transform: 'scale(0.95)', opacity: '0' }, to: { transform: 'scale(1)', opacity: '1' } },
+        tilt: {
+          '0%, 100%': { transform: 'rotate(0deg)' },
+          '50%': { transform: 'rotate(1deg)' }
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'shine': 'shine 3s linear infinite',
+        'rotate': 'rotate 6s linear infinite',
+        'bounce-click': 'bounce-click 0.3s ease-out',
+        'pulse-glow': 'pulse-glow 4s ease-in-out infinite',
+        'pop-in': 'popIn 0.4s ease-out forwards',
+        'slide-in-up': 'slideInUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards',
+        'fade-in': 'fadeIn 0.3s ease-out forwards',
+        'scale-in': 'scaleIn 0.3s ease-out forwards',
+        'tilt': 'tilt 10s infinite linear'
       },
     },
   },
