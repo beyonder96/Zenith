@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
     { id: "dashboard", icon: Home, label: "Dashboard", href: "/dashboard" },
-    { id: "supermercado", icon: ShoppingCart, label: "Supermercado", href: "#" },
+    { id: "supermercado", icon: ShoppingCart, label: "Supermercado", href: "/supermercado" },
     { id: "produtividade", icon: CheckCircle, label: "Produtividade", href: "#" },
     { id: "financas", icon: BarChart, label: "Finanças", href: "/finance" },
 ];
