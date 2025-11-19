@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Briefcase,
   Gift,
@@ -13,50 +13,22 @@ import {
   Home,
   Utensils,
   MoreHorizontal,
-} from "lucide-react";
+  ShoppingBag,
+} from 'lucide-react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useEffect, useState } from 'react';
+import { Skeleton } from '../ui/skeleton';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-const transactions = [
-  {
-    category: "Salário",
-    icon: Briefcase,
-    description: "Salário de Maio",
-    date: "05/05/2024",
-    amount: 2500,
-    type: "income",
-  },
-  {
-    category: "Contas",
-    icon: Home,
-    description: "Aluguel",
-    date: "10/05/2024",
-    amount: -800,
-    type: "expense",
-  },
-  {
-    category: "Alimentação",
-    icon: Utensils,
-    description: "Supermercado",
-    date: "12/05/2024",
-    amount: -150.75,
-    type: "expense",
-  },
-  {
-    category: "Saúde",
-    icon: Heart,
-    description: "Farmácia",
-    date: "15/05/2024",
-    amount: -45.5,
-    type: "expense",
-  },
-   {
-    category: "Lazer",
-    icon: Gift,
-    description: "Presente de Aniversário",
-    date: "20/05/2024",
-    amount: -100,
-    type: "expense",
-  },
-];
+type Transaction = {
+  id: number;
+  description: string;
+  amount: number;
+  date: string;
+  type: 'income' | 'expense';
+  category: string;
+};
 
 const categoryIcons: { [key: string]: React.ElementType } = {
   Salário: Briefcase,
@@ -64,9 +36,22 @@ const categoryIcons: { [key: string]: React.ElementType } = {
   Alimentação: Utensils,
   Saúde: Heart,
   Lazer: Gift,
+  Compras: ShoppingBag,
+  Freelance: Briefcase,
+  Investimentos: Briefcase,
+  Outros: MoreHorizontal,
 };
 
 export function TransactionList() {
+  const [transactions] = useLocalStorage<Transaction[]>('zenith-vision-finance', []);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
   return (
     <Card className="bg-black/20 border-white/10 backdrop-blur-md text-white">
       <CardHeader>
@@ -75,36 +60,57 @@ export function TransactionList() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {transactions.map((transaction, index) => {
-            const Icon = categoryIcons[transaction.category] || MoreHorizontal;
-            return (
-              <div
-                key={index}
-                className="flex items-center"
-              >
-                <div className="p-3 bg-white/10 rounded-lg mr-4">
-                  <Icon className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex-grow">
-                  <p className="font-semibold">{transaction.description}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {transaction.date}
-                  </p>
-                </div>
+        {!isClient ? (
+             <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex items-center">
+                        <Skeleton className="h-10 w-10 rounded-lg mr-4" />
+                        <div className="flex-grow space-y-2">
+                           <Skeleton className="h-4 w-3/4" />
+                           <Skeleton className="h-3 w-1/4" />
+                        </div>
+                        <Skeleton className="h-6 w-1/5" />
+                    </div>
+                ))}
+             </div>
+        ) : sortedTransactions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+                <p>Nenhuma transação registrada ainda.</p>
+                <p className="text-sm">Clique no botão "+" para adicionar uma.</p>
+            </div>
+        ) : (
+          <div className="space-y-4">
+            {sortedTransactions.map((transaction) => {
+              const Icon = categoryIcons[transaction.category] || MoreHorizontal;
+              const formattedDate = format(new Date(transaction.date), "dd/MM/yyyy", { locale: ptBR });
+              return (
                 <div
-                  className={`font-semibold ${
-                    transaction.type === "income"
-                      ? "text-cyan-300"
-                      : "text-pink-400"
-                  }`}
+                  key={transaction.id}
+                  className="flex items-center"
                 >
-                  {transaction.amount < 0 ? "-" : "+"}R$ {Math.abs(transaction.amount).toFixed(2).replace(".", ",")}
+                  <div className="p-3 bg-white/10 rounded-lg mr-4">
+                    <Icon className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="flex-grow">
+                    <p className="font-semibold">{transaction.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formattedDate}
+                    </p>
+                  </div>
+                  <div
+                    className={`font-semibold ${
+                      transaction.type === "income"
+                        ? "text-cyan-300"
+                        : "text-pink-400"
+                    }`}
+                  >
+                    {transaction.type === 'expense' ? "-" : "+"}R$ {Math.abs(transaction.amount).toFixed(2).replace(".", ",")}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
