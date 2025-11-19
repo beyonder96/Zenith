@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, X, Circle, CheckCircle2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "../ui/skeleton";
 
 type ShoppingItem = {
   id: number;
@@ -17,6 +18,11 @@ type ShoppingItem = {
 export function ShoppingList() {
   const [items, setItems] = useLocalStorage<ShoppingItem[]>("zenith-vision-shopping-list", []);
   const [newItem, setNewItem] = useState("");
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleAddItem = () => {
     if (newItem.trim()) {
@@ -51,7 +57,13 @@ export function ShoppingList() {
 
       <Card className="bg-white dark:bg-zinc-800 border-none shadow-sm rounded-xl min-h-[300px]">
         <CardContent className="p-4 space-y-3">
-          {items.length === 0 ? (
+          {!isClient ? (
+            <div className="space-y-3 pt-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center text-gray-400 dark:text-gray-500 h-full py-16">
                 <Star className="w-10 h-10 mb-4"/>
                 <p className="font-semibold">Sua lista está vazia.</p>
