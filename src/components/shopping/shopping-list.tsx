@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, X, Circle, CheckCircle2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Plus, X, Circle, CheckCircle2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ShoppingItem = {
@@ -33,53 +33,40 @@ export function ShoppingList() {
     setItems(items.filter(item => item.id !== id));
   };
 
-  const handleClearList = () => {
-    setItems([]);
-  }
-
-  const completedCount = items.filter(i => i.completed).length;
-
   return (
-    <div className="space-y-6">
-      <Card className="bg-black/20 border-white/10 backdrop-blur-md">
-        <CardContent className="p-4">
-          <div className="flex gap-2">
+    <div className="space-y-4">
+        <div className="flex gap-2">
             <Input
-              type="text"
-              value={newItem}
-              onChange={(e) => setNewItem(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
-              placeholder="Adicionar item..."
-              className="bg-white/5 border-white/20 focus-visible:ring-orange-500 focus-visible:ring-offset-0 text-white"
+            type="text"
+            value={newItem}
+            onChange={(e) => setNewItem(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
+            placeholder="Adicionar novo item..."
+            className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 h-12 rounded-xl focus-visible:ring-orange-500 focus-visible:ring-offset-0 text-gray-800 dark:text-white"
             />
-            <Button onClick={handleAddItem} className="bg-gradient-to-r from-orange-400 to-pink-500 text-white" size="icon">
-              <Plus size={24} />
+            <Button onClick={handleAddItem} className="bg-orange-400 hover:bg-orange-500 text-white rounded-xl h-12 w-12" size="icon">
+                <Plus size={24} />
             </Button>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <div className="flex justify-between items-center">
-          <p className="text-muted-foreground">{completedCount} de {items.length} itens comprados</p>
-          <Button onClick={handleClearList} variant="ghost" size="sm" className="text-red-500 hover:bg-red-500/10 hover:text-red-400">
-              <X className="mr-2 h-4 w-4" /> Limpar Lista
-          </Button>
-      </div>
+        </div>
 
-      <Card className="bg-black/20 border-white/10 backdrop-blur-md">
+      <Card className="bg-white dark:bg-zinc-800 border-none shadow-sm rounded-xl min-h-[300px]">
         <CardContent className="p-4 space-y-3">
           {items.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">Sua lista de compras está vazia.</p>
+            <div className="flex flex-col items-center justify-center text-center text-gray-400 dark:text-gray-500 h-full py-16">
+                <Star className="w-10 h-10 mb-4"/>
+                <p className="font-semibold">Sua lista está vazia.</p>
+                <p className="text-sm">Adicione um item para começar!</p>
+            </div>
           ) : (
             items.map(item => (
-              <div key={item.id} className="flex items-center gap-4 p-3 bg-white/5 rounded-lg">
+              <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-zinc-700/50 rounded-lg">
                 <button onClick={() => handleToggleItem(item.id)}>
-                  {item.completed ? <CheckCircle2 className="text-orange-400" /> : <Circle className="text-muted-foreground" />}
+                  {item.completed ? <CheckCircle2 className="text-green-500" /> : <Circle className="text-gray-400" />}
                 </button>
-                <span className={cn("flex-grow text-white", item.completed && "line-through text-muted-foreground")}>
+                <span className={cn("flex-grow text-gray-800 dark:text-white", item.completed && "line-through text-gray-400 dark:text-gray-500")}>
                   {item.name}
                 </span>
-                <Button onClick={() => handleRemoveItem(item.id)} variant="ghost" size="icon" className="w-8 h-8 rounded-full text-muted-foreground hover:bg-white/10 hover:text-white">
+                <Button onClick={() => handleRemoveItem(item.id)} variant="ghost" size="icon" className="w-8 h-8 rounded-full text-gray-400 hover:bg-red-500/10 hover:text-red-500">
                   <X size={16} />
                 </Button>
               </div>
