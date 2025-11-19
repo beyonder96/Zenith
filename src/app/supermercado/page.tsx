@@ -8,10 +8,10 @@ export default function ShoppingPage() {
     <div className="relative min-h-screen w-full overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('https://picsum.photos/seed/market/1920/1080')" }}
-        data-ai-hint="abstract gradients"
+        style={{ backgroundImage: "url('https://i.pinimg.com/originals/a1/83/83/a183833f4a38543d3513aa67c130b05b.jpg')" }}
+        data-ai-hint="mountain landscape"
       ></div>
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-xl"></div>
+      <div className="absolute inset-0 bg-gray-900/10 dark:bg-black/10 backdrop-blur-sm"></div>
 
       <div className="relative z-10 flex flex-col min-h-screen text-white">
         <header className="p-4 sm:p-6 lg:p-8">
