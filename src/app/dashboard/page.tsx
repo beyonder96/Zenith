@@ -25,7 +25,7 @@ export default function Dashboard() {
             <ShoppingListCard />
             <TasksCard />
         </main>
-        <BottomNav />
+        <BottomNav active="dashboard" />
       </div>
     </div>
   );
