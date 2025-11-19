@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { BottomNav } from "@/components/dashboard/bottom-nav";
-import { ProjectCard, Project } from "@/components/projects/project-card";
+import { ProjectCard, Project, Subtask } from "@/components/projects/project-card";
 import { QuickAccessCard } from "@/components/projects/quick-access-card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -19,25 +19,29 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { getTaskBreakdown } from '../actions';
 
 const initialProjects: Project[] = [
   {
     id: 1,
-    title: 'Tarefas',
+    title: 'Planejar viagem de férias',
     dueDate: '2025-11-19',
     completed: false,
+    subtasks: [],
   },
    {
     id: 2,
-    title: 'Relatório Mensal',
+    title: 'Organizar festa de aniversário',
     dueDate: '2025-11-25',
     completed: false,
+    subtasks: [],
   },
 ];
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useLocalStorage<Project[]>('zenith-vision-projects', initialProjects);
   const [projectToDelete, setProjectToDelete] = useState<number | null>(null);
+  const [loadingProjectId, setLoadingProjectId] = useState<number | null>(null);
   const { toast } = useToast();
 
   const handleToggleComplete = (id: number) => {
@@ -67,12 +71,62 @@ export default function ProjectsPage() {
     });
   };
   
-  const handleAiSplit = (id: number) => {
-    console.log(`AI split project ${id}`);
-     toast({
-      title: "Em desenvolvimento",
-      description: "A funcionalidade de divisão com IA será implementada em breve.",
-    });
+  const handleAiSplit = async (id: number) => {
+    const project = projects.find(p => p.id === id);
+    if (!project) return;
+
+    setLoadingProjectId(id);
+
+    try {
+        const result = await getTaskBreakdown(project.title);
+        if (result.success && result.subtasks) {
+            const newSubtasks: Subtask[] = result.subtasks.map((subtaskText, index) => ({
+                id: Date.now() + index,
+                text: subtaskText,
+                completed: false,
+            }));
+
+            setProjects(prevProjects =>
+                prevProjects.map(p =>
+                    p.id === id
+                        ? { ...p, subtasks: [...(p.subtasks || []), ...newSubtasks] }
+                        : p
+                )
+            );
+            toast({
+                title: "Tarefa dividida!",
+                description: "Novas subtarefas foram adicionadas ao projeto.",
+            });
+        } else {
+             toast({
+                variant: "destructive",
+                title: "Falha na divisão com IA",
+                description: result.error || "Não foi possível dividir a tarefa.",
+            });
+        }
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Erro de Conexão",
+            description: "Não foi possível conectar ao serviço de IA.",
+        });
+    } finally {
+        setLoadingProjectId(null);
+    }
+  };
+
+  const handleToggleSubtask = (projectId: number, subtaskId: number) => {
+    setProjects(prevProjects =>
+      prevProjects.map(p => {
+        if (p.id === projectId) {
+          const updatedSubtasks = p.subtasks?.map(sub =>
+            sub.id === subtaskId ? { ...sub, completed: !sub.completed } : sub
+          );
+          return { ...p, subtasks: updatedSubtasks };
+        }
+        return p;
+      })
+    );
   };
 
   return (
@@ -92,10 +146,12 @@ export default function ProjectsPage() {
                     <ProjectCard 
                       key={project.id}
                       project={project}
+                      isLoading={loadingProjectId === project.id}
                       onToggleComplete={handleToggleComplete}
                       onEdit={handleEdit}
                       onAiSplit={handleAiSplit}
                       onDelete={handleDeleteInitiate}
+                      onToggleSubtask={handleToggleSubtask}
                     />
                   ))}
               </div>
