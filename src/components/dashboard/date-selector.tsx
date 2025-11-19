@@ -5,6 +5,16 @@ import { format, addDays, isSameDay, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
+const dayAbbreviations: { [key: string]: string } = {
+  dom: 'DOM',
+  seg: 'SEG',
+  ter: 'TER',
+  qua: 'QUA',
+  qui: 'QUI',
+  sex: 'SEX',
+  sáb: 'SÁB',
+};
+
 export function DateSelector() {
   const [dates, setDates] = useState<{ day: string; date: string; fullDate: Date }[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -14,9 +24,10 @@ export function DateSelector() {
     const startOfWeek = addDays(today, -today.getDay()); // Start from Sunday
     const weekDates = Array.from({ length: 7 }).map((_, i) => {
       const date = addDays(startOfWeek, i);
-      const dayName = format(date, 'EEE', { locale: ptBR });
+      const dayNameKey = format(date, 'EEE', { locale: ptBR }).replace('.', '').toLowerCase();
+      const dayName = dayAbbreviations[dayNameKey] || dayNameKey;
       return {
-        day: dayName.charAt(0).toUpperCase() + dayName.slice(1).replace('.', ''),
+        day: dayName,
         date: format(date, 'd'),
         fullDate: date,
       };
