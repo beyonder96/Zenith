@@ -2,18 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { format, addDays, isSameDay, isToday } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-
-const dayAbbreviations: { [key: string]: string } = {
-  dom: 'DOM',
-  seg: 'SEG',
-  ter: 'TER',
-  qua: 'QUA',
-  qui: 'QUI',
-  sex: 'SEX',
-  sáb: 'SÁB',
-};
 
 export function DateSelector() {
   const [dates, setDates] = useState<{ day: string; date: string; fullDate: Date }[]>([]);
@@ -26,10 +15,11 @@ export function DateSelector() {
 
     const weekDates = Array.from({ length: 7 }).map((_, i) => {
       const date = addDays(startOfWeek, i);
-      // Get the abbreviated day name key (e.g., 'seg', 'ter')
-      const dayNameKey = format(date, 'EEE', { locale: ptBR }).replace('.', '').toLowerCase();
-      // Use the map to get the uppercase abbreviation
-      const dayName = dayAbbreviations[dayNameKey] || dayNameKey.toUpperCase();
+      const dayName = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' })
+        .format(date)
+        .slice(0, 3)
+        .toUpperCase();
+      
       return {
         day: dayName,
         date: format(date, 'd'),
