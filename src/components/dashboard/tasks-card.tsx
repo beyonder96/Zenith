@@ -14,37 +14,31 @@ type TaskHistory = {
     [date: string]: Task[];
 }
 
-const getTodayString = () => new Date().toISOString().split('T')[0];
-
 export function TasksCard() {
-  const [taskHistory] = useLocalStorage<TaskHistory>("zenith-vision-tasks-v2", {
-      [getTodayString()]: [
-          {id: 1, text: "Reunião de equipe", completed: true},
-          {id: 2, text: "Finalizar relatório", completed: false},
-          {id: 3, text: "Ligar para o cliente", completed: false},
-      ]
-  });
+    const [taskHistory] = useLocalStorage<TaskHistory>("zenith-vision-tasks-v2", {});
 
-  const today = getTodayString();
-  const todayTasks = taskHistory[today] || [];
-  const completedTasks = todayTasks.filter(task => task.completed).length;
+    const today = new Date().toISOString().split('T')[0];
+    const todayTasks = taskHistory[today] || [];
 
-  return (
-    <Card className="bg-black/20 border border-white/10 rounded-2xl backdrop-blur-md">
-      <CardHeader className="flex flex-row items-start justify-between pb-2">
-        <div className="flex flex-col">
-            <CardTitle className="text-base font-medium flex items-center gap-2 text-muted-foreground">
-              Tarefas
-            </CardTitle>
-            <CardDescription className="text-2xl font-bold text-white">{completedTasks}/{todayTasks.length}</CardDescription>
-        </div>
-         <div className="p-2 bg-white/10 rounded-lg">
-            <CheckCircle2 className="text-white" size={20} />
-         </div>
-      </CardHeader>
-      <CardContent>
-       <p className="text-xs text-muted-foreground">tarefas concluídas</p>
-      </CardContent>
-    </Card>
-  );
+    return (
+        <Card className="bg-zinc-900 border-zinc-800 rounded-2xl">
+            <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <div className="flex flex-col">
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2 text-white">
+                        Tarefas do Dia
+                    </CardTitle>
+                </div>
+                <div className="p-2 bg-zinc-800 rounded-lg">
+                    <CheckCircle2 className="text-white" size={20} />
+                </div>
+            </CardHeader>
+            <CardContent>
+                {todayTasks.length > 0 ? (
+                    <p className="text-2xl font-bold text-white">{todayTasks.filter(t => t.completed).length}/{todayTasks.length} concluídas</p>
+                ) : (
+                    <p className="text-sm text-muted-foreground">Nenhuma tarefa para hoje.</p>
+                )}
+            </CardContent>
+        </Card>
+    );
 }

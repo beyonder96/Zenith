@@ -1,7 +1,6 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,10 +8,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal,
-  DropdownMenuSubContent
 } from "@/components/ui/dropdown-menu";
 import { Moon, Sun, Sunrise } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -39,7 +34,8 @@ export function GreetingHeader() {
   return (
     <div className="flex justify-between items-center">
       <div className="flex items-center gap-4">
-        <div className="w-10 h-10 flex items-center justify-center">
+        <div className="w-10 h-10 flex items-center justify-center relative">
+          <div className="absolute inset-0 bg-white/30 blur-xl rounded-full"></div>
           {icon}
         </div>
         <span className="text-2xl font-medium">{greeting}</span>
@@ -49,16 +45,16 @@ export function GreetingHeader() {
         <DropdownMenuTrigger asChild>
           <button className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
             <Avatar>
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-              <AvatarFallback>CN</AvatarFallback>
+              <AvatarImage src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="User" />
+              <AvatarFallback>U</AvatarFallback>
             </Avatar>
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56 bg-black/50 backdrop-blur-lg border-white/10">
+        <DropdownMenuContent align="end" className="w-56 bg-zinc-900/80 backdrop-blur-lg border-white/10 text-white">
           <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-white/10" />
-          <DropdownMenuItem>Editar Foto</DropdownMenuItem>
-          <DropdownMenuItem className="flex justify-between items-center">
+          <DropdownMenuItem className="focus:bg-white/10">Editar Foto</DropdownMenuItem>
+          <DropdownMenuItem className="flex justify-between items-center focus:bg-white/10">
             <span>Alterar Tema</span>
             <Switch />
           </DropdownMenuItem>

@@ -1,14 +1,13 @@
 "use client";
 
-import { Home, ShoppingCart, CheckCircle, BarChart } from "lucide-react";
-import { useState } from "react";
+import { Grid, ShoppingCart, CheckCircle, BarChart } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-    { id: "dashboard", icon: Home, label: "Dashboard", href: "/dashboard" },
+    { id: "dashboard", icon: Grid, label: "Dashboard", href: "/dashboard" },
     { id: "supermercado", icon: ShoppingCart, label: "Supermercado", href: "/supermercado" },
-    { id: "produtividade", icon: CheckCircle, label: "Produtividade", href: "#" },
+    { id: "produtividade", icon: CheckCircle, label: "Produtividade", href: "/dashboard" }, // Corrected link
     { id: "financas", icon: BarChart, label: "Finanças", href: "/finance" },
 ];
 
@@ -18,9 +17,9 @@ export function BottomNav({ active }: { active: string }) {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50">
             <div className="relative group">
                 <div 
-                    className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 opacity-75 blur transition duration-1000 group-hover:opacity-100 group-hover:duration-200 animate-tilt"
+                    className="absolute -inset-x-1 inset-y-0 rounded-full bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 opacity-40 blur-lg transition duration-1000 group-hover:opacity-60"
                 ></div>
-                <nav className="relative bg-black/70 backdrop-blur-lg rounded-full p-2 flex justify-around items-center border border-white/10">
+                <nav className="relative bg-zinc-900/80 backdrop-blur-lg rounded-full p-2 flex justify-around items-center border border-white/10">
                     {navItems.map((item) => (
                         <Link href={item.href} key={item.id} passHref>
                             <button

@@ -2,7 +2,7 @@
 
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { BarChart3 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 type FinanceEntry = {
   id: number;
@@ -11,25 +11,32 @@ type FinanceEntry = {
 };
 
 export function FinanceCard() {
-  const [entries, setEntries] = useLocalStorage<FinanceEntry[]>("zenith-vision-finance", []);
+  const [entries] = useLocalStorage<FinanceEntry[]>("zenith-vision-finance", []);
   
+  const hasActivity = entries.length > 0;
   const totalSpent = entries.reduce((acc, entry) => acc + (entry.amount < 0 ? entry.amount : 0), 0);
 
   return (
-    <Card className="bg-black/20 border border-white/10 rounded-2xl backdrop-blur-md">
-      <CardHeader className="flex flex-row items-start justify-between pb-2">
+    <Card className="bg-zinc-900 border-zinc-800 rounded-2xl">
+      <CardHeader className="flex flex-row items-center justify-between pb-4">
         <div className="flex flex-col">
-            <CardTitle className="text-base font-medium flex items-center gap-2 text-muted-foreground">
-              Finanças
+            <CardTitle className="text-lg font-semibold flex items-center gap-2 text-white">
+              Finanças do Dia
             </CardTitle>
-            <CardDescription className="text-2xl font-bold text-white">R$ {totalSpent.toFixed(2)}</CardDescription>
         </div>
-        <div className="p-2 bg-white/10 rounded-lg">
+        <div className="p-2 bg-zinc-800 rounded-lg">
           <BarChart3 className="text-white" size={20}/>
         </div>
       </CardHeader>
       <CardContent>
-       <p className="text-xs text-muted-foreground">gastos hoje</p>
+        {hasActivity ? (
+            <>
+                <p className="text-2xl font-bold text-white">R$ {totalSpent.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">gastos hoje</p>
+            </>
+        ) : (
+            <p className="text-sm text-muted-foreground">Nenhuma atividade registrada.</p>
+        )}
       </CardContent>
     </Card>
   );
