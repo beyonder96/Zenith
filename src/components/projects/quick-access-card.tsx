@@ -48,7 +48,7 @@ export function QuickAccessCard() {
     };
 
     const progress = (timeRemaining / initialTime) * 100;
-    const circumference = 2 * Math.PI * 52; // 52 é o raio
+    const circumference = 2 * Math.PI * 60; // 60 é o raio
     const strokeDashoffset = circumference - (progress / 100) * circumference;
 
     return (
@@ -81,18 +81,18 @@ export function QuickAccessCard() {
                             <ChevronDown size={20} />
                         </Button>
                         <div className="relative w-40 h-40 flex items-center justify-center">
-                            <svg className="absolute w-full h-full transform -rotate-90 z-0">
+                            <svg className="absolute w-full h-full transform -rotate-90">
                                 <defs>
                                     <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                                         <stop offset="0%" stopColor="#fb923c" />
                                         <stop offset="100%" stopColor="#f43f5e" />
                                     </linearGradient>
                                 </defs>
-                                <circle cx="50%" cy="50%" r="52" stroke="currentColor" strokeWidth="8" className="text-gray-200 dark:text-zinc-700" fill="transparent" />
+                                <circle cx="50%" cy="50%" r="60" stroke="currentColor" strokeWidth="8" className="text-gray-200 dark:text-zinc-700" fill="transparent" />
                                 <circle
                                     cx="50%"
                                     cy="50%"
-                                    r="52"
+                                    r="60"
                                     stroke="url(#progressGradient)"
                                     strokeWidth="8"
                                     fill="transparent"
