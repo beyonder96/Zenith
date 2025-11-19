@@ -67,10 +67,6 @@ export function ProjectCard({ project, onToggleComplete, onEdit, onAiSplit, onDe
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48 bg-white/80 dark:bg-black/40 backdrop-blur-xl border-white/20 text-gray-800 dark:text-white">
-                            <DropdownMenuItem onSelect={() => onToggleComplete(project.id)} className="focus:bg-gray-200/50 dark:focus:bg-white/10">
-                                <CheckCircle2 className="mr-2 h-4 w-4" />
-                                <span>{project.completed ? 'Desmarcar' : 'Concluir'}</span>
-                            </DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => onEdit(project.id)} className="focus:bg-gray-200/50 dark:focus:bg-white/10">
                                 <Pencil className="mr-2 h-4 w-4" />
                                 <span>Editar</span>
