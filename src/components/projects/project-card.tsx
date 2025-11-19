@@ -1,7 +1,14 @@
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
-import { MoreVertical } from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical, CheckCircle2, Pencil, Sparkles, Trash2 } from "lucide-react";
 
 export function ProjectCard() {
     return (
@@ -18,9 +25,32 @@ export function ProjectCard() {
                         <p className="text-sm text-gray-500 dark:text-gray-400">19 de novembro de 2025</p>
                     </div>
                 </div>
-                <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                    <MoreVertical size={20} />
-                </button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700">
+                            <MoreVertical size={20} />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48 bg-white/80 dark:bg-black/40 backdrop-blur-xl border-white/20 text-gray-800 dark:text-white">
+                        <DropdownMenuItem className="focus:bg-gray-200/50 dark:focus:bg-white/10">
+                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                            <span>Concluir Tarefa</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="focus:bg-gray-200/50 dark:focus:bg-white/10">
+                            <Pencil className="mr-2 h-4 w-4" />
+                            <span>Editar</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="focus:bg-gray-200/50 dark:focus:bg-white/10">
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            <span>Dividir c/ IA</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator className="bg-gray-200 dark:bg-white/10" />
+                        <DropdownMenuItem className="text-red-500 focus:bg-red-500/10 focus:text-red-500">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            <span>Deletar</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </CardContent>
         </Card>
     );
