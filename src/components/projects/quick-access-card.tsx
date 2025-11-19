@@ -76,8 +76,8 @@ export function QuickAccessCard() {
                             <svg className="absolute w-full h-full transform -rotate-90 z-0">
                                 <defs>
                                     <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stopColor="hsl(var(--primary))" />
-                                        <stop offset="100%" stopColor="rgb(236, 72, 153)" />
+                                        <stop offset="0%" stopColor="#fb923c" />
+                                        <stop offset="100%" stopColor="#f97316" />
                                     </linearGradient>
                                 </defs>
                                 <circle cx="50%" cy="50%" r="52" stroke="currentColor" strokeWidth="8" className="text-gray-200 dark:text-zinc-700" fill="transparent" />
@@ -105,7 +105,7 @@ export function QuickAccessCard() {
                         <p className="text-sm text-gray-500 dark:text-gray-400">Selecione uma tarefa para focar.</p>
 
                         <div className="flex items-center gap-4">
-                             <Button onClick={handleTogglePlay} className="bg-pink-500 hover:bg-pink-600 text-white font-bold h-12 rounded-xl px-12 text-base">
+                             <Button onClick={handleTogglePlay} className="bg-green-500 hover:bg-green-600 text-white font-bold h-12 rounded-xl px-12 text-base">
                                 {isActive ? <Pause className="mr-2" /> : <Play className="mr-2" />}
                                 {isActive ? 'Pausar' : 'Continuar'}
                             </Button>
