@@ -46,11 +46,16 @@ export function CoordinatesDisplay() {
   }, []);
 
   return (
-    <p className="text-muted-foreground mt-2 text-sm">
-      {isLoading && <Skeleton className="h-4 w-48 mx-auto" />}
-      {error && `Erro ao obter coordenadas.`}
-      {!isLoading && !error && !coords && `Obtendo coordenadas...`}
-      {!isLoading && coords && `Aguardando suas coordenadas.`}
-    </p>
+    <div className="text-muted-foreground mt-2 text-sm h-4">
+      {isLoading ? (
+        <Skeleton className="h-full w-48 mx-auto" />
+      ) : error ? (
+        <span>Erro ao obter coordenadas.</span>
+      ) : coords ? (
+        <span>Aguardando suas coordenadas.</span>
+      ) : (
+        <span>Obtendo coordenadas...</span>
+      )}
+    </div>
   );
 }
