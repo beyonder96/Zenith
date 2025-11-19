@@ -134,15 +134,15 @@ export default function ProjectsPage() {
 
   return (
     <>
-      <div className="relative min-h-screen w-full bg-gray-100 dark:bg-zinc-900">
-        <div className="relative z-10 flex flex-col min-h-screen text-gray-800 dark:text-white">
-          <header className="p-4 sm:p-6 lg:p-8">
+      <div className="relative min-h-screen w-full bg-gray-100 dark:bg-zinc-900 overflow-hidden">
+        <div className="relative z-10 flex flex-col h-screen text-gray-800 dark:text-white">
+          <header className="p-4 sm:p-6 lg:p-8 flex-shrink-0">
             <h1 className="text-4xl font-thin tracking-wider text-center bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
               Projetos
             </h1>
           </header>
           
-          <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-4 pb-28">
+          <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-4 pb-28 overflow-y-auto">
               <div className="w-full max-w-md space-y-4">
                   <QuickAccessCard />
                   {!isClient ? (
@@ -171,8 +171,10 @@ export default function ProjectsPage() {
               <Plus size={32} />
             </Link>
           </Button>
-
-          <BottomNav active="produtividade" />
+          
+          <div className="flex-shrink-0">
+            <BottomNav active="produtividade" />
+          </div>
         </div>
       </div>
 

@@ -13,12 +13,12 @@ export default function Dashboard() {
           <div className="absolute inset-0 bg-gray-900/10 dark:bg-black/10 backdrop-blur-sm"></div>
       </div>
 
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <header className="p-4 sm:p-6 lg:p-8">
+      <div className="relative z-10 flex flex-col h-screen">
+        <header className="p-4 sm:p-6 lg:p-8 flex-shrink-0">
           <GreetingHeader />
         </header>
         
-        <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-8 pb-24">
+        <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-8 pb-28 overflow-y-auto">
           <div className="text-center w-full">
             <h1
               className="mb-2 bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-5xl font-thin tracking-[0.3em] text-transparent animate-shine bg-[200%_auto]"
@@ -37,7 +37,9 @@ export default function Dashboard() {
           </div>
         </main>
 
-        <BottomNav active="dashboard" />
+        <div className="flex-shrink-0">
+          <BottomNav active="dashboard" />
+        </div>
       </div>
     </div>
   );

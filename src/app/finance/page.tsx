@@ -9,7 +9,7 @@ import { TransactionList } from "@/components/finance/transaction-list";
 
 export default function FinancePage() {
   return (
-    <div className="relative min-h-screen w-full">
+    <div className="relative min-h-screen w-full overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: "url('https://i.pinimg.com/originals/a1/83/83/a183833f4a38543d3513aa67c130b05b.jpg')" }}
@@ -17,14 +17,14 @@ export default function FinancePage() {
       ></div>
       <div className="absolute inset-0 bg-gray-900/10 dark:bg-black/10 backdrop-blur-sm"></div>
 
-      <div className="relative z-10 flex flex-col min-h-screen text-white">
-        <header className="p-4 sm:p-6 lg:p-8">
+      <div className="relative z-10 flex flex-col h-screen text-white">
+        <header className="p-4 sm:p-6 lg:p-8 flex-shrink-0">
           <h1 className="text-4xl font-thin tracking-wider bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
             Finanças
           </h1>
         </header>
         
-        <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col gap-6 pb-28">
+        <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col gap-6 pb-28 overflow-y-auto">
           <FinanceSummary />
           <FinanceChart />
           <TransactionList />
@@ -34,7 +34,9 @@ export default function FinancePage() {
           <Plus size={32} />
         </Button>
 
-        <BottomNav active="financas" />
+        <div className="flex-shrink-0">
+          <BottomNav active="financas" />
+        </div>
       </div>
     </div>
   );
