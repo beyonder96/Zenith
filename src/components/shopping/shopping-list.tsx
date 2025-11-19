@@ -50,7 +50,7 @@ export function ShoppingList() {
             placeholder="Adicionar novo item..."
             className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 h-12 rounded-xl focus-visible:ring-orange-500 focus-visible:ring-offset-0 text-gray-800 dark:text-white"
             />
-            <Button onClick={handleAddItem} className="bg-orange-400 hover:bg-orange-500 text-white rounded-xl h-12 w-12" size="icon">
+            <Button onClick={handleAddItem} disabled={!newItem.trim()} className="bg-orange-400 hover:bg-orange-500 text-white rounded-xl h-12 w-12" size="icon">
                 <Plus size={24} />
             </Button>
         </div>
