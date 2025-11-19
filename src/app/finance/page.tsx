@@ -6,10 +6,11 @@ import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { FinanceSummary } from "@/components/finance/finance-summary";
 import { FinanceChart } from "@/components/finance/finance-chart";
 import { TransactionList } from "@/components/finance/transaction-list";
+import Link from "next/link";
 
 export default function FinancePage() {
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
+    <div className="relative min-h-screen w-full bg-gray-100 dark:bg-zinc-900">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: "url('https://i.pinimg.com/originals/a1/83/83/a183833f4a38543d3513aa67c130b05b.jpg')" }}
@@ -30,8 +31,10 @@ export default function FinancePage() {
           <TransactionList />
         </main>
         
-        <Button className="fixed z-20 bottom-24 right-6 w-16 h-16 rounded-full bg-gradient-to-r from-orange-400 to-pink-500 text-white shadow-lg transition-transform hover:scale-110 active:scale-100">
-          <Plus size={32} />
+        <Button asChild className="fixed z-20 bottom-24 right-6 w-16 h-16 rounded-full bg-gradient-to-r from-orange-400 to-pink-500 text-white shadow-lg transition-transform hover:scale-110 active:scale-100">
+          <Link href="/finance/new">
+            <Plus size={32} />
+          </Link>
         </Button>
 
         <div className="flex-shrink-0">
