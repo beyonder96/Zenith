@@ -1,26 +1,51 @@
 "use client";
 
-import { BarChart3, CheckCircle2, LayoutGrid, ShoppingCart } from "lucide-react";
+import { LayoutGrid, ShoppingCart, CheckCircle, BarChart, Home } from "lucide-react";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+
+const navItems = [
+    { id: "dashboard", icon: Home, label: "Dashboard" },
+    { id: "supermercado", icon: ShoppingCart, label: "Supermercado" },
+    { id: "produtividade", icon: CheckCircle, label: "Produtividade" },
+    { id: "financas", icon: BarChart, label: "Finanças" },
+]
 
 export function BottomNav() {
+    const [active, setActive] = useState("dashboard");
+
     return (
-        <nav className="fixed bottom-0 left-0 right-0 h-20 bg-background/80 backdrop-blur-lg border-t border-border/50 flex justify-around items-center">
-            <div className="absolute bottom-full left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none"></div>
-            <button className="p-2 text-muted-foreground">
-                <LayoutGrid size={28} />
-            </button>
-            <button className="p-2 text-muted-foreground">
-                <ShoppingCart size={28} />
-            </button>
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50">
             <div className="relative">
-                 <div className="absolute -inset-4 bg-gradient-to-br from-pink-500 to-orange-400 rounded-full blur-lg"></div>
-                 <button className="p-4 bg-gradient-to-br from-pink-500 to-orange-400 rounded-full text-white relative">
-                    <CheckCircle2 size={32} />
-                </button>
+                <div 
+                    className="absolute -inset-px rounded-full bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500"
+                    style={{
+                        animation: 'spin 4s linear infinite',
+                    }}
+                ></div>
+                <nav className="relative bg-black/50 backdrop-blur-lg rounded-full p-2 flex justify-around items-center">
+                    {navItems.map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => setActive(item.id)}
+                            className={cn(
+                                "p-3 rounded-full transition-colors duration-300 ease-in-out",
+                                active === item.id 
+                                    ? "bg-white/10 text-white" 
+                                    : "text-muted-foreground hover:bg-white/5"
+                            )}
+                        >
+                            <item.icon size={24} />
+                        </button>
+                    ))}
+                </nav>
             </div>
-            <button className="p-2 text-muted-foreground">
-                <BarChart3 size={28} />
-            </button>
-        </nav>
+             <style jsx>{`
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+            `}</style>
+        </div>
     );
 }

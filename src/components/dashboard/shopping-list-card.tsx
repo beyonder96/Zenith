@@ -12,32 +12,34 @@ type ShoppingItem = {
 };
 
 export function ShoppingListCard() {
-  const [items, setItems] = useLocalStorage<ShoppingItem[]>("zenith-vision-shopping", []);
+  const [items, setItems] = useLocalStorage<ShoppingItem[]>("zenith-vision-shopping-v2", [
+    {id: 1, text: "Maçãs", completed: true},
+    {id: 2, text: "Leite", completed: true},
+    {id: 3, text: "Pão", completed: false},
+    {id: 4, text: "Ovos", completed: false},
+    {id: 5, text: "Queijo", completed: false},
+  ]);
   
   const completedItems = items.filter(item => item.completed).length;
   const totalItems = items.length;
   const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
 
   return (
-    <Card className="bg-card border-none rounded-2xl">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
+    <Card className="bg-black/20 border border-white/10 rounded-2xl backdrop-blur-md">
+      <CardHeader className="flex flex-row items-start justify-between pb-2">
         <div className="flex flex-col">
-            <CardTitle className="text-base font-medium flex items-center gap-2">
-              Lista de Compras
+            <CardTitle className="text-base font-medium flex items-center gap-2 text-muted-foreground">
+              Compras
             </CardTitle>
-            {totalItems > 0 && <CardDescription>{totalItems} itens na lista</CardDescription>}
+             <CardDescription className="text-2xl font-bold text-white">{completedItems}/{totalItems}</CardDescription>
         </div>
-        <ShoppingCart className="text-muted-foreground" size={20}/>
+        <div className="p-2 bg-white/10 rounded-lg">
+            <ShoppingCart className="text-white" size={20}/>
+        </div>
       </CardHeader>
       <CardContent>
-        {totalItems > 0 ? (
-            <div>
-                <p className="text-2xl font-bold">{completedItems} / {totalItems} <span className="text-base font-normal text-muted-foreground">concluídos</span></p>
-                <Progress value={progress} className="h-2 mt-2" />
-            </div>
-        ) : (
-             <CardDescription>Nenhum item na lista.</CardDescription>
-        )}
+        <p className="text-xs text-muted-foreground mb-2">itens concluídos</p>
+        <Progress value={progress} className="h-2" />
       </CardContent>
     </Card>
   );
