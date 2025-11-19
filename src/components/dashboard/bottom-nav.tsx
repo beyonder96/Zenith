@@ -1,12 +1,12 @@
 "use client";
 
-import { Grid, ShoppingCart, CheckCircle, BarChart } from "lucide-react";
+import { LayoutGrid, ShoppingCart, CheckCircle, BarChart } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 const navItems = [
-    { id: "dashboard", icon: Grid, label: "Dashboard", href: "/dashboard" },
+    { id: "dashboard", icon: LayoutGrid, label: "Dashboard", href: "/dashboard" },
     { id: "supermercado", icon: ShoppingCart, label: "Supermercado", href: "/supermercado" },
     { id: "produtividade", icon: CheckCircle, label: "Produtividade", href: "/projects" },
     { id: "financas", icon: BarChart, label: "Finanças", href: "/finance" },
