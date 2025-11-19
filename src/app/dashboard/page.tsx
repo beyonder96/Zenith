@@ -29,7 +29,7 @@ export default function Dashboard() {
             <CoordinatesDisplay />
           </div>
 
-          <div className="w-full max-w-md space-y-4">
+          <div className="w-full max-w-md space-y-4 animate-pop-in">
             <DateSelector />
             <FinanceCard />
             <ShoppingListCard />
