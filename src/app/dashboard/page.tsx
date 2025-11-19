@@ -7,7 +7,7 @@ import { TasksCard } from "@/components/dashboard/tasks-card";
 
 export default function Dashboard() {
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
+    <div className="relative min-h-screen w-full overflow-hidden group">
       <div
         className="absolute inset-0 bg-cover bg-center transition-transform duration-500 ease-in-out group-hover:scale-105"
         style={{ backgroundImage: "url('https://picsum.photos/seed/mountain/1920/1080')" }}
