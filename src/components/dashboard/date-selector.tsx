@@ -14,8 +14,9 @@ export function DateSelector() {
     const startOfWeek = addDays(today, -today.getDay()); // Start from Sunday
     const weekDates = Array.from({ length: 7 }).map((_, i) => {
       const date = addDays(startOfWeek, i);
+      const dayName = format(date, 'EEE', { locale: ptBR });
       return {
-        day: format(date, 'EEE', { locale: ptBR }).toUpperCase(),
+        day: dayName.charAt(0).toUpperCase() + dayName.slice(1).replace('.', ''),
         date: format(date, 'd'),
         fullDate: date,
       };
