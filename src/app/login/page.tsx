@@ -44,6 +44,7 @@ export default function LoginPage() {
               </div>
 
               <Button
+                type="button"
                 onClick={handleLogin}
                 className="w-full bg-gradient-to-r from-orange-400 to-pink-500 text-white shadow-lg transition-transform hover:scale-105 active:scale-100"
               >
