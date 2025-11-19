@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { ProjectCard, Project, Subtask } from "@/components/projects/project-card";
 import { QuickAccessCard } from "@/components/projects/quick-access-card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import {
@@ -45,6 +45,11 @@ export default function ProjectsPage() {
   const [projectToDelete, setProjectToDelete] = useState<number | null>(null);
   const [loadingProjectId, setLoadingProjectId] = useState<number | null>(null);
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleToggleComplete = (id: number) => {
     setProjects(projects.map(p => p.id === id ? { ...p, completed: !p.completed } : p));
@@ -140,18 +145,24 @@ export default function ProjectsPage() {
           <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-4 pb-28">
               <div className="w-full max-w-md space-y-4">
                   <QuickAccessCard />
-                  {projects.map(project => (
-                    <ProjectCard 
-                      key={project.id}
-                      project={project}
-                      isLoading={loadingProjectId === project.id}
-                      onToggleComplete={handleToggleComplete}
-                      onEdit={handleEdit}
-                      onAiSplit={handleAiSplit}
-                      onDelete={handleDeleteInitiate}
-                      onToggleSubtask={handleToggleSubtask}
-                    />
-                  ))}
+                  {!isClient ? (
+                     <div className="flex justify-center items-center h-48">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                     </div>
+                  ) : (
+                    projects.map(project => (
+                      <ProjectCard 
+                        key={project.id}
+                        project={project}
+                        isLoading={loadingProjectId === project.id}
+                        onToggleComplete={handleToggleComplete}
+                        onEdit={handleEdit}
+                        onAiSplit={handleAiSplit}
+                        onDelete={handleDeleteInitiate}
+                        onToggleSubtask={handleToggleSubtask}
+                      />
+                    ))
+                  )}
               </div>
           </main>
           
