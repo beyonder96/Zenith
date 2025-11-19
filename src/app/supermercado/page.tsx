@@ -8,7 +8,7 @@ import { Check, Trash2 } from "lucide-react";
 
 export default function ShoppingPage() {
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-gray-100 dark:bg-zinc-900">
+    <div className="relative min-h-screen w-full bg-gray-100 dark:bg-zinc-900">
       <div className="relative z-10 flex flex-col min-h-screen text-gray-800 dark:text-white">
         <header className="p-4 sm:p-6 lg:p-8">
           <h1 className="text-4xl font-thin tracking-wider text-center bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
