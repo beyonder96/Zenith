@@ -16,7 +16,6 @@ import { cn } from '@/lib/utils';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useToast } from '@/hooks/use-toast';
 
-// This should be defined in a shared types file
 type Transaction = {
   id: number;
   description: string;
@@ -33,7 +32,6 @@ const categories = {
   income: ['Salário', 'Freelance', 'Investimentos', 'Outros'],
 };
 
-
 export default function NewTransactionPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -46,6 +44,7 @@ export default function NewTransactionPage() {
   const [type, setType] = useState<TransactionType>('expense');
   const [category, setCategory] = useState('');
   const [isRecurrent, setIsRecurrent] = useState(false);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
   const handleSave = () => {
     if (!description.trim() || !amount.trim() || !date) {
@@ -77,14 +76,26 @@ export default function NewTransactionPage() {
     };
 
     setTransactions([...transactions, newTransaction]);
+    setShowSuccessAnimation(true);
 
-    toast({
-      title: 'Transação salva!',
-      description: 'Sua nova transação foi adicionada.',
-    });
-
-    router.push('/finance');
+    setTimeout(() => {
+        router.push('/finance');
+        setTimeout(() => setShowSuccessAnimation(false), 500);
+    }, 1500);
   };
+
+  if (showSuccessAnimation) {
+    return (
+      <div className="fixed inset-0 bg-background z-50 flex items-center justify-center animate-fade-in">
+        <div className="success-checkmark__container">
+          <svg className="success-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle className="success-checkmark__circle" cx="26" cy="26" r="25" fill="none" />
+            <path className="success-checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+          </svg>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background min-h-screen text-foreground">
