@@ -4,8 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  const handleLogin = (e: React.MouseEvent<HTMLButtonElement> | React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    router.push('/dashboard');
+  };
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       <div
@@ -36,10 +44,10 @@ export default function LoginPage() {
               </div>
 
               <Button
+                onClick={handleLogin}
                 className="w-full bg-gradient-to-r from-orange-400 to-pink-500 text-white shadow-lg transition-transform hover:scale-105 active:scale-100"
-                asChild
               >
-                <Link href="/dashboard">Entrar</Link>
+                Entrar
               </Button>
             </form>
 
@@ -47,9 +55,9 @@ export default function LoginPage() {
               <Link href="#" className="text-orange-400 hover:underline">
                 Criar agora
               </Link>
-              <Link href="/dashboard" className="text-orange-400 hover:underline">
+              <a href="/dashboard" onClick={handleLogin} className="text-orange-400 hover:underline">
                 Entrar como Convidado
-              </Link>
+              </a>
             </div>
           </div>
         </div>
