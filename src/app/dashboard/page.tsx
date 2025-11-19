@@ -9,14 +9,17 @@ import { CoordinatesDisplay } from "@/components/dashboard/coordinates-display";
 export default function Dashboard() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black text-white">
-       <div className="absolute inset-0 w-full h-full bg-cover bg-center transition-transform duration-500 ease-in-out group-hover:scale-105" style={{ backgroundImage: "url('https://i.pinimg.com/originals/a1/83/83/a183833f4a38543d3513aa67c130b05b.jpg')" }}>
+      <div className="absolute inset-0 w-full h-full bg-cover bg-center transition-transform duration-500 ease-in-out group-hover:scale-105" style={{ backgroundImage: "url('https://i.pinimg.com/originals/a1/83/83/a183833f4a38543d3513aa67c130b05b.jpg')" }}>
           <div className="absolute inset-0 bg-gray-900/10 dark:bg-black/10 backdrop-blur-sm"></div>
       </div>
 
       <div className="relative z-10 flex flex-col min-h-screen">
-        <header className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+        <header className="p-4 sm:p-6 lg:p-8">
           <GreetingHeader />
-          <div className="text-center">
+        </header>
+        
+        <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-8 pb-24">
+          <div className="text-center w-full">
             <h1
               className="mb-2 bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-5xl font-thin tracking-[0.3em] text-transparent animate-shine bg-[200%_auto]"
               style={{ animationDuration: '3s' }}
@@ -25,13 +28,15 @@ export default function Dashboard() {
             </h1>
             <CoordinatesDisplay />
           </div>
-          <DateSelector />
-        </header>
-        <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col gap-4 pb-24">
+
+          <div className="w-full max-w-md space-y-4">
+            <DateSelector />
             <FinanceCard />
             <ShoppingListCard />
             <TasksCard />
+          </div>
         </main>
+
         <BottomNav active="dashboard" />
       </div>
     </div>

@@ -9,36 +9,41 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Moon, Sun, Sunrise } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Switch } from "../ui/switch";
 
+const CelestialIcon = ({ type }: { type: 'rising-sun' | 'setting-sun' | 'moon' }) => {
+    const typeClasses = {
+        'rising-sun': 'rising-sun-icon',
+        'setting-sun': 'setting-sun-icon',
+        'moon': 'moon-icon',
+    };
+    return <div className={`celestial-body ${typeClasses[type]}`}></div>;
+};
+
 export function GreetingHeader() {
   const [greeting, setGreeting] = useState("Boa noite");
-  const [icon, setIcon] = useState(<Moon className="text-gray-300" />);
+  const [iconType, setIconType] = useState<'rising-sun' | 'setting-sun' | 'moon'>("moon");
 
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {
       setGreeting("Bom Dia");
-      setIcon(<Sunrise className="text-orange-300" />);
+      setIconType("rising-sun");
     } else if (hour >= 12 && hour < 18) {
       setGreeting("Boa Tarde");
-      setIcon(<Sun className="text-yellow-300" />);
+      setIconType("setting-sun");
     } else {
       setGreeting("Boa Noite");
-      setIcon(<Moon className="text-blue-300" />);
+      setIconType("moon");
     }
   }, []);
 
   return (
     <div className="flex justify-between items-center">
       <div className="flex items-center gap-4">
-        <div className="w-10 h-10 flex items-center justify-center relative">
-          <div className="absolute inset-0 bg-white/30 blur-xl rounded-full"></div>
-          {icon}
-        </div>
-        <span className="text-2xl font-medium">{greeting}</span>
+        <CelestialIcon type={iconType} />
+        <span className="text-xl font-medium text-white/80">{greeting}</span>
       </div>
       
       <DropdownMenu>
@@ -50,7 +55,7 @@ export function GreetingHeader() {
             </Avatar>
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56 bg-zinc-900/80 backdrop-blur-lg border-white/10 text-white">
+        <DropdownMenuContent align="end" className="w-56 bg-black/40 backdrop-blur-xl border border-white/20 text-white">
           <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-white/10" />
           <DropdownMenuItem className="focus:bg-white/10">Editar Foto</DropdownMenuItem>
@@ -59,7 +64,7 @@ export function GreetingHeader() {
             <Switch />
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-white/10" />
-          <DropdownMenuItem className="text-red-500 focus:bg-red-500/20 focus:text-red-400">
+          <DropdownMenuItem className="text-red-400 focus:bg-red-500/20 focus:text-red-400">
             Sair
           </DropdownMenuItem>
         </DropdownMenuContent>
