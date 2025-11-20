@@ -11,6 +11,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
 import { Switch } from "../ui/switch";
+import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
+
 
 const CelestialIcon = ({ type }: { type: 'rising-sun' | 'setting-sun' | 'moon' }) => {
     const typeClasses = {
@@ -24,6 +27,7 @@ const CelestialIcon = ({ type }: { type: 'rising-sun' | 'setting-sun' | 'moon' }
 export function GreetingHeader() {
   const [greeting, setGreeting] = useState("Boa noite");
   const [iconType, setIconType] = useState<'rising-sun' | 'setting-sun' | 'moon'>("moon");
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -43,7 +47,7 @@ export function GreetingHeader() {
     <div className="flex justify-between items-center">
       <div className="flex items-center gap-4">
         <CelestialIcon type={iconType} />
-        <span className="text-xl font-medium text-white/80">{greeting}</span>
+        <span className="text-xl font-medium text-foreground/80">{greeting}</span>
       </div>
       
       <DropdownMenu>
@@ -55,16 +59,22 @@ export function GreetingHeader() {
             </Avatar>
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56 bg-black/40 backdrop-blur-xl border border-white/20 text-white">
+        <DropdownMenuContent align="end" className="w-56 bg-background/80 dark:bg-black/40 backdrop-blur-xl border-border text-foreground">
           <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-          <DropdownMenuSeparator className="bg-white/10" />
-          <DropdownMenuItem className="focus:bg-white/10">Editar Foto</DropdownMenuItem>
-          <DropdownMenuItem className="flex justify-between items-center focus:bg-white/10">
-            <span>Alterar Tema</span>
-            <Switch />
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="focus:bg-accent">Editar Foto</DropdownMenuItem>
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex justify-between items-center focus:bg-accent">
+            <div className="flex items-center">
+              {theme === 'dark' ? <Moon className="mr-2 h-4 w-4" /> : <Sun className="mr-2 h-4 w-4" />}
+              <span>Alterar Tema</span>
+            </div>
+            <Switch
+                checked={theme === 'dark'}
+                onCheckedChange={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            />
           </DropdownMenuItem>
-          <DropdownMenuSeparator className="bg-white/10" />
-          <DropdownMenuItem className="text-red-400 focus:bg-red-500/20 focus:text-red-400">
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="text-red-500 dark:text-red-400 focus:bg-destructive/10 focus:text-destructive">
             Sair
           </DropdownMenuItem>
         </DropdownMenuContent>
