@@ -31,7 +31,7 @@ export default function ShoppingPage() {
     setItems([]);
   };
 
-  const hasCompletedItems = items.some(item => item.completed);
+  const hasCompletedItems = isClient && items.some(item => item.completed);
 
   return (
     <div className="relative min-h-screen w-full bg-gray-100 dark:bg-zinc-900 overflow-hidden">
