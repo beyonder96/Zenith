@@ -16,18 +16,20 @@ export default function ShoppingPage() {
     setIsClient(true);
   }, []);
 
-  const totalCost = items.reduce((acc, item) => {
-    if (item.completed && item.quantity && item.price) {
+  const totalCost = isClient ? items.reduce((acc, item) => {
+    if (item.completed && item.quantity && typeof item.price !== 'undefined') {
       return acc + (item.quantity * item.price);
     }
     return acc;
-  }, 0);
+  }, 0) : 0;
 
   const handleClearCompleted = () => {
     setItems(items.filter(item => !item.completed));
   };
 
   const handleFinishShopping = () => {
+    // Here you could add logic to save the final list, generate a receipt, etc.
+    // For now, we'll just clear the list.
     setItems([]);
   };
 

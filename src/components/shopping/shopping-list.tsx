@@ -102,7 +102,7 @@ export function ShoppingList() {
                     <span className={cn('text-gray-800 dark:text-white', item.completed && 'line-through text-gray-400 dark:text-gray-500')}>
                       {item.name}
                     </span>
-                    {item.completed && item.quantity && item.price && (
+                    {item.completed && item.quantity && typeof item.price !== 'undefined' && (
                        <p className="text-xs text-gray-400 dark:text-gray-500">
                          {item.quantity} x R$ {item.price.toFixed(2)} = R$ {(item.quantity * item.price).toFixed(2)}
                        </p>
