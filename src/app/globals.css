@@ -144,7 +144,7 @@
         80% { opacity: 1; transform: scale(1.05); }
         100% { opacity: 1; transform: scale(1); }
     }
-    .animate-pop-in { animation: popIn 0.4s ease-out forwards; }
+    .animate-pop-in { animation: popIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; }
     
     @keyframes slideInUp {
         from { transform: translateY(100%); }
