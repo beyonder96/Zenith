@@ -131,6 +131,7 @@ export default function NewTransactionPage() {
             <Input
               id="amount"
               type="text"
+              inputMode="decimal"
               placeholder="25,50"
               value={amount}
               onChange={(e) => setAmount(e.target.value.replace(/[^0-9,]/g, ''))}
