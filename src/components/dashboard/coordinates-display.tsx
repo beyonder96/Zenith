@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -9,7 +10,19 @@ export function CoordinatesDisplay() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // This function will run only on the client side
     const getLocation = () => {
+      const storedCoords = localStorage.getItem("zenith-vision-coords");
+      if (storedCoords) {
+        try {
+          setCoords(JSON.parse(storedCoords));
+          setIsLoading(false);
+          return; // Exit if we have stored coords
+        } catch {
+          // If parsing fails, proceed to get new location
+        }
+      }
+      
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
@@ -31,19 +44,10 @@ export function CoordinatesDisplay() {
         setIsLoading(false);
       }
     };
+    
+    getLocation();
 
-    const storedCoords = localStorage.getItem("zenith-vision-coords");
-    if (storedCoords) {
-      try {
-        setCoords(JSON.parse(storedCoords));
-      } catch {
-        getLocation();
-      }
-      setIsLoading(false);
-    } else {
-      getLocation();
-    }
-  }, []);
+  }, []); // Empty dependency array ensures this runs once on mount
 
   return (
     <div className="text-muted-foreground mt-2 text-sm h-4">
@@ -52,7 +56,7 @@ export function CoordinatesDisplay() {
       ) : error ? (
         <span>Erro ao obter coordenadas.</span>
       ) : coords ? (
-        <span>Aguardando suas coordenadas.</span>
+        <span>{`Lat: ${coords.latitude.toFixed(4)}, Lon: ${coords.longitude.toFixed(4)}`}</span>
       ) : (
         <span>Obtendo coordenadas...</span>
       )}

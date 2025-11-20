@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -80,8 +81,11 @@ export default function NewTransactionPage() {
 
     setTimeout(() => {
         router.push('/finance');
-        setTimeout(() => setShowSuccessAnimation(false), 500);
     }, 1500);
+
+    setTimeout(() => {
+      setShowSuccessAnimation(false)
+    }, 2000);
   };
 
   if (showSuccessAnimation) {
