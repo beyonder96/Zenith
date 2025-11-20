@@ -29,13 +29,13 @@ export function GreetingHeader() {
   const [greeting, setGreeting] = useState("Boa noite");
   const [iconType, setIconType] = useState<'rising-sun' | 'setting-sun' | 'moon'>("moon");
   const { theme, setTheme } = useTheme();
-  const [isClient, setIsClient] = useState(false)
+  const [isClient, setIsClient] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [userImage, setUserImage] = useLocalStorage<string | null>('zenith-user-image', null);
 
   useEffect(() => {
-    setIsClient(true)
-  }, [])
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     const hour = new Date().getHours();
