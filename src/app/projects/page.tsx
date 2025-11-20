@@ -45,6 +45,7 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useLocalStorage<Project[]>('zenith-vision-projects', initialProjects);
   const [projectToDelete, setProjectToDelete] = useState<number | null>(null);
   const [loadingProjectId, setLoadingProjectId] = useState<number | null>(null);
+  const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
 
@@ -97,6 +98,7 @@ export default function ProjectsPage() {
                         : p
                 )
             );
+            handleToggleExpand(id, true); // Expande o projeto para mostrar as novas subtarefas
             toast({
                 title: "Tarefa dividida!",
                 description: "Novas subtarefas foram adicionadas ao projeto.",
@@ -132,6 +134,20 @@ export default function ProjectsPage() {
       })
     );
   };
+  
+  const handleToggleExpand = (id: number, forceOpen = false) => {
+    setExpandedProjects(prev => {
+        const newSet = new Set(prev);
+        if (forceOpen) {
+            newSet.add(id);
+        } else if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            newSet.add(id);
+        }
+        return newSet;
+    });
+};
 
   return (
     <>
@@ -156,6 +172,8 @@ export default function ProjectsPage() {
                         key={project.id}
                         project={project}
                         isLoading={loadingProjectId === project.id}
+                        isExpanded={expandedProjects.has(project.id)}
+                        onToggleExpand={handleToggleExpand}
                         onToggleComplete={handleToggleComplete}
                         onEdit={handleEdit}
                         onAiSplit={handleAiSplit}
