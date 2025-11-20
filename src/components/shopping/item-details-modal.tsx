@@ -40,7 +40,7 @@ export function ItemDetailsModal({ item, onConfirm, onCancel }: ItemDetailsModal
 
   return (
     <Dialog open={true} onOpenChange={open => !open && onCancel()}>
-      <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle className="text-center text-lg">Adicionar detalhes para:</DialogTitle>
           <p className="text-center text-orange-400 font-bold text-xl">{item.name}</p>
@@ -53,7 +53,7 @@ export function ItemDetailsModal({ item, onConfirm, onCancel }: ItemDetailsModal
               type="number"
               value={quantity}
               onChange={e => setQuantity(e.target.value)}
-              className="bg-zinc-800 border-zinc-700"
+              className="bg-card dark:bg-zinc-800"
             />
           </div>
           <div className="space-y-2">
@@ -63,19 +63,19 @@ export function ItemDetailsModal({ item, onConfirm, onCancel }: ItemDetailsModal
               placeholder="ex: 5,50"
               value={price}
               onChange={e => setPrice(e.target.value.replace(/[^0-9,.]/g, ''))}
-              className="bg-zinc-800 border-zinc-700"
+              className="bg-card dark:bg-zinc-800"
               inputMode="decimal"
             />
           </div>
         </div>
         <div className="text-center">
-            <p className="text-sm text-gray-400">Total do Item</p>
+            <p className="text-sm text-muted-foreground">Total do Item</p>
             <p className="text-2xl font-bold text-orange-400">
                 R$ {total.toFixed(2).replace('.', ',')}
             </p>
         </div>
         <DialogFooter className="!grid !grid-cols-2 gap-2 sm:!justify-center">
-          <Button variant="outline" onClick={onCancel} className="bg-zinc-700 border-zinc-600 hover:bg-zinc-600">
+          <Button variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
           <Button onClick={handleConfirmClick} className="bg-orange-500 hover:bg-orange-600 text-white">
