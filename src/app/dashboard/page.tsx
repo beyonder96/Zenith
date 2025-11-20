@@ -4,13 +4,12 @@ import { GreetingHeader } from "@/components/dashboard/greeting-header";
 import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { ShoppingListCard } from "@/components/dashboard/shopping-list-card";
 import { TasksCard } from "@/components/dashboard/tasks-card";
-import { CoordinatesDisplay } from "@/components/dashboard/coordinates-display";
 
 export default function Dashboard() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-background text-foreground">
       <div className="absolute inset-0 w-full h-full bg-cover bg-center transition-transform duration-500 ease-in-out group-hover:scale-105" style={{ backgroundImage: "url('https://i.pinimg.com/originals/a1/83/83/a183833f4a38543d3513aa67c130b05b.jpg')" }}>
-          <div className="absolute inset-0 bg-gray-900/10 dark:bg-black/10 backdrop-blur-sm"></div>
+          <div className="absolute inset-0 bg-white/10 dark:bg-black/10 backdrop-blur-sm"></div>
       </div>
 
       <div className="relative z-10 flex flex-col h-screen">
@@ -26,7 +25,6 @@ export default function Dashboard() {
             >
               ZENITH
             </h1>
-            <CoordinatesDisplay />
           </div>
 
           <div className="w-full max-w-md space-y-4 animate-pop-in">
