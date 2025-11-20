@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,8 +17,12 @@ export type ShoppingItem = {
   price?: number;
 };
 
-export function ShoppingList() {
-  const [items, setItems] = useLocalStorage<ShoppingItem[]>('zenith-vision-shopping-list', []);
+type ShoppingListProps = {
+  items: ShoppingItem[];
+  setItems: React.Dispatch<React.SetStateAction<ShoppingItem[]>>;
+};
+
+export function ShoppingList({ items, setItems }: ShoppingListProps) {
   const [newItem, setNewItem] = useState('');
   const [isClient, setIsClient] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
@@ -30,7 +33,7 @@ export function ShoppingList() {
 
   const handleAddItem = () => {
     if (newItem.trim()) {
-      setItems([...items, { id: Date.now(), name: newItem.trim(), completed: false }]);
+      setItems(prevItems => [...prevItems, { id: Date.now(), name: newItem.trim(), completed: false }]);
       setNewItem('');
     }
   };
@@ -39,7 +42,7 @@ export function ShoppingList() {
     // If the item is already completed, un-complete it and clear details
     if (item.completed) {
       const updatedItem = { ...item, completed: false, quantity: undefined, price: undefined };
-      setItems(items.map(i => (i.id === item.id ? updatedItem : i)));
+      setItems(prevItems => prevItems.map(i => (i.id === item.id ? updatedItem : i)));
     } else {
       // If the item is not completed, open the modal to add details
       setEditingItem(item);
@@ -48,12 +51,12 @@ export function ShoppingList() {
 
   const handleConfirmDetails = (item: ShoppingItem, quantity: number, price: number) => {
     const updatedItem = { ...item, completed: true, quantity, price };
-    setItems(items.map(i => (i.id === item.id ? updatedItem : i)));
+    setItems(prevItems => prevItems.map(i => (i.id === item.id ? updatedItem : i)));
     setEditingItem(null);
   };
 
   const handleRemoveItem = (id: number) => {
-    setItems(items.filter(item => item.id !== id));
+    setItems(prevItems => prevItems.filter(item => item.id !== id));
   };
   
   return (
@@ -104,7 +107,7 @@ export function ShoppingList() {
                     </span>
                     {item.completed && item.quantity && typeof item.price !== 'undefined' && (
                        <p className="text-xs text-gray-400 dark:text-gray-500">
-                         {item.quantity} x R$ {item.price.toFixed(2)} = R$ {(item.quantity * item.price).toFixed(2)}
+                         {item.quantity} x R$ {item.price.toFixed(2).replace('.',',')} = R$ {(item.quantity * item.price).toFixed(2).replace('.',',')}
                        </p>
                     )}
                   </div>

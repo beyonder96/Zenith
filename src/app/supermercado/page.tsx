@@ -23,8 +23,10 @@ export default function ShoppingPage() {
     return acc;
   }, 0) : 0;
 
+  const hasCompletedItems = isClient && items.some(item => item.completed);
+
   const handleClearCompleted = () => {
-    setItems(items.filter(item => !item.completed));
+    setItems(prevItems => prevItems.filter(item => !item.completed));
   };
 
   const handleFinishShopping = () => {
@@ -32,8 +34,6 @@ export default function ShoppingPage() {
     // For now, we'll just clear the list.
     setItems([]);
   };
-
-  const hasCompletedItems = isClient && items.some(item => item.completed);
 
   return (
     <div className="relative min-h-screen w-full bg-gray-100 dark:bg-zinc-900 overflow-hidden">
@@ -74,7 +74,7 @@ export default function ShoppingPage() {
             </Card>
 
             <div className="w-full max-w-md">
-                <ShoppingList />
+                <ShoppingList items={items} setItems={setItems} />
             </div>
         </main>
         
