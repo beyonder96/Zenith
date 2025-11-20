@@ -122,7 +122,7 @@ export default function NewTransactionPage() {
             placeholder="Ex: Aluguel"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="bg-zinc-800 border-zinc-700 rounded-md"
+            className="bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-md"
           />
         </div>
 
@@ -136,7 +136,7 @@ export default function NewTransactionPage() {
               placeholder="25,50"
               value={amount}
               onChange={(e) => setAmount(e.target.value.replace(/[^0-9,]/g, ''))}
-              className="bg-zinc-800 border-zinc-700 rounded-md"
+              className="bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-md"
             />
           </div>
           <div className="space-y-2">
@@ -146,7 +146,7 @@ export default function NewTransactionPage() {
                 <Button
                   variant={'outline'}
                   className={cn(
-                    'w-full justify-start text-left font-normal bg-zinc-800 border-zinc-700 rounded-md hover:bg-zinc-700 hover:text-white',
+                    'w-full justify-start text-left font-normal bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-md hover:bg-zinc-700 hover:text-white',
                     !date && 'text-muted-foreground'
                   )}
                 >
@@ -169,7 +169,7 @@ export default function NewTransactionPage() {
               onClick={() => { setType('expense'); setCategory(''); }}
               className={cn(
                 'flex-1',
-                type === 'expense' ? 'bg-destructive/80 text-white border-destructive' : 'bg-zinc-800 border-zinc-700'
+                type === 'expense' ? 'bg-destructive/80 text-destructive-foreground border-destructive' : 'bg-card dark:bg-zinc-800 border-border dark:border-zinc-700'
               )}
             >
               Despesa
@@ -179,7 +179,7 @@ export default function NewTransactionPage() {
                onClick={() => { setType('income'); setCategory(''); }}
                className={cn(
                  'flex-1',
-                 type === 'income' ? 'bg-cyan-500 text-white border-cyan-500 hover:bg-cyan-600' : 'bg-zinc-800 border-zinc-700'
+                 type === 'income' ? 'bg-cyan-500 text-white border-cyan-500 hover:bg-cyan-600' : 'bg-card dark:bg-zinc-800 border-border dark:border-zinc-700'
                )}
             >
               Receita
@@ -190,7 +190,7 @@ export default function NewTransactionPage() {
         <div className="space-y-2">
           <Label htmlFor="category">Categoria</Label>
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger id="category" className="bg-zinc-800 border-zinc-700 rounded-md">
+            <SelectTrigger id="category" className="bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-md">
               <SelectValue placeholder="Selecione uma categoria" />
             </SelectTrigger>
             <SelectContent>
@@ -201,7 +201,7 @@ export default function NewTransactionPage() {
           </Select>
         </div>
 
-        <div className="space-y-4 p-4 bg-zinc-800 rounded-md">
+        <div className="space-y-4 p-4 bg-card dark:bg-zinc-800 rounded-md">
             <div className="flex items-center justify-between">
                 <Label htmlFor="recurrent-task" className="m-0">Transação Recorrente</Label>
                 <Switch
@@ -211,7 +211,7 @@ export default function NewTransactionPage() {
                 />
             </div>
             {isRecurrent && (
-                <div className="space-y-2 pt-4 border-t border-zinc-700">
+                <div className="space-y-2 pt-4 border-t border-border dark:border-zinc-700">
                     <Label>Frequência</Label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {(['diario', 'semanal', 'mensal', 'anual'] as RecurrenceFrequency[]).map((freq) => (
@@ -223,7 +223,7 @@ export default function NewTransactionPage() {
                                 'capitalize',
                                 recurrenceFrequency === freq 
                                     ? 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600'
-                                    : 'bg-zinc-700 border-zinc-600 hover:bg-zinc-600'
+                                    : 'bg-muted dark:bg-zinc-700 border-border dark:border-zinc-600 hover:bg-accent dark:hover:bg-zinc-600'
                                 )}
                             >
                                 {freq}

@@ -69,7 +69,7 @@ export function ShoppingList({ items, setItems }: ShoppingListProps) {
             onChange={e => setNewItem(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleAddItem()}
             placeholder="Adicionar novo item..."
-            className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 h-12 rounded-xl focus-visible:ring-orange-500 focus-visible:ring-offset-0 text-gray-800 dark:text-white"
+            className="bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 h-12 rounded-xl focus-visible:ring-orange-500 focus-visible:ring-offset-0 text-foreground"
           />
           <Button
             onClick={handleAddItem}
@@ -81,7 +81,7 @@ export function ShoppingList({ items, setItems }: ShoppingListProps) {
           </Button>
         </div>
 
-        <Card className="bg-white dark:bg-zinc-800 border-none shadow-sm rounded-xl min-h-[300px]">
+        <Card className="bg-card dark:bg-zinc-800 border-none shadow-sm rounded-xl min-h-[300px]">
           <CardContent className="p-4 space-y-3">
             {!isClient ? (
               <div className="space-y-3 pt-2">
@@ -97,16 +97,16 @@ export function ShoppingList({ items, setItems }: ShoppingListProps) {
               </div>
             ) : (
               items.map(item => (
-                <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-zinc-700/50 rounded-lg">
+                <div key={item.id} className="flex items-center gap-4 p-3 bg-background dark:bg-zinc-700/50 rounded-lg">
                   <button onClick={() => handleToggleItem(item)}>
                     {item.completed ? <CheckCircle2 className="text-green-500" /> : <Circle className="text-gray-400" />}
                   </button>
                   <div className="flex-grow">
-                    <span className={cn('text-gray-800 dark:text-white', item.completed && 'line-through text-gray-400 dark:text-gray-500')}>
+                    <span className={cn('text-foreground', item.completed && 'line-through text-muted-foreground')}>
                       {item.name}
                     </span>
                     {item.completed && item.quantity && typeof item.price !== 'undefined' && (
-                       <p className="text-xs text-gray-400 dark:text-gray-500">
+                       <p className="text-xs text-muted-foreground">
                          {item.quantity} x R$ {item.price.toFixed(2).replace('.',',')} = R$ {(item.quantity * item.price).toFixed(2).replace('.',',')}
                        </p>
                     )}

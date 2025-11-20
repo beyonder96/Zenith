@@ -85,8 +85,8 @@ export default function ShoppingPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-gray-100 dark:bg-zinc-900 overflow-hidden">
-       <div className="relative z-10 flex flex-col h-screen text-gray-800 dark:text-white">
+    <div className="relative min-h-screen w-full bg-background dark:bg-zinc-900 overflow-hidden">
+       <div className="relative z-10 flex flex-col h-screen text-foreground">
         <header className="p-4 sm:p-6 lg:p-8 flex-shrink-0">
           <h1 className="text-4xl font-thin tracking-wider text-center bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
             Lista de Compras
@@ -111,13 +111,13 @@ export default function ShoppingPage() {
                 </Button>
             </div>
 
-            <Card className="w-full max-w-md bg-white/5 dark:bg-zinc-800/50 border-none shadow-sm rounded-xl">
+            <Card className="w-full max-w-md bg-card dark:bg-zinc-800/50 border-none shadow-sm rounded-xl">
                 <CardContent className="p-4 text-center">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Total Gasto na Compra</p>
+                    <p className="text-sm text-muted-foreground">Total Gasto na Compra</p>
                      {!isClient ? (
                         <Loader2 className="h-8 w-8 mx-auto animate-spin text-muted-foreground mt-1" />
                     ) : (
-                        <p className="text-3xl font-bold text-gray-800 dark:text-white">R$ {totalCost.toFixed(2).replace('.', ',')}</p>
+                        <p className="text-3xl font-bold text-foreground">R$ {totalCost.toFixed(2).replace('.', ',')}</p>
                     )}
                 </CardContent>
             </Card>

@@ -28,6 +28,11 @@ export function GreetingHeader() {
   const [greeting, setGreeting] = useState("Boa noite");
   const [iconType, setIconType] = useState<'rising-sun' | 'setting-sun' | 'moon'>("moon");
   const { theme, setTheme } = useTheme();
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -47,7 +52,7 @@ export function GreetingHeader() {
     <div className="flex justify-between items-center">
       <div className="flex items-center gap-4">
         <CelestialIcon type={iconType} />
-        <span className="text-xl font-medium text-foreground/80">{greeting}</span>
+        <span className="text-xl font-medium text-foreground">{greeting}</span>
       </div>
       
       <DropdownMenu>
@@ -65,13 +70,15 @@ export function GreetingHeader() {
           <DropdownMenuItem className="focus:bg-accent">Editar Foto</DropdownMenuItem>
           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex justify-between items-center focus:bg-accent">
             <div className="flex items-center">
-              {theme === 'dark' ? <Moon className="mr-2 h-4 w-4" /> : <Sun className="mr-2 h-4 w-4" />}
+              {isClient && theme === 'dark' ? <Moon className="mr-2 h-4 w-4" /> : <Sun className="mr-2 h-4 w-4" />}
               <span>Alterar Tema</span>
             </div>
-            <Switch
-                checked={theme === 'dark'}
-                onCheckedChange={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            />
+            {isClient && (
+              <Switch
+                  checked={theme === 'dark'}
+                  onCheckedChange={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              />
+            )}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="text-red-500 dark:text-red-400 focus:bg-destructive/10 focus:text-destructive">

@@ -45,19 +45,19 @@ export function FinanceSummary() {
       title: 'Saldo Atual',
       amount: formatCurrency(balance),
       icon: Wallet,
-      color: 'text-white',
+      color: 'text-foreground',
     },
     {
       title: 'Receitas do Mês',
       amount: formatCurrency(income),
       icon: TrendingUp,
-      color: 'text-cyan-300',
+      color: 'text-cyan-500',
     },
     {
       title: 'Despesas do Mês',
       amount: formatCurrency(Math.abs(expenses)),
       icon: TrendingDown,
-      color: 'text-pink-400',
+      color: 'text-pink-500',
     },
   ];
 
@@ -65,7 +65,7 @@ export function FinanceSummary() {
     return (
         <div className="grid gap-4 md:grid-cols-3">
             {Array.from({ length: 3 }).map((_, index) => (
-                <Card key={index} className="bg-black/20 border-white/10 backdrop-blur-md text-white">
+                <Card key={index} className="bg-card/80 dark:bg-black/20 border-border dark:border-white/10 backdrop-blur-md text-card-foreground">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <Skeleton className="h-4 w-24" />
                         <Skeleton className="h-4 w-4" />
@@ -82,7 +82,7 @@ export function FinanceSummary() {
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {summaryData.map((item, index) => (
-        <Card key={index} className="bg-black/20 border-white/10 backdrop-blur-md text-white">
+        <Card key={index} className="bg-card/80 dark:bg-black/20 border-border dark:border-white/10 backdrop-blur-md text-card-foreground">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">{item.title}</CardTitle>
             <item.icon className={`h-4 w-4 ${item.color}`} />

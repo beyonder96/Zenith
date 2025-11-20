@@ -96,8 +96,8 @@ export default function NewTaskPage() {
   };
 
   return (
-    <div className="bg-gray-100 dark:bg-zinc-900 min-h-screen text-gray-800 dark:text-white">
-      <header className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-zinc-800">
+    <div className="bg-background min-h-screen text-foreground">
+      <header className="flex items-center justify-between p-4 border-b border-border">
         <Button variant="link" onClick={() => router.back()} className="text-orange-500">
           Cancelar
         </Button>
@@ -115,7 +115,7 @@ export default function NewTaskPage() {
             placeholder="Ex: Preparar relatório trimestral"
             value={taskName}
             onChange={(e) => setTaskName(e.target.value)}
-            className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 rounded-md"
+            className="bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-md"
           />
         </div>
 
@@ -126,7 +126,7 @@ export default function NewTaskPage() {
               <Button
                 variant={'outline'}
                 className={cn(
-                  'w-full justify-start text-left font-normal bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 rounded-md',
+                  'w-full justify-start text-left font-normal bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-md',
                   !date && 'text-muted-foreground'
                 )}
               >
@@ -155,7 +155,7 @@ export default function NewTaskPage() {
                 variant={importance === level ? 'default' : 'outline'}
                 onClick={() => setImportance(level)}
                 className={cn(
-                  'flex-1 bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700',
+                  'flex-1 bg-card dark:bg-zinc-800 border-border dark:border-zinc-700',
                   importance === level && 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600'
                 )}
               >
@@ -165,7 +165,7 @@ export default function NewTaskPage() {
           </div>
         </div>
 
-        <div className="space-y-4 p-4 bg-white dark:bg-zinc-800 rounded-md">
+        <div className="space-y-4 p-4 bg-card dark:bg-zinc-800 rounded-md">
           <div className="flex items-center justify-between">
             <Label htmlFor="recurrent-task" className="m-0">Tarefa Recorrente</Label>
             <Switch
@@ -175,7 +175,7 @@ export default function NewTaskPage() {
             />
           </div>
            {isRecurrent && (
-                <div className="space-y-2 pt-4 border-t border-gray-200 dark:border-zinc-700">
+                <div className="space-y-2 pt-4 border-t border-border dark:border-zinc-700">
                     <Label>Frequência</Label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {(['diario', 'semanal', 'mensal', 'anual'] as RecurrenceFrequency[]).map((freq) => (
@@ -187,7 +187,7 @@ export default function NewTaskPage() {
                                 'capitalize',
                                 recurrenceFrequency === freq 
                                     ? 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600'
-                                    : 'bg-zinc-700 border-zinc-600 hover:bg-zinc-600 text-white'
+                                    : 'bg-muted dark:bg-zinc-700 border-border dark:border-zinc-600 text-foreground hover:bg-accent dark:hover:bg-zinc-600 dark:text-white'
                                 )}
                             >
                                 {freq}

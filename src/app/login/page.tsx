@@ -34,11 +34,11 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
             <Input 
                 type="email" placeholder="E-mail" 
-                className="w-full bg-white/50 dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-orange-400/50 transition-all"
+                className="w-full bg-white/50 dark:bg-white/5 border-gray-300 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-orange-400/50 transition-all"
             />
             <Input 
                 type="password" placeholder="Senha" 
-                className="w-full bg-white/50 dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-orange-400/50 transition-all"
+                className="w-full bg-white/50 dark:bg-white/5 border-gray-300 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-orange-400/50 transition-all"
             />
             <Button type="submit" className="w-full bg-gradient-to-r from-orange-400 to-pink-500 text-white font-bold py-3 h-auto rounded-xl shadow-lg hover:shadow-orange-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200">
                 Entrar

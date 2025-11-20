@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '../ui/skeleton';
+import { useTheme } from 'next-themes';
 
 type Transaction = {
   id: number;
@@ -20,6 +21,7 @@ type Transaction = {
 export function FinanceChart() {
   const [transactions] = useLocalStorage<Transaction[]>('zenith-vision-finance', []);
   const [isClient, setIsClient] = useState(false);
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     setIsClient(true);
@@ -58,9 +60,12 @@ export function FinanceChart() {
   };
 
   const chartData = isClient ? processChartData() : [];
+  const axisColor = resolvedTheme === 'dark' ? '#9ca3af' : '#6b7280';
+  const tooltipBg = resolvedTheme === 'dark' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.8)';
+  const tooltipBorder = resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
 
   return (
-    <Card className="bg-black/20 border-white/10 backdrop-blur-md text-white">
+    <Card className="bg-card/80 dark:bg-black/20 border-border dark:border-white/10 backdrop-blur-md text-card-foreground">
       <CardHeader>
         <CardTitle className="text-lg font-medium text-muted-foreground">Visão Geral Mensal</CardTitle>
       </CardHeader>
@@ -92,13 +97,13 @@ export function FinanceChart() {
               </defs>
               <XAxis
                 dataKey="month"
-                stroke="#9ca3af"
+                stroke={axisColor}
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                stroke="#9ca3af"
+                stroke={axisColor}
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
@@ -106,11 +111,12 @@ export function FinanceChart() {
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  backgroundColor: tooltipBg,
+                  border: `1px solid ${tooltipBorder}`,
                   borderRadius: '0.75rem',
+                  backdropFilter: 'blur(4px)',
                 }}
-                labelStyle={{ color: '#d1d5db' }}
+                labelStyle={{ color: axisColor }}
                 formatter={(value: number, name: string) => [
                   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
                   name === 'revenue' ? 'Receitas' : 'Despesas',

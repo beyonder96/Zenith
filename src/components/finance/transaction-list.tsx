@@ -53,7 +53,7 @@ export function TransactionList() {
   const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
-    <Card className="bg-black/20 border-white/10 backdrop-blur-md text-white">
+    <Card className="bg-card/80 dark:bg-black/20 border-border dark:border-white/10 backdrop-blur-md text-card-foreground">
       <CardHeader>
         <CardTitle className="text-lg font-medium text-muted-foreground">
           Transações Recentes
@@ -88,8 +88,8 @@ export function TransactionList() {
                   key={transaction.id}
                   className="flex items-center"
                 >
-                  <div className="p-3 bg-white/10 rounded-lg mr-4">
-                    <Icon className="h-5 w-5 text-white" />
+                  <div className="p-3 bg-muted dark:bg-white/10 rounded-lg mr-4">
+                    <Icon className="h-5 w-5 text-foreground" />
                   </div>
                   <div className="flex-grow">
                     <p className="font-semibold">{transaction.description}</p>
@@ -100,8 +100,8 @@ export function TransactionList() {
                   <div
                     className={`font-semibold ${
                       transaction.type === "income"
-                        ? "text-cyan-300"
-                        : "text-pink-400"
+                        ? "text-cyan-500"
+                        : "text-pink-500"
                     }`}
                   >
                     {transaction.type === 'expense' ? "-" : "+"}R$ {Math.abs(transaction.amount).toFixed(2).replace(".", ",")}

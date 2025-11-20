@@ -10,15 +10,15 @@ import Link from "next/link";
 
 export default function FinancePage() {
   return (
-    <div className="relative min-h-screen w-full bg-gray-100 dark:bg-zinc-900">
+    <div className="relative min-h-screen w-full bg-background dark:bg-zinc-900">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: "url('https://i.pinimg.com/originals/a1/83/83/a183833f4a38543d3513aa67c130b05b.jpg')" }}
         data-ai-hint="mountain landscape"
       ></div>
-      <div className="absolute inset-0 bg-gray-900/10 dark:bg-black/10 backdrop-blur-sm"></div>
+      <div className="absolute inset-0 bg-white/10 dark:bg-black/10 backdrop-blur-sm"></div>
 
-      <div className="relative z-10 flex flex-col h-screen text-white">
+      <div className="relative z-10 flex flex-col h-screen text-foreground">
         <header className="p-4 sm:p-6 lg:p-8 flex-shrink-0">
           <h1 className="text-4xl font-thin tracking-wider bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
             Finanças
