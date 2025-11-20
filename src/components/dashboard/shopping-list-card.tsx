@@ -24,14 +24,14 @@ export function ShoppingListCard() {
   const totalItems = items.length;
 
   return (
-    <Card className="bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-2xl">
+    <Card className="bg-card text-card-foreground rounded-2xl">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex flex-col">
-            <CardTitle className="text-base font-semibold text-white/90">
+            <CardTitle className="text-base font-semibold text-card-foreground/90">
               Lista de Compras
             </CardTitle>
         </div>
-        <ShoppingCart className="text-white/60" size={20}/>
+        <ShoppingCart className="text-muted-foreground" size={20}/>
       </CardHeader>
       <CardContent>
         {!isClient ? (
@@ -42,10 +42,10 @@ export function ShoppingListCard() {
         ) : items.length > 0 ? (
           <>
             <p className="text-2xl font-bold">{completedItems}/{totalItems}</p>
-            <p className="text-xs text-white/70">concluídos</p>
+            <p className="text-xs text-muted-foreground">concluídos</p>
           </>
         ) : (
-          <p className="text-sm text-white/70">Nenhum item na lista.</p>
+          <p className="text-sm text-muted-foreground">Nenhum item na lista.</p>
         )}
       </CardContent>
     </Card>

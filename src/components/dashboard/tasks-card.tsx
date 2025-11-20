@@ -20,14 +20,14 @@ export function TasksCard() {
     const todayTasks = isClient ? projects.filter(p => p.dueDate === today) : [];
 
     return (
-        <Card className="bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-2xl">
+        <Card className="bg-card text-card-foreground rounded-2xl">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <div className="flex flex-col">
-                    <CardTitle className="text-base font-semibold text-white/90">
+                    <CardTitle className="text-base font-semibold text-card-foreground/90">
                         Tarefas do Dia
                     </CardTitle>
                 </div>
-                <CheckCircle2 className="text-white/60" size={20} />
+                <CheckCircle2 className="text-muted-foreground" size={20} />
             </CardHeader>
             <CardContent>
                 {!isClient ? (
@@ -38,10 +38,10 @@ export function TasksCard() {
                 ) : todayTasks.length > 0 ? (
                     <>
                       <p className="text-2xl font-bold">{todayTasks.filter(t => t.completed).length}/{todayTasks.length}</p>
-                      <p className="text-xs text-white/70">concluídas</p>
+                      <p className="text-xs text-muted-foreground">concluídas</p>
                     </>
                 ) : (
-                    <p className="text-sm text-white/70">Nenhuma tarefa para hoje.</p>
+                    <p className="text-sm text-muted-foreground">Nenhuma tarefa para hoje.</p>
                 )}
             </CardContent>
         </Card>

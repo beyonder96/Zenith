@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { format, addDays, isSameDay, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { ptBR } from 'date-fns/locale';
+
 
 export function DateSelector() {
   const [dates, setDates] = useState<{ day: string; date: string; fullDate: Date }[]>([]);
@@ -31,7 +33,7 @@ export function DateSelector() {
   }, []);
 
   return (
-    <div className="flex justify-between items-center bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+    <div className="flex justify-between items-center bg-card p-2 rounded-xl border border-border">
       {dates.map(({ day, date, fullDate }) => {
         const isSelected = isSameDay(fullDate, selectedDate);
         const isCurrentDay = isToday(fullDate);
@@ -44,8 +46,8 @@ export function DateSelector() {
                 `flex flex-col items-center justify-center w-12 h-16 rounded-lg transition-all duration-300`,
                 isSelected 
                     ? 'bg-gradient-to-br from-orange-400 to-pink-500 text-white shadow-lg scale-105' 
-                    : 'text-muted-foreground hover:bg-zinc-800',
-                isCurrentDay && !isSelected && 'border border-zinc-700'
+                    : 'text-muted-foreground hover:bg-accent',
+                isCurrentDay && !isSelected && 'border border-border'
             )}
           >
             <span className="text-xs font-medium">{day}</span>

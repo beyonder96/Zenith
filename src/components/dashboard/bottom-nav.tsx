@@ -24,7 +24,7 @@ export function BottomNav({ active }: { active: string }) {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm h-20 z-50">
             <div className="relative group w-full h-full p-[1.5px] rounded-3xl overflow-hidden shadow-lg">
                 <div className="animated-border w-full h-full">
-                    <div className="w-full h-full bg-white/30 dark:bg-black/30 backdrop-blur-lg rounded-[22px] flex items-center justify-around">
+                    <div className="w-full h-full bg-card/30 dark:bg-black/30 backdrop-blur-lg rounded-[22px] flex items-center justify-around">
                         {navItems.map((item) => (
                             <Link href={item.href} key={item.id} passHref>
                                 <button
