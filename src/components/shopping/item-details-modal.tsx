@@ -64,6 +64,7 @@ export function ItemDetailsModal({ item, onConfirm, onCancel }: ItemDetailsModal
               value={price}
               onChange={e => setPrice(e.target.value.replace(/[^0-9,.]/g, ''))}
               className="bg-zinc-800 border-zinc-700"
+              inputMode="decimal"
             />
           </div>
         </div>
