@@ -31,11 +31,15 @@ export function GreetingHeader() {
   const { theme, setTheme } = useTheme();
   const [isClient, setIsClient] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [userImage, setUserImage] = useLocalStorage<string | null>('zenith-user-image', null);
+  const [storedUserImage, setStoredUserImage] = useLocalStorage<string | null>('zenith-user-image', null);
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    if (storedUserImage) {
+      setAvatarSrc(storedUserImage);
+    }
+  }, [storedUserImage]);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -60,7 +64,9 @@ export function GreetingHeader() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setUserImage(reader.result as string);
+        const base64Image = reader.result as string;
+        setStoredUserImage(base64Image);
+        setAvatarSrc(base64Image);
       };
       reader.readAsDataURL(file);
     }
@@ -77,7 +83,7 @@ export function GreetingHeader() {
         <DropdownMenuTrigger asChild>
           <button className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
             <Avatar>
-              <AvatarImage src={userImage || "https://i.pravatar.cc/150?u=a042581f4e29026704d"} alt="User" />
+              <AvatarImage src={avatarSrc || "https://i.pravatar.cc/150?u=a042581f4e29026704d"} alt="User" />
               <AvatarFallback>U</AvatarFallback>
             </Avatar>
           </button>
