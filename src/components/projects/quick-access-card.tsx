@@ -54,11 +54,11 @@ export function QuickAccessCard() {
     return (
         <Card 
             className={cn(
-                "w-full max-w-md bg-white dark:bg-zinc-800 border-none shadow-sm rounded-xl transition-all duration-300 ease-in-out"
+                "w-full max-w-md bg-white dark:bg-zinc-800 border-none shadow-sm rounded-xl transition-all duration-500 ease-in-out"
             )}
         >
-            <CardContent className={cn("p-4 relative transition-all duration-300", isExpanded ? 'h-auto' : 'h-20 flex items-center justify-center')}>
-                <div className={cn("grid transition-all duration-300 ease-in-out", isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}>
+            <CardContent className={cn("p-4 relative transition-all duration-500", isExpanded ? 'h-auto' : 'h-20 flex items-center justify-center')}>
+                <div className={cn("grid transition-all duration-500 ease-in-out", isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}>
                     <div className="overflow-hidden">
                         <div className="flex flex-col items-center justify-center w-full space-y-6 py-4 animate-pop-in">
                             <Button onClick={() => setIsExpanded(false)} size="icon" variant="ghost" className="absolute top-2 right-2 w-8 h-8 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-zinc-700">
