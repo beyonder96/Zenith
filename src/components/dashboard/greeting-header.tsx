@@ -60,7 +60,6 @@ export function GreetingHeader() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        // This will update the state AND localStorage
         setUserImage(reader.result as string);
       };
       reader.readAsDataURL(file);
