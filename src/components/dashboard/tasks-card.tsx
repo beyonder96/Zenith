@@ -5,19 +5,11 @@ import { CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
+import type { Project } from "@/components/projects/project-card";
 
-type Task = {
-  id: number;
-  text: string;
-  completed: boolean;
-};
-
-type TaskHistory = {
-    [date: string]: Task[];
-}
 
 export function TasksCard() {
-    const [taskHistory] = useLocalStorage<TaskHistory>("zenith-vision-tasks-v2", {});
+    const [projects] = useLocalStorage<Project[]>("zenith-vision-projects", []);
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
@@ -25,7 +17,7 @@ export function TasksCard() {
     }, []);
 
     const today = new Date().toISOString().split('T')[0];
-    const todayTasks = taskHistory[today] || [];
+    const todayTasks = isClient ? projects.filter(p => p.dueDate === today) : [];
 
     return (
         <Card className="bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-2xl">
