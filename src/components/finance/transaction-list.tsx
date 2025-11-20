@@ -125,7 +125,7 @@ export function TransactionList() {
                     onSwipeLeft={() => handleDeleteInitiate(transaction.id)}
                     onSwipeRight={() => handleEdit(transaction.id)}
                   >
-                    <div className="flex items-center w-full bg-background dark:bg-zinc-800 p-2 rounded-lg">
+                    <div className="flex items-center w-full p-2 rounded-lg">
                       <div className="p-3 bg-muted dark:bg-white/10 rounded-lg mr-4">
                         <Icon className="h-5 w-5 text-foreground" />
                       </div>
