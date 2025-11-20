@@ -60,8 +60,7 @@ export function GreetingHeader() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64Image = reader.result as string;
-        setStoredUserImage(base64Image);
+        setStoredUserImage(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -78,7 +77,7 @@ export function GreetingHeader() {
         <DropdownMenuTrigger asChild>
           <button className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
             <Avatar>
-              <AvatarImage src={storedUserImage || "https://i.pravatar.cc/150?u=a042581f4e29026704d"} alt="User" />
+              <AvatarImage src={storedUserImage || undefined} alt="User" />
               <AvatarFallback>U</AvatarFallback>
             </Avatar>
           </button>
