@@ -17,6 +17,7 @@ import type { Project } from '@/components/projects/project-card';
 import { useToast } from '@/hooks/use-toast';
 
 type Importance = 'Baixa' | 'Média' | 'Alta';
+type RecurrenceFrequency = 'diario' | 'semanal' | 'mensal' | 'anual';
 
 export default function NewTaskPage() {
   const router = useRouter();
@@ -30,7 +31,8 @@ export default function NewTaskPage() {
   const [date, setDate] = useState<Date | undefined>();
   const [importance, setImportance] = useState<Importance>('Baixa');
   const [isRecurrent, setIsRecurrent] = useState(false);
-  
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState<RecurrenceFrequency>('mensal');
+
   const isEditing = projectId !== null;
 
   useEffect(() => {
@@ -163,13 +165,37 @@ export default function NewTaskPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between p-4 bg-white dark:bg-zinc-800 rounded-md">
-          <Label htmlFor="recurrent-task" className="m-0">Tarefa Recorrente</Label>
-          <Switch
-            id="recurrent-task"
-            checked={isRecurrent}
-            onCheckedChange={setIsRecurrent}
-          />
+        <div className="space-y-4 p-4 bg-white dark:bg-zinc-800 rounded-md">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="recurrent-task" className="m-0">Tarefa Recorrente</Label>
+            <Switch
+              id="recurrent-task"
+              checked={isRecurrent}
+              onCheckedChange={setIsRecurrent}
+            />
+          </div>
+           {isRecurrent && (
+                <div className="space-y-2 pt-4 border-t border-gray-200 dark:border-zinc-700">
+                    <Label>Frequência</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {(['diario', 'semanal', 'mensal', 'anual'] as RecurrenceFrequency[]).map((freq) => (
+                            <Button
+                                key={freq}
+                                variant={recurrenceFrequency === freq ? 'default' : 'outline'}
+                                onClick={() => setRecurrenceFrequency(freq)}
+                                className={cn(
+                                'capitalize',
+                                recurrenceFrequency === freq 
+                                    ? 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600'
+                                    : 'bg-zinc-700 border-zinc-600 hover:bg-zinc-600 text-white'
+                                )}
+                            >
+                                {freq}
+                            </Button>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
       </main>
     </div>
