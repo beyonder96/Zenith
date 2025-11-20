@@ -18,18 +18,20 @@ export default function ShoppingPage() {
 
   const totalCost = items.reduce((acc, item) => {
     if (item.completed && item.quantity && item.price) {
-      return acc + item.quantity * item.price;
+      return acc + (item.quantity * item.price);
     }
     return acc;
   }, 0);
 
-  const handleClearList = () => {
+  const handleClearCompleted = () => {
     setItems(items.filter(item => !item.completed));
   };
 
   const handleFinishShopping = () => {
     setItems([]);
   };
+
+  const hasCompletedItems = items.some(item => item.completed);
 
   return (
     <div className="relative min-h-screen w-full bg-gray-100 dark:bg-zinc-900 overflow-hidden">
@@ -42,10 +44,18 @@ export default function ShoppingPage() {
         
         <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-4 pb-28 overflow-y-auto">
             <div className="w-full max-w-md flex gap-4">
-                <Button onClick={handleFinishShopping} className="w-full bg-green-500 hover:bg-green-600 text-white font-bold h-12 rounded-xl text-base">
+                <Button 
+                    onClick={handleFinishShopping} 
+                    disabled={!hasCompletedItems}
+                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold h-12 rounded-xl text-base disabled:bg-gray-500 disabled:opacity-50"
+                >
                     <Check className="mr-2 h-5 w-5"/> Finalizar
                 </Button>
-                <Button onClick={handleClearList} className="w-full bg-red-500 hover:bg-red-600 text-white font-bold h-12 rounded-xl text-base">
+                <Button 
+                    onClick={handleClearCompleted} 
+                    disabled={!hasCompletedItems}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white font-bold h-12 rounded-xl text-base disabled:bg-gray-500 disabled:opacity-50"
+                >
                     <Trash2 className="mr-2 h-5 w-5"/> Limpar Marcados
                 </Button>
             </div>
