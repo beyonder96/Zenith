@@ -26,6 +26,7 @@ type Transaction = {
 };
 
 type TransactionType = 'expense' | 'income';
+type RecurrenceFrequency = 'diario' | 'semanal' | 'mensal' | 'anual';
 
 const categories = {
   expense: ['Contas', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Compras', 'Outros'],
@@ -44,6 +45,7 @@ export default function NewTransactionPage() {
   const [type, setType] = useState<TransactionType>('expense');
   const [category, setCategory] = useState('');
   const [isRecurrent, setIsRecurrent] = useState(false);
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState<RecurrenceFrequency>('mensal');
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
   const handleSave = () => {
@@ -199,13 +201,37 @@ export default function NewTransactionPage() {
           </Select>
         </div>
 
-        <div className="flex items-center justify-between p-4 bg-zinc-800 rounded-md">
-          <Label htmlFor="recurrent-task" className="m-0">Transação Recorrente</Label>
-          <Switch
-            id="recurrent-task"
-            checked={isRecurrent}
-            onCheckedChange={setIsRecurrent}
-          />
+        <div className="space-y-4 p-4 bg-zinc-800 rounded-md">
+            <div className="flex items-center justify-between">
+                <Label htmlFor="recurrent-task" className="m-0">Transação Recorrente</Label>
+                <Switch
+                    id="recurrent-task"
+                    checked={isRecurrent}
+                    onCheckedChange={setIsRecurrent}
+                />
+            </div>
+            {isRecurrent && (
+                <div className="space-y-2 pt-4 border-t border-zinc-700">
+                    <Label>Frequência</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {(['diario', 'semanal', 'mensal', 'anual'] as RecurrenceFrequency[]).map((freq) => (
+                            <Button
+                                key={freq}
+                                variant={recurrenceFrequency === freq ? 'default' : 'outline'}
+                                onClick={() => setRecurrenceFrequency(freq)}
+                                className={cn(
+                                'capitalize',
+                                recurrenceFrequency === freq 
+                                    ? 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600'
+                                    : 'bg-zinc-700 border-zinc-600 hover:bg-zinc-600'
+                                )}
+                            >
+                                {freq}
+                            </Button>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
       </main>
     </div>
