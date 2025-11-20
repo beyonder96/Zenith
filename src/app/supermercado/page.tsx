@@ -7,10 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Trash2, Loader2 } from "lucide-react";
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 export default function ShoppingPage() {
   const [items, setItems] = useLocalStorage<ShoppingItem[]>('zenith-vision-shopping-list', []);
   const [isClient, setIsClient] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsClient(true);
@@ -30,8 +34,53 @@ export default function ShoppingPage() {
   };
 
   const handleFinishShopping = () => {
-    // Here you could add logic to save the final list, generate a receipt, etc.
-    // For now, we'll just clear the list.
+    const completedItems = items.filter(item => item.completed && item.price);
+    if (completedItems.length === 0) {
+        toast({
+            variant: "destructive",
+            title: "Nenhum item comprado",
+            description: "Adicione o preço e a quantidade dos itens para finalizar.",
+        });
+        return;
+    }
+
+    const doc = new jsPDF();
+    const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    // Header
+    doc.setFontSize(18);
+    doc.text('Recibo da Compra', 14, 22);
+    doc.setFontSize(11);
+    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 29);
+
+    // Table
+    const tableColumn = ["Item", "Qtd.", "Preço Unit.", "Total"];
+    const tableRows = completedItems.map(item => [
+      item.name,
+      item.quantity || 1,
+      currencyFormatter.format(item.price || 0),
+      currencyFormatter.format((item.price || 0) * (item.quantity || 1)),
+    ]);
+
+    (doc as any).autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 40,
+      theme: 'striped',
+      headStyles: { fillColor: [251, 146, 60] },
+    });
+
+    // Total
+    const finalY = (doc as any).lastAutoTable.finalY;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Total Gasto:', 14, finalY + 10);
+    doc.text(currencyFormatter.format(totalCost), 200, finalY + 10, { align: 'right' });
+
+    // Save
+    doc.save(`recibo-compra-${new Date().toISOString().split('T')[0]}.pdf`);
+
+    // Clean up
     setItems([]);
   };
 
