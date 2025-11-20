@@ -138,7 +138,7 @@ export default function ProjectsPage() {
       <div className="relative min-h-screen w-full bg-gray-100 dark:bg-zinc-900 overflow-hidden">
         <div className="relative z-10 flex flex-col h-screen text-gray-800 dark:text-white">
           <header className="p-4 sm:p-6 lg:p-8 flex-shrink-0">
-            <h1 className="text-4xl font-thin tracking-wider text-center bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-light tracking-wider text-center bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
               Projetos
             </h1>
           </header>

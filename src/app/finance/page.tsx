@@ -20,7 +20,7 @@ export default function FinancePage() {
 
       <div className="relative z-10 flex flex-col h-screen text-foreground">
         <header className="p-4 sm:p-6 lg:p-8 flex-shrink-0">
-          <h1 className="text-4xl font-thin tracking-wider bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-light tracking-wider bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
             Finanças
           </h1>
         </header>

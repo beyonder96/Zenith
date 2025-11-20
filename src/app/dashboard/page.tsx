@@ -20,7 +20,7 @@ export default function Dashboard() {
         <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-8 pb-28 overflow-y-auto">
           <div className="text-center w-full">
             <h1
-              className="mb-2 bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-5xl font-thin tracking-[0.3em] text-transparent animate-shine bg-[200%_auto]"
+              className="mb-2 bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-5xl font-light tracking-[0.3em] text-transparent animate-shine bg-[200%_auto]"
               style={{ animationDuration: '3s' }}
             >
               ZENITH
