@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useLocalStorage } from '@/hooks/use-local-storage';
@@ -35,10 +35,12 @@ const categories = {
 
 export default function NewTransactionPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   
   const [transactions, setTransactions] = useLocalStorage<Transaction[]>('zenith-vision-finance', []);
 
+  const [transactionId, setTransactionId] = useState<number | null>(null);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -47,6 +49,24 @@ export default function NewTransactionPage() {
   const [isRecurrent, setIsRecurrent] = useState(false);
   const [recurrenceFrequency, setRecurrenceFrequency] = useState<RecurrenceFrequency>('mensal');
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+
+  const isEditing = transactionId !== null;
+
+  useEffect(() => {
+    const id = searchParams.get('id');
+    if (id) {
+      const transactionToEdit = transactions.find(t => t.id === Number(id));
+      if (transactionToEdit) {
+        setTransactionId(transactionToEdit.id);
+        setDescription(transactionToEdit.description);
+        setAmount(String(Math.abs(transactionToEdit.amount)).replace('.', ','));
+        setDate(parseISO(transactionToEdit.date));
+        setType(transactionToEdit.type);
+        setCategory(transactionToEdit.category);
+        // You could add recurrence to your Transaction type if needed
+      }
+    }
+  }, [searchParams, transactions]);
 
   const handleSave = () => {
     if (!description.trim() || !amount.trim() || !date) {
@@ -67,17 +87,29 @@ export default function NewTransactionPage() {
       });
       return;
     }
+    
+    if (isEditing) {
+      const updatedTransaction: Transaction = {
+        id: transactionId,
+        description,
+        amount: type === 'expense' ? -Math.abs(numericAmount) : Math.abs(numericAmount),
+        date: format(date, 'yyyy-MM-dd'),
+        type,
+        category: category || categories[type][0],
+      };
+      setTransactions(transactions.map(t => t.id === transactionId ? updatedTransaction : t));
+    } else {
+      const newTransaction: Transaction = {
+        id: Date.now(),
+        description,
+        amount: type === 'expense' ? -Math.abs(numericAmount) : Math.abs(numericAmount),
+        date: format(date, 'yyyy-MM-dd'),
+        type,
+        category: category || categories[type][0],
+      };
+      setTransactions([...transactions, newTransaction]);
+    }
 
-    const newTransaction: Transaction = {
-      id: Date.now(),
-      description,
-      amount: type === 'expense' ? -Math.abs(numericAmount) : Math.abs(numericAmount),
-      date: format(date, 'yyyy-MM-dd'),
-      type,
-      category: category || categories[type][0],
-    };
-
-    setTransactions([...transactions, newTransaction]);
     setShowSuccessAnimation(true);
 
     setTimeout(() => {
@@ -108,7 +140,7 @@ export default function NewTransactionPage() {
         <Button variant="link" onClick={() => router.back()} className="text-orange-500">
           Cancelar
         </Button>
-        <h1 className="font-bold text-lg">Nova Transação</h1>
+        <h1 className="font-bold text-lg">{isEditing ? 'Editar Transação' : 'Nova Transação'}</h1>
         <Button variant="link" onClick={handleSave} className="font-bold text-orange-500">
           Salvar
         </Button>
@@ -169,7 +201,7 @@ export default function NewTransactionPage() {
               onClick={() => { setType('expense'); setCategory(''); }}
               className={cn(
                 'flex-1',
-                type === 'expense' ? 'bg-destructive/80 text-destructive-foreground border-destructive' : 'bg-card dark:bg-zinc-800 border-border dark:border-zinc-700'
+                type === 'expense' ? 'bg-destructive/80 text-destructive-foreground border-destructive' : 'bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 text-foreground'
               )}
             >
               Despesa
@@ -179,7 +211,7 @@ export default function NewTransactionPage() {
                onClick={() => { setType('income'); setCategory(''); }}
                className={cn(
                  'flex-1',
-                 type === 'income' ? 'bg-cyan-500 text-white border-cyan-500 hover:bg-cyan-600' : 'bg-card dark:bg-zinc-800 border-border dark:border-zinc-700'
+                 type === 'income' ? 'bg-cyan-500 text-white border-cyan-500 hover:bg-cyan-600' : 'bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 text-foreground'
                )}
             >
               Receita
@@ -223,7 +255,7 @@ export default function NewTransactionPage() {
                                 'capitalize',
                                 recurrenceFrequency === freq 
                                     ? 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600'
-                                    : 'bg-muted dark:bg-zinc-700 border-border dark:border-zinc-600 hover:bg-accent dark:hover:bg-zinc-600'
+                                    : 'bg-muted dark:bg-zinc-700 border-border dark:border-zinc-600 text-foreground dark:text-white hover:bg-accent dark:hover:bg-zinc-600'
                                 )}
                             >
                                 {freq}
