@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,11 +8,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useEffect, useState } from "react";
-import { Switch } from "../ui/switch";
-import { useTheme } from "next-themes";
-import { Moon, Sun } from "lucide-react";
+} from '@/components/ui/dropdown-menu';
+import { useEffect, useState, useRef } from 'react';
+import { Switch } from '../ui/switch';
+import { useTheme } from 'next-themes';
+import { Moon, Sun } from 'lucide-react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 
 const CelestialIcon = ({ type }: { type: 'rising-sun' | 'setting-sun' | 'moon' }) => {
@@ -29,6 +30,8 @@ export function GreetingHeader() {
   const [iconType, setIconType] = useState<'rising-sun' | 'setting-sun' | 'moon'>("moon");
   const { theme, setTheme } = useTheme();
   const [isClient, setIsClient] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [userImage, setUserImage] = useLocalStorage<string | null>('zenith-user-image', null);
 
   useEffect(() => {
     setIsClient(true)
@@ -48,6 +51,21 @@ export function GreetingHeader() {
     }
   }, []);
 
+  const handleEditPhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setUserImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="flex justify-between items-center">
       <div className="flex items-center gap-4">
@@ -59,7 +77,7 @@ export function GreetingHeader() {
         <DropdownMenuTrigger asChild>
           <button className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
             <Avatar>
-              <AvatarImage src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="User" />
+              <AvatarImage src={userImage || "https://i.pravatar.cc/150?u=a042581f4e29026704d"} alt="User" />
               <AvatarFallback>U</AvatarFallback>
             </Avatar>
           </button>
@@ -67,7 +85,14 @@ export function GreetingHeader() {
         <DropdownMenuContent align="end" className="w-56 bg-background/80 dark:bg-black/40 backdrop-blur-xl border-border text-foreground">
           <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="focus:bg-accent">Editar Foto</DropdownMenuItem>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+            accept="image/*"
+          />
+          <DropdownMenuItem onSelect={handleEditPhotoClick} className="focus:bg-accent">Editar Foto</DropdownMenuItem>
           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex justify-between items-center focus:bg-accent">
             <div className="flex items-center">
               {isClient && theme === 'dark' ? <Moon className="mr-2 h-4 w-4" /> : <Sun className="mr-2 h-4 w-4" />}
