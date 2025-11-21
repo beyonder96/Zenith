@@ -36,22 +36,27 @@ function StatementContent() {
   const statementType = searchParams.get('type') as 'detailed' | 'summary';
 
   useEffect(() => {
+    // Wait until Firebase auth state is determined
     if (userLoading) {
       return;
     }
+
+    // If auth is loaded and there's no user, then show error
+    if (!user) {
+      setError("Você precisa estar logado para ver o extrato.");
+      setLoading(false);
+      return;
+    }
     
+    // Check for other required params
     if (!startDateParam || !endDateParam) {
         setError("Período inválido. Por favor, gere o extrato novamente.");
         setLoading(false);
         return;
     }
     
-    if (!user || !firestore) {
-      if(!userLoading && !user) {
-          setError("Você precisa estar logado para ver o extrato.");
-      } else {
-          setError("Não foi possível conectar ao banco de dados.");
-      }
+    if (!firestore) {
+      setError("Não foi possível conectar ao banco de dados.");
       setLoading(false);
       return;
     }
@@ -109,7 +114,7 @@ function StatementContent() {
 
   if (error) {
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen text-center">
+        <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
             <h2 className="text-xl font-semibold text-destructive">{error}</h2>
             <Button onClick={() => window.close()} className="mt-4">Fechar</Button>
         </div>
