@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
 import type { Project } from "@/components/projects/project-card";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { FirestorePermissionError } from "@/firebase/errors";
+import { errorEmitter } from "@/firebase/error-emitter";
 
 
 export function TasksCard() {
@@ -25,6 +27,13 @@ export function TasksCard() {
                     userProjects.push({ id: doc.id, ...doc.data() } as Project);
                 });
                 setProjects(userProjects);
+            },
+            (serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: 'projects',
+                    operation: 'list',
+                });
+                errorEmitter.emit('permission-error', permissionError);
             });
             return () => unsubscribe();
         }

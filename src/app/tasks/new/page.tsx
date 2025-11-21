@@ -16,6 +16,8 @@ import type { Project } from '@/components/projects/project-card';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
 import { collection, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 type Importance = 'Baixa' | 'Média' | 'Alta';
 type RecurrenceFrequency = 'diario' | 'semanal' | 'mensal' | 'anual';
@@ -72,8 +74,8 @@ export default function NewTaskPage() {
         });
         return;
     }
-    if (!user) {
-        toast({ variant: 'destructive', title: 'Usuário não autenticado' });
+    if (!user || !firestore) {
+        toast({ variant: 'destructive', title: 'Usuário ou banco de dados não disponível' });
         return;
     }
 
@@ -84,22 +86,27 @@ export default function NewTaskPage() {
         subtasks: [],
         userId: user.uid,
     };
+    
+    const operation = isEditing && projectId ? 'update' : 'create';
 
-    if (isEditing && projectId) {
-      const docRef = doc(firestore, 'projects', projectId);
-      await setDoc(docRef, projectData, { merge: true });
-      toast({
-        title: "Projeto atualizado!",
-        description: "Suas alterações foram salvas.",
-      });
-    } else {
-      await addDoc(collection(firestore, 'projects'), projectData);
-      toast({
-        title: "Projeto criado!",
-        description: "O novo projeto foi adicionado à sua lista.",
-      });
-    }
-    router.push('/projects');
+    const promise = isEditing && projectId
+      ? setDoc(doc(firestore, 'projects', projectId), projectData, { merge: true })
+      : addDoc(collection(firestore, 'projects'), projectData);
+
+    promise.then(() => {
+        toast({
+            title: isEditing ? "Projeto atualizado!" : "Projeto criado!",
+            description: isEditing ? "Suas alterações foram salvas." : "O novo projeto foi adicionado à sua lista.",
+        });
+        router.push('/projects');
+    }).catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+            path: isEditing && projectId ? `projects/${projectId}` : 'projects',
+            operation: operation,
+            requestResourceData: projectData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    });
   };
 
   const importanceColors = {

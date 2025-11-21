@@ -6,6 +6,8 @@ import { TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '../ui/skeleton';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 type Transaction = {
   id: string;
@@ -32,6 +34,13 @@ export function FinanceSummary() {
             userTransactions.push({ id: doc.id, ...doc.data() } as Transaction);
         });
         setTransactions(userTransactions);
+      },
+      (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: 'transactions',
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
       });
       return () => unsubscribe();
     }

@@ -34,7 +34,8 @@ import {
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
-
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 type Transaction = {
   id: string;
@@ -76,6 +77,13 @@ export function TransactionList() {
                 userTransactions.push({ id: doc.id, ...doc.data() } as Transaction);
             });
             setTransactions(userTransactions);
+        },
+        (serverError) => {
+          const permissionError = new FirestorePermissionError({
+            path: `transactions`,
+            operation: 'list',
+          });
+          errorEmitter.emit('permission-error', permissionError);
         });
         return () => unsubscribe();
     }
@@ -91,14 +99,22 @@ export function TransactionList() {
     setTransactionToDelete(id);
   };
   
-  const handleDeleteConfirm = async () => {
-    if (transactionToDelete !== null) {
-      if (!firestore) return;
-      await deleteDoc(doc(firestore, "transactions", transactionToDelete));
-      setTransactionToDelete(null);
-      toast({
-        title: "Transação deletada",
-        description: "A transação foi removida com sucesso.",
+  const handleDeleteConfirm = () => {
+    if (transactionToDelete !== null && firestore) {
+      const docRef = doc(firestore, "transactions", transactionToDelete);
+      deleteDoc(docRef).then(() => {
+        setTransactionToDelete(null);
+        toast({
+          title: "Transação deletada",
+          description: "A transação foi removida com sucesso.",
+        });
+      }).catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+            path: `transactions/${transactionToDelete}`,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setTransactionToDelete(null);
       });
     }
   };

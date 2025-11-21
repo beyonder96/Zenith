@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Trash2, Loader2 } from "lucide-react";
 import { useFirestore, useUser } from '@/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, addDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 export default function ShoppingPage() {
   const firestore = useFirestore();
@@ -29,6 +31,13 @@ export default function ShoppingPage() {
           userItems.push({ id: doc.id, ...doc.data() } as ShoppingItem);
         });
         setItems(userItems);
+      },
+      (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: 'shoppingItems',
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
       });
       return () => unsubscribe();
     }
@@ -43,7 +52,7 @@ export default function ShoppingPage() {
 
   const hasCompletedItems = items.some(item => item.completed);
 
-  const handleClearCompleted = async () => {
+  const handleClearCompleted = () => {
     if (!firestore) return;
     const batch = writeBatch(firestore);
     items.forEach(item => {
@@ -51,7 +60,14 @@ export default function ShoppingPage() {
         batch.delete(doc(firestore, "shoppingItems", item.id));
       }
     });
-    await batch.commit();
+    batch.commit()
+      .catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: 'shoppingItems',
+          operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
   };
 
   const handleFinishShopping = async () => {
@@ -103,7 +119,14 @@ export default function ShoppingPage() {
     items.forEach(item => {
       batch.delete(doc(firestore, "shoppingItems", item.id));
     });
-    await batch.commit();
+    await batch.commit()
+      .catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: 'shoppingItems',
+          operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
   };
 
   return (

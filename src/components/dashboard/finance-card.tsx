@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { FirestorePermissionError } from "@/firebase/errors";
+import { errorEmitter } from "@/firebase/error-emitter";
 
 type FinanceEntry = {
   id: string;
@@ -35,6 +37,13 @@ export function FinanceCard() {
           dailyEntries.push({ id: doc.id, ...doc.data() } as FinanceEntry);
         });
         setEntries(dailyEntries);
+      },
+      (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: `transactions`,
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
       });
       return () => unsubscribe();
     }

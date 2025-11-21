@@ -9,6 +9,8 @@ import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '../ui/skeleton';
 import { useTheme } from 'next-themes';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 type Transaction = {
   id: string;
@@ -36,6 +38,13 @@ export function FinanceChart() {
                 userTransactions.push({ id: doc.id, ...doc.data() } as Transaction);
             });
             setTransactions(userTransactions);
+        },
+        (serverError) => {
+          const permissionError = new FirestorePermissionError({
+            path: 'transactions',
+            operation: 'list',
+          });
+          errorEmitter.emit('permission-error', permissionError);
         });
         return () => unsubscribe();
     }
@@ -83,7 +92,7 @@ export function FinanceChart() {
       <CardHeader>
         <CardTitle className="text-lg font-medium text-muted-foreground">Visão Geral Mensal</CardTitle>
       </CardHeader>
-      <CardContent className="h-64">
+      <CardContent className="h-64 pl-2">
         {!isClient ? (
           <div className="flex items-center justify-center h-full">
             <Skeleton className="w-full h-full" />

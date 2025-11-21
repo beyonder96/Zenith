@@ -16,6 +16,8 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
 import { collection, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type Transaction = {
   id: string;
@@ -83,8 +85,8 @@ export default function NewTransactionPage() {
       });
       return;
     }
-    if (!user) {
-        toast({ variant: 'destructive', title: 'Usuário não autenticado' });
+    if (!user || !firestore) {
+        toast({ variant: 'destructive', title: 'Usuário ou banco de dados não disponível' });
         return;
     }
 
@@ -107,22 +109,28 @@ export default function NewTransactionPage() {
       userId: user.uid,
     };
     
-    if (isEditing && transactionId) {
-      const docRef = doc(firestore, 'transactions', transactionId);
-      await setDoc(docRef, transactionData, { merge: true });
-    } else {
-      await addDoc(collection(firestore, 'transactions'), transactionData);
-    }
+    const operation = isEditing && transactionId ? 'update' : 'create';
 
-    setShowSuccessAnimation(true);
-
-    setTimeout(() => {
-        router.push('/finance');
-    }, 1500);
-
-    setTimeout(() => {
-      setShowSuccessAnimation(false)
-    }, 2000);
+    const promise = isEditing && transactionId
+      ? setDoc(doc(firestore, 'transactions', transactionId), transactionData, { merge: true })
+      : addDoc(collection(firestore, 'transactions'), transactionData);
+      
+    promise.then(() => {
+        setShowSuccessAnimation(true);
+        setTimeout(() => {
+            router.push('/finance');
+        }, 1500);
+        setTimeout(() => {
+          setShowSuccessAnimation(false)
+        }, 2000);
+    }).catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+            path: isEditing && transactionId ? `transactions/${transactionId}` : 'transactions',
+            operation: operation,
+            requestResourceData: transactionData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    });
   };
 
   if (showSuccessAnimation) {

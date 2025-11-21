@@ -10,6 +10,8 @@ import { Skeleton } from '../ui/skeleton';
 import { ItemDetailsModal } from './item-details-modal';
 import { useFirestore, useUser } from '@/firebase';
 import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export type ShoppingItem = {
   id: string;
@@ -36,46 +38,86 @@ export function ShoppingList({ items, setItems }: ShoppingListProps) {
     setIsClient(true);
   }, []);
 
-  const handleAddItem = async () => {
+  const handleAddItem = () => {
     if (newItem.trim() && user && firestore) {
-      await addDoc(collection(firestore, 'shoppingItems'), {
+      const itemData = {
         name: newItem.trim(),
         completed: false,
         userId: user.uid,
-      });
-      setNewItem('');
+      };
+      addDoc(collection(firestore, 'shoppingItems'), itemData)
+        .then(() => {
+          setNewItem('');
+        })
+        .catch(serverError => {
+          const permissionError = new FirestorePermissionError({
+              path: 'shoppingItems',
+              operation: 'create',
+              requestResourceData: itemData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
     }
   };
 
-  const handleToggleItem = async (item: ShoppingItem) => {
+  const handleToggleItem = (item: ShoppingItem) => {
     if (!firestore) return;
     const itemRef = doc(firestore, 'shoppingItems', item.id);
     
     if (item.completed) {
-      await updateDoc(itemRef, {
+      const updateData = {
         completed: false,
         quantity: undefined,
         price: undefined,
-      });
+      };
+      updateDoc(itemRef, updateData)
+        .catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+                path: `shoppingItems/${item.id}`,
+                operation: 'update',
+                requestResourceData: updateData
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
     } else {
       setEditingItem(item);
     }
   };
 
-  const handleConfirmDetails = async (item: ShoppingItem, quantity: number, price: number) => {
+  const handleConfirmDetails = (item: ShoppingItem, quantity: number, price: number) => {
     if (!firestore) return;
     const itemRef = doc(firestore, 'shoppingItems', item.id);
-    await updateDoc(itemRef, {
+    const updateData = {
       completed: true,
       quantity,
       price,
-    });
-    setEditingItem(null);
+    };
+    updateDoc(itemRef, updateData)
+      .then(() => {
+        setEditingItem(null);
+      })
+      .catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+            path: `shoppingItems/${item.id}`,
+            operation: 'update',
+            requestResourceData: updateData
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setEditingItem(null);
+      });
   };
 
-  const handleRemoveItem = async (id: string) => {
+  const handleRemoveItem = (id: string) => {
     if (!firestore) return;
-    await deleteDoc(doc(firestore, 'shoppingItems', id));
+    const docRef = doc(firestore, 'shoppingItems', id);
+    deleteDoc(docRef)
+      .catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+            path: `shoppingItems/${id}`,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
   };
   
   return (

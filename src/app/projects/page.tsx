@@ -23,7 +23,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { getTaskBreakdown } from '../actions';
 import { useRouter } from 'next/navigation';
-
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -46,29 +47,54 @@ export default function ProjectsPage() {
           userProjects.push({ id: doc.id, ...doc.data() } as Project);
         });
         setProjects(userProjects.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()));
+      },
+      (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: 'projects',
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
       });
       return () => unsubscribe();
     }
   }, [user, firestore]);
 
-  const handleToggleComplete = async (id: string) => {
+  const handleToggleComplete = (id: string) => {
     const project = projects.find(p => p.id === id);
-    if (!project) return;
+    if (!project || !firestore) return;
     const projectRef = doc(firestore, "projects", id);
-    await updateDoc(projectRef, { completed: !project.completed });
+    const updateData = { completed: !project.completed };
+    updateDoc(projectRef, updateData)
+        .catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+                path: `projects/${id}`,
+                operation: 'update',
+                requestResourceData: updateData
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
   };
 
   const handleDeleteInitiate = (id: string) => {
     setProjectToDelete(id);
   };
 
-  const handleDeleteConfirm = async () => {
-    if (projectToDelete !== null) {
-      await deleteDoc(doc(firestore, "projects", projectToDelete));
-      setProjectToDelete(null);
-      toast({
-        title: "Projeto deletado",
-        description: "O projeto foi removido com sucesso.",
+  const handleDeleteConfirm = () => {
+    if (projectToDelete !== null && firestore) {
+      const docRef = doc(firestore, "projects", projectToDelete);
+      deleteDoc(docRef).then(() => {
+          setProjectToDelete(null);
+          toast({
+            title: "Projeto deletado",
+            description: "O projeto foi removido com sucesso.",
+          });
+      }).catch(serverError => {
+          const permissionError = new FirestorePermissionError({
+              path: `projects/${projectToDelete}`,
+              operation: 'delete',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+          setProjectToDelete(null);
       });
     }
   };
@@ -79,7 +105,7 @@ export default function ProjectsPage() {
   
   const handleAiSplit = async (id: string) => {
     const project = projects.find(p => p.id === id);
-    if (!project) return;
+    if (!project || !firestore) return;
 
     setLoadingProjectId(id);
 
@@ -93,14 +119,21 @@ export default function ProjectsPage() {
             }));
             
             const projectRef = doc(firestore, "projects", id);
-            await updateDoc(projectRef, {
-                subtasks: [...(project.subtasks || []), ...newSubtasks]
-            });
+            const updateData = { subtasks: [...(project.subtasks || []), ...newSubtasks] };
 
-            handleToggleExpand(id, true);
-            toast({
-                title: "Tarefa dividida!",
-                description: "Novas subtarefas foram adicionadas ao projeto.",
+            updateDoc(projectRef, updateData).then(() => {
+                handleToggleExpand(id, true);
+                toast({
+                    title: "Tarefa dividida!",
+                    description: "Novas subtarefas foram adicionadas ao projeto.",
+                });
+            }).catch(serverError => {
+                 const permissionError = new FirestorePermissionError({
+                    path: `projects/${id}`,
+                    operation: 'update',
+                    requestResourceData: updateData
+                });
+                errorEmitter.emit('permission-error', permissionError);
             });
         } else {
              toast({
@@ -120,16 +153,25 @@ export default function ProjectsPage() {
     }
   };
 
-  const handleToggleSubtask = async (projectId: string, subtaskId: number) => {
+  const handleToggleSubtask = (projectId: string, subtaskId: number) => {
     const project = projects.find(p => p.id === projectId);
-    if (!project) return;
+    if (!project || !firestore) return;
 
     const updatedSubtasks = project.subtasks?.map(sub =>
         sub.id === subtaskId ? { ...sub, completed: !sub.completed } : sub
     );
     
     const projectRef = doc(firestore, "projects", projectId);
-    await updateDoc(projectRef, { subtasks: updatedSubtasks });
+    const updateData = { subtasks: updatedSubtasks };
+    updateDoc(projectRef, updateData)
+        .catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+                path: `projects/${projectId}`,
+                operation: 'update',
+                requestResourceData: updateData
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
   };
   
   const handleToggleExpand = (id: string, forceOpen = false) => {
