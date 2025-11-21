@@ -98,17 +98,19 @@ export default function ShoppingPage() {
       startY: 40,
       theme: 'striped',
       headStyles: { fillColor: [251, 146, 60] },
-      bodyStyles: {
-        cellPadding: 3,
-      },
-      didDrawCell: (data) => {
+      didDrawCell: (data: any) => {
         if (data.section === 'body' && data.column.index === 0) {
-           const text = data.cell.text[0]; // Get the item text
-           data.cell.text = []; // Clear the original text to prevent it from being drawn by autotable
-           // Draw a square for checkbox
-           doc.rect(data.cell.x + 2, data.cell.y + data.cell.height / 2 - 2, 4, 4);
-           // Redefine cell text position
-           doc.text(text, data.cell.x + 8, data.cell.y + data.cell.height / 2 + 2);
+          const text = data.cell.text[0];
+          // Limpa o texto da célula para evitar que o autoTable o desenhe
+          data.cell.text = [];
+          
+          // Desenha a caixa de seleção
+          const checkboxSize = 4;
+          const cellCenterY = data.cell.y + data.cell.height / 2;
+          doc.rect(data.cell.x + 2, cellCenterY - checkboxSize / 2, checkboxSize, checkboxSize);
+
+          // Desenha o texto do item ao lado da caixa de seleção
+          doc.text(text, data.cell.x + 2 + checkboxSize + 2, cellCenterY + (doc.getFontSize() / 3));
         }
       }
     });
