@@ -168,8 +168,10 @@ export default function NewTaskPage() {
                 variant={importance === level ? 'default' : 'outline'}
                 onClick={() => setImportance(level)}
                 className={cn(
-                  'flex-1 bg-card dark:bg-zinc-800 border-border dark:border-zinc-700',
-                  importance === level && importanceColors[level]
+                  'flex-1',
+                  importance === level 
+                    ? importanceColors[level] 
+                    : 'bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 text-foreground'
                 )}
               >
                 {level}
