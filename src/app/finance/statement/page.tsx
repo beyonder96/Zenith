@@ -40,6 +40,7 @@ function StatementContent() {
     }
 
     if (!user || !firestore) {
+      setError("Não foi possível conectar ao banco de dados.");
       setLoading(false);
       return;
     }
@@ -54,15 +55,11 @@ function StatementContent() {
       setLoading(true);
       setError(null);
       try {
-        // Ensure dates are in YYYY-MM-DD format for Firestore query
-        const startDate = format(parseISO(startDateParam), 'yyyy-MM-dd');
-        const endDate = format(parseISO(endDateParam), 'yyyy-MM-dd');
-
         const q = query(
           collection(firestore, 'transactions'),
           where('userId', '==', user.uid),
-          where('date', '>=', startDate),
-          where('date', '<=', endDate) 
+          where('date', '>=', startDateParam),
+          where('date', '<=', endDateParam) 
         );
 
         const querySnapshot = await getDocs(q);
