@@ -5,9 +5,9 @@ import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { ShoppingList, type ShoppingItem } from "@/components/shopping/shopping-list";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Trash2, Loader2, Share2 } from "lucide-react";
+import { Check, Trash2, Loader2, Link2 } from "lucide-react";
 import { useFirestore, useUser } from '@/firebase';
-import { collection, query, where, onSnapshot, doc, writeBatch } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, writeBatch, addDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -20,6 +20,7 @@ export default function ShoppingPage() {
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
+  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -71,52 +72,60 @@ export default function ShoppingPage() {
       });
   };
   
-  const handleShareList = () => {
-    const uncompletedItems = items.filter(item => !item.completed);
+  const handleShareList = async () => {
+    if (!firestore || !user) return;
+    
+    const pendingItems = items
+      .filter(item => !item.completed)
+      .map(({ name, completed }) => ({ name, completed }));
 
-    if (uncompletedItems.length === 0) {
+    if (pendingItems.length === 0) {
       toast({
         variant: "destructive",
         title: "Nenhum item pendente",
-        description: "Não há itens para compartilhar na lista.",
+        description: "Adicione itens à lista antes de compartilhar.",
       });
       return;
     }
 
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text('Lista de Compras', 14, 22);
-    doc.setFontSize(11);
-    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 29);
+    setIsSharing(true);
 
-    const tableColumn = ["Item"];
-    const tableRows = uncompletedItems.map(item => [item.name]);
+    try {
+      const sharedListData = {
+        items: pendingItems,
+        ownerId: user.uid,
+        createdAt: new Date().toISOString(),
+      };
+      const docRef = await addDoc(collection(firestore, "sharedLists"), sharedListData);
+      const shareLink = `${window.location.origin}/list/${docRef.id}`;
+      
+      await navigator.clipboard.writeText(shareLink);
+      
+      toast({
+        title: "Link copiado!",
+        description: "O link para sua lista de compras foi copiado para a área de transferência.",
+      });
 
-    (doc as any).autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      startY: 40,
-      theme: 'striped',
-      headStyles: { fillColor: [251, 146, 60] },
-      didDrawCell: (data: any) => {
-        if (data.section === 'body' && data.column.index === 0) {
-          const text = data.cell.text[0];
-          // Limpa o texto da célula para evitar que o autoTable o desenhe
-          data.cell.text = [];
-          
-          // Desenha a caixa de seleção
-          const checkboxSize = 4;
-          const cellCenterY = data.cell.y + data.cell.height / 2;
-          doc.rect(data.cell.x + 2, cellCenterY - checkboxSize / 2, checkboxSize, checkboxSize);
-
-          // Desenha o texto do item ao lado da caixa de seleção
-          doc.text(text, data.cell.x + 2 + checkboxSize + 2, cellCenterY + (doc.getFontSize() / 3));
-        }
+    } catch (error) {
+      console.error("Error sharing list: ", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao compartilhar",
+        description: "Não foi possível criar o link compartilhável. Tente novamente.",
+      });
+      if (error instanceof Error && error.message.includes('permission-denied')) {
+          const permissionError = new FirestorePermissionError({
+            path: 'sharedLists',
+            operation: 'create',
+            requestResourceData: { ownerId: user.uid },
+          });
+          errorEmitter.emit('permission-error', permissionError);
       }
-    });
-
-    doc.save(`lista-de-compras-${new Date().toISOString().split('T')[0]}.pdf`);
+    } finally {
+        setIsSharing(false);
+    }
   };
+
 
   const handleFinishShopping = async () => {
     if (!firestore) return;
@@ -190,10 +199,11 @@ export default function ShoppingPage() {
             <div className="w-full max-w-md grid grid-cols-2 gap-4">
                 <Button 
                     onClick={handleShareList} 
-                    disabled={!hasPendingItems}
+                    disabled={!hasPendingItems || isSharing}
                     className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold h-12 rounded-xl text-base disabled:bg-gray-500 disabled:opacity-50"
                 >
-                    <Share2 className="mr-2 h-5 w-5"/> Compartilhar
+                    {isSharing ? <Loader2 className="mr-2 h-5 w-5 animate-spin"/> : <Link2 className="mr-2 h-5 w-5"/>}
+                    Copiar Link
                 </Button>
                 <Button 
                     onClick={handleClearCompleted} 
