@@ -3,6 +3,7 @@ export type Note = {
     title: string;
     content: string;
     color: string;
+    tags?: string[];
     userId: string;
     createdAt: string; // ISO 8601 string
 };

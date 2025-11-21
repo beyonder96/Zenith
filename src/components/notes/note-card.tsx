@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical, Edit, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 type NoteCardProps = {
     note: Note;
@@ -49,6 +50,11 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
             </CardHeader>
             <CardContent>
                 <p className="text-sm text-foreground/80 whitespace-pre-wrap">{note.content}</p>
+                <div className="flex flex-wrap gap-2 mt-4">
+                    {note.tags?.map(tag => (
+                        <Badge key={tag} variant="secondary" className="font-normal">{tag}</Badge>
+                    ))}
+                </div>
                 <p className="text-xs text-foreground/50 mt-4 text-right">{formattedDate}</p>
             </CardContent>
         </Card>

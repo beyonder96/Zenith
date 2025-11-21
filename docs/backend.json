@@ -206,6 +206,13 @@
           "type": "string",
           "description": "The background color of the note card."
         },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of tags associated with the note."
+        },
         "userId": {
           "type": "string",
           "description": "The ID of the user who owns the note."

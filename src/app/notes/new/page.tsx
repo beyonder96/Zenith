@@ -12,6 +12,8 @@ import { collection, doc, getDoc, setDoc, addDoc, serverTimestamp } from 'fireba
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import type { Note } from '@/components/notes/notes';
+import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
 
 const colorOptions = [
   'bg-white dark:bg-zinc-800',
@@ -34,6 +36,9 @@ export default function NewNotePage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [color, setColor] = useState(colorOptions[0]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+
 
   const isEditing = noteId !== null;
 
@@ -49,11 +54,28 @@ export default function NewNotePage() {
             setTitle(noteToEdit.title);
             setContent(noteToEdit.content);
             setColor(noteToEdit.color || colorOptions[0]);
+            setTags(noteToEdit.tags || []);
         }
       };
       fetchNote();
     }
   }, [searchParams, firestore]);
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const newTag = tagInput.trim();
+      if (newTag && !tags.includes(newTag)) {
+        setTags([...tags, newTag]);
+      }
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -72,6 +94,7 @@ export default function NewNotePage() {
         title,
         content,
         color,
+        tags,
         userId: user.uid,
         createdAt: new Date().toISOString(),
     };
@@ -130,6 +153,31 @@ export default function NewNotePage() {
             onChange={(e) => setContent(e.target.value)}
             className="bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-md min-h-[300px]"
           />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="tags">Tags</Label>
+          <Input
+            id="tags"
+            placeholder="Adicione tags (separadas por vírgula ou Enter)"
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={handleTagKeyDown}
+            className="bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-md"
+          />
+          <div className="flex flex-wrap gap-2 mt-2">
+            {tags.map(tag => (
+              <Badge key={tag} variant="secondary" className="pl-3 pr-1 py-1 text-sm">
+                {tag}
+                <button
+                  onClick={() => removeTag(tag)}
+                  className="ml-1 rounded-full hover:bg-background/50 p-0.5"
+                >
+                  <X size={14} />
+                </button>
+              </Badge>
+            ))}
+          </div>
         </div>
 
         <div className="space-y-3">
