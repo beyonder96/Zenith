@@ -36,12 +36,10 @@ function StatementContent() {
 
   useEffect(() => {
     if (userLoading) {
-      // Aguarde o carregamento do usuário
       return;
     }
 
     if (!user || !firestore) {
-      // Se não houver usuário ou firestore, pare o carregamento e mostre um erro se necessário
       setLoading(false);
       return;
     }
@@ -61,7 +59,7 @@ function StatementContent() {
           collection(firestore, 'transactions'),
           where('userId', '==', user.uid),
           where('date', '>=', startDate),
-          where('date', '<=', endDate)
+          where('date', '<=', `${endDate}T23:59:59`) // Correctly include the entire end day
         );
 
         const querySnapshot = await getDocs(q);
