@@ -102,6 +102,12 @@ export default function NewTaskPage() {
     router.push('/projects');
   };
 
+  const importanceColors = {
+    Baixa: 'bg-green-500 text-white border-green-500 hover:bg-green-600',
+    Média: 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600',
+    Alta: 'bg-red-500 text-white border-red-500 hover:bg-red-600'
+  };
+
   return (
     <div className="bg-background min-h-screen text-foreground">
       <header className="flex items-center justify-between p-4 border-b border-border">
@@ -163,7 +169,7 @@ export default function NewTaskPage() {
                 onClick={() => setImportance(level)}
                 className={cn(
                   'flex-1 bg-card dark:bg-zinc-800 border-border dark:border-zinc-700',
-                  importance === level && 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600'
+                  importance === level && importanceColors[level]
                 )}
               >
                 {level}
