@@ -8,7 +8,7 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Printer, ArrowUpCircle, ArrowDownCircle, Banknote, Scale } from 'lucide-react';
+import { Loader2, Printer, ArrowUpCircle, ArrowDownCircle, Scale } from 'lucide-react';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
@@ -23,7 +23,7 @@ type Transaction = {
 
 function StatementContent() {
   const firestore = useFirestore();
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const searchParams = useSearchParams();
   
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -35,13 +35,23 @@ function StatementContent() {
   const statementType = searchParams.get('type') as 'detailed' | 'summary';
 
   useEffect(() => {
-    if (!user || !firestore || !startDate || !endDate) {
-      if (!startDate || !endDate) {
-        setError("Período inválido. Por favor, gere o extrato novamente.");
-        setLoading(false);
-      }
+    if (userLoading) {
+      // Aguarde o carregamento do usuário
       return;
     }
+
+    if (!user || !firestore) {
+      // Se não houver usuário ou firestore, pare o carregamento e mostre um erro se necessário
+      setLoading(false);
+      return;
+    }
+    
+    if (!startDate || !endDate) {
+        setError("Período inválido. Por favor, gere o extrato novamente.");
+        setLoading(false);
+        return;
+    }
+
 
     const fetchTransactions = async () => {
       setLoading(true);
@@ -79,7 +89,7 @@ function StatementContent() {
     };
 
     fetchTransactions();
-  }, [user, firestore, startDate, endDate]);
+  }, [user, userLoading, firestore, startDate, endDate]);
 
   const handlePrint = () => {
     window.print();
@@ -111,7 +121,7 @@ function StatementContent() {
 
   const summaryCards = [
     { title: 'Total Receitas', value: formatCurrency(income), icon: ArrowUpCircle, color: 'text-cyan-500' },
-    { title: 'Total Despesas', value: formatCurrency(expenses), icon: ArrowDownCircle, color: 'text-pink-500' },
+    { title: 'Total Despesas', value: formatCurrency(Math.abs(expenses)), icon: ArrowDownCircle, color: 'text-pink-500' },
     { title: 'Saldo do Período', value: formatCurrency(balance), icon: Scale, color: balance >= 0 ? 'text-cyan-500' : 'text-pink-500' },
   ];
 
