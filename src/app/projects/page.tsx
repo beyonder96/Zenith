@@ -8,7 +8,8 @@ import { QuickAccessCard } from "@/components/projects/quick-access-card";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useFirestore, useUser } from '@/firebase';
+import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,47 +24,47 @@ import { useToast } from '@/hooks/use-toast';
 import { getTaskBreakdown } from '../actions';
 import { useRouter } from 'next/navigation';
 
-const initialProjects: Project[] = [
-  {
-    id: 1,
-    title: 'Planejar viagem de férias',
-    dueDate: '2025-11-19',
-    completed: false,
-    subtasks: [],
-  },
-   {
-    id: 2,
-    title: 'Organizar festa de aniversário',
-    dueDate: '2025-11-25',
-    completed: false,
-    subtasks: [],
-  },
-];
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const [projects, setProjects] = useLocalStorage<Project[]>('zenith-vision-projects', initialProjects);
-  const [projectToDelete, setProjectToDelete] = useState<number | null>(null);
-  const [loadingProjectId, setLoadingProjectId] = useState<number | null>(null);
-  const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const [loadingProjectId, setLoadingProjectId] = useState<string | null>(null);
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    if (user && firestore) {
+      const q = query(collection(firestore, "projects"), where("userId", "==", user.uid));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const userProjects: Project[] = [];
+        querySnapshot.forEach((doc) => {
+          userProjects.push({ id: doc.id, ...doc.data() } as Project);
+        });
+        setProjects(userProjects.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()));
+      });
+      return () => unsubscribe();
+    }
+  }, [user, firestore]);
 
-  const handleToggleComplete = (id: number) => {
-    setProjects(projects.map(p => p.id === id ? { ...p, completed: !p.completed } : p));
+  const handleToggleComplete = async (id: string) => {
+    const project = projects.find(p => p.id === id);
+    if (!project) return;
+    const projectRef = doc(firestore, "projects", id);
+    await updateDoc(projectRef, { completed: !project.completed });
   };
 
-  const handleDeleteInitiate = (id: number) => {
+  const handleDeleteInitiate = (id: string) => {
     setProjectToDelete(id);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (projectToDelete !== null) {
-      setProjects(projects.filter(p => p.id !== projectToDelete));
+      await deleteDoc(doc(firestore, "projects", projectToDelete));
       setProjectToDelete(null);
       toast({
         title: "Projeto deletado",
@@ -72,11 +73,11 @@ export default function ProjectsPage() {
     }
   };
 
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: string) => {
     router.push(`/tasks/new?id=${id}`);
   };
   
-  const handleAiSplit = async (id: number) => {
+  const handleAiSplit = async (id: string) => {
     const project = projects.find(p => p.id === id);
     if (!project) return;
 
@@ -85,20 +86,18 @@ export default function ProjectsPage() {
     try {
         const result = await getTaskBreakdown(project.title);
         if (result.success && result.subtasks) {
-            const newSubtasks: Subtask[] = result.subtasks.map((subtaskText, index) => ({
-                id: Date.now() + index,
+            const newSubtasks: Subtask[] = result.subtasks.map((subtaskText) => ({
+                id: Date.now() + Math.random(),
                 text: subtaskText,
                 completed: false,
             }));
+            
+            const projectRef = doc(firestore, "projects", id);
+            await updateDoc(projectRef, {
+                subtasks: [...(project.subtasks || []), ...newSubtasks]
+            });
 
-            setProjects(prevProjects =>
-                prevProjects.map(p =>
-                    p.id === id
-                        ? { ...p, subtasks: [...(p.subtasks || []), ...newSubtasks] }
-                        : p
-                )
-            );
-            handleToggleExpand(id, true); // Expande o projeto para mostrar as novas subtarefas
+            handleToggleExpand(id, true);
             toast({
                 title: "Tarefa dividida!",
                 description: "Novas subtarefas foram adicionadas ao projeto.",
@@ -121,21 +120,19 @@ export default function ProjectsPage() {
     }
   };
 
-  const handleToggleSubtask = (projectId: number, subtaskId: number) => {
-    setProjects(prevProjects =>
-      prevProjects.map(p => {
-        if (p.id === projectId) {
-          const updatedSubtasks = p.subtasks?.map(sub =>
-            sub.id === subtaskId ? { ...sub, completed: !sub.completed } : sub
-          );
-          return { ...p, subtasks: updatedSubtasks };
-        }
-        return p;
-      })
+  const handleToggleSubtask = async (projectId: string, subtaskId: number) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    const updatedSubtasks = project.subtasks?.map(sub =>
+        sub.id === subtaskId ? { ...sub, completed: !sub.completed } : sub
     );
+    
+    const projectRef = doc(firestore, "projects", projectId);
+    await updateDoc(projectRef, { subtasks: updatedSubtasks });
   };
   
-  const handleToggleExpand = (id: number, forceOpen = false) => {
+  const handleToggleExpand = (id: string, forceOpen = false) => {
     setExpandedProjects(prev => {
         const newSet = new Set(prev);
         if (forceOpen) {
@@ -166,6 +163,11 @@ export default function ProjectsPage() {
                      <div className="flex justify-center items-center h-48">
                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                      </div>
+                  ) : projects.length === 0 ? (
+                    <div className="text-center py-10 text-muted-foreground">
+                      <p>Nenhum projeto ainda.</p>
+                      <p className="text-sm">Clique em '+' para criar seu primeiro projeto.</p>
+                    </div>
                   ) : (
                     projects.map(project => (
                       <ProjectCard 

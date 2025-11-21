@@ -1,23 +1,37 @@
 "use client";
 
-import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useFirestore, useUser } from "@/firebase";
 import { CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
 import type { Project } from "@/components/projects/project-card";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 
 
 export function TasksCard() {
-    const [projects] = useLocalStorage<Project[]>("zenith-vision-projects", []);
+    const firestore = useFirestore();
+    const { user } = useUser();
+    const [projects, setProjects] = useState<Project[]>([]);
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
         setIsClient(true);
-    }, []);
+        if (user && firestore) {
+            const q = query(collection(firestore, "projects"), where("userId", "==", user.uid));
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const userProjects: Project[] = [];
+                snapshot.forEach(doc => {
+                    userProjects.push({ id: doc.id, ...doc.data() } as Project);
+                });
+                setProjects(userProjects);
+            });
+            return () => unsubscribe();
+        }
+    }, [user, firestore]);
 
     const today = new Date().toISOString().split('T')[0];
-    const todayTasks = isClient ? projects.filter(p => p.dueDate === today) : [];
+    const todayTasks = projects.filter(p => p.dueDate === today);
 
     return (
         <Card className="bg-card text-card-foreground rounded-2xl">

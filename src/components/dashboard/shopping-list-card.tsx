@@ -1,24 +1,39 @@
 "use client";
 
-import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useFirestore, useUser } from "@/firebase";
 import { ShoppingCart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+
 
 type ShoppingItem = {
-  id: number;
+  id: string;
   text: string;
   completed: boolean;
 };
 
 export function ShoppingListCard() {
-  const [items] = useLocalStorage<ShoppingItem[]>("zenith-vision-shopping-list", []);
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const [items, setItems] = useState<ShoppingItem[]>([]);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    if (user && firestore) {
+      const q = query(collection(firestore, "shoppingItems"), where("userId", "==", user.uid));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const userItems: ShoppingItem[] = [];
+        snapshot.forEach(doc => {
+          userItems.push({ id: doc.id, ...doc.data()} as ShoppingItem)
+        });
+        setItems(userItems);
+      });
+      return () => unsubscribe();
+    }
+  }, [user, firestore]);
 
   const completedItems = items.filter(item => item.completed).length;
   const totalItems = items.length;

@@ -20,11 +20,136 @@
           "description": "The user's email address."
         }
       },
-      "required": ["displayName", "email"]
+      "required": [
+        "displayName",
+        "email"
+      ]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Represents a user's project or complex task.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the project."
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The due date for the project."
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Whether the project is completed."
+        },
+        "subtasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/backend/entities/Subtask"
+          }
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns the project."
+        }
+      },
+      "required": [
+        "title",
+        "dueDate",
+        "completed",
+        "userId"
+      ]
+    },
+    "Subtask": {
+      "title": "Subtask",
+      "description": "A subtask within a project.",
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "The description of the subtask."
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Whether the subtask is completed."
+        }
+      },
+      "required": [
+        "text",
+        "completed"
+      ]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Represents a financial transaction.",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "income",
+            "expense"
+          ]
+        },
+        "category": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "amount",
+        "date",
+        "type",
+        "category",
+        "userId"
+      ]
+    },
+    "ShoppingItem": {
+      "title": "Shopping Item",
+      "description": "An item in the shopping list.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "price": {
+          "type": "number"
+        },
+        "userId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "completed",
+        "userId"
+      ]
     }
   },
   "auth": {
-    "providers": ["google.com"]
+    "providers": [
+      "google.com"
+    ]
   },
   "firestore": {
     "/users/{userId}": {
@@ -32,6 +157,24 @@
         "$ref": "#/backend/entities/UserProfile"
       },
       "description": "Stores public profile information for each user."
+    },
+    "/projects/{projectId}": {
+      "schema": {
+        "$ref": "#/backend/entities/Project"
+      },
+      "description": "Stores user projects."
+    },
+    "/transactions/{transactionId}": {
+      "schema": {
+        "$ref": "#/backend/entities/Transaction"
+      },
+      "description": "Stores user financial transactions."
+    },
+    "/shoppingItems/{itemId}": {
+      "schema": {
+        "$ref": "#/backend/entities/ShoppingItem"
+      },
+      "description": "Stores user shopping list items."
     }
   }
 }

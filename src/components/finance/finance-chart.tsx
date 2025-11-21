@@ -2,15 +2,16 @@
 
 import { Area, AreaChart, Tooltip, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useFirestore, useUser } from '@/firebase';
 import { useEffect, useState } from 'react';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '../ui/skeleton';
 import { useTheme } from 'next-themes';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 type Transaction = {
-  id: number;
+  id: string;
   description: string;
   amount: number;
   date: string;
@@ -19,13 +20,26 @@ type Transaction = {
 };
 
 export function FinanceChart() {
-  const [transactions] = useLocalStorage<Transaction[]>('zenith-vision-finance', []);
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    if(user && firestore) {
+        const q = query(collection(firestore, "transactions"), where("userId", "==", user.uid));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const userTransactions: Transaction[] = [];
+            snapshot.forEach(doc => {
+                userTransactions.push({ id: doc.id, ...doc.data() } as Transaction);
+            });
+            setTransactions(userTransactions);
+        });
+        return () => unsubscribe();
+    }
+  }, [user, firestore]);
 
   const processChartData = () => {
     const sixMonthsAgo = subMonths(new Date(), 5);

@@ -12,9 +12,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Project } from '@/components/projects/project-card';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore, useUser } from '@/firebase';
+import { collection, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
 
 type Importance = 'Baixa' | 'Média' | 'Alta';
 type RecurrenceFrequency = 'diario' | 'semanal' | 'mensal' | 'anual';
@@ -23,10 +24,10 @@ export default function NewTaskPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const { user } = useUser();
   
-  const [projects, setProjects] = useLocalStorage<Project[]>('zenith-vision-projects', []);
-  
-  const [projectId, setProjectId] = useState<number | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(null);
   const [taskName, setTaskName] = useState('');
   const [date, setDate] = useState<Date | undefined>();
   const [importance, setImportance] = useState<Importance>('Baixa');
@@ -37,18 +38,24 @@ export default function NewTaskPage() {
 
   useEffect(() => {
     const id = searchParams.get('id');
-    if (id) {
-      const projectToEdit = projects.find(p => p.id === Number(id));
-      if (projectToEdit) {
-        setProjectId(projectToEdit.id);
-        setTaskName(projectToEdit.title);
-        setDate(parseISO(projectToEdit.dueDate));
-        // You can add importance and recurrence to your Project type if needed
-      }
+    if (id && firestore) {
+      const fetchProject = async () => {
+        const docRef = doc(firestore, 'projects', id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const projectToEdit = {id: docSnap.id, ...docSnap.data()} as Project;
+            setProjectId(projectToEdit.id);
+            setTaskName(projectToEdit.title);
+            if (projectToEdit.dueDate) {
+                setDate(parseISO(projectToEdit.dueDate));
+            }
+        }
+      };
+      fetchProject();
     }
-  }, [searchParams, projects]);
+  }, [searchParams, firestore]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!taskName.trim()) {
       toast({
         variant: "destructive",
@@ -64,29 +71,29 @@ export default function NewTaskPage() {
           description: "Por favor, selecione uma data.",
         });
         return;
-      }
+    }
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Usuário não autenticado' });
+        return;
+    }
 
-    if (isEditing) {
-      // Update existing project
-      setProjects(projects.map(p => 
-        p.id === projectId 
-          ? { ...p, title: taskName, dueDate: format(date, 'yyyy-MM-dd') } 
-          : p
-      ));
+    const projectData = {
+        title: taskName,
+        dueDate: format(date, 'yyyy-MM-dd'),
+        completed: false,
+        subtasks: [],
+        userId: user.uid,
+    };
+
+    if (isEditing && projectId) {
+      const docRef = doc(firestore, 'projects', projectId);
+      await setDoc(docRef, projectData, { merge: true });
       toast({
         title: "Projeto atualizado!",
         description: "Suas alterações foram salvas.",
       });
     } else {
-      // Add new project
-      const newProject: Project = {
-        id: Date.now(),
-        title: taskName,
-        dueDate: format(date, 'yyyy-MM-dd'),
-        completed: false,
-        subtasks: [],
-      };
-      setProjects([...projects, newProject]);
+      await addDoc(collection(firestore, 'projects'), projectData);
       toast({
         title: "Projeto criado!",
         description: "O novo projeto foi adicionado à sua lista.",

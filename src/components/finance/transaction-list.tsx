@@ -15,7 +15,7 @@ import {
   MoreHorizontal,
   ShoppingBag,
 } from 'lucide-react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useFirestore, useUser } from '@/firebase';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '../ui/skeleton';
 import { format, parseISO } from 'date-fns';
@@ -33,9 +33,11 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+
 
 type Transaction = {
-  id: number;
+  id: string;
   description: string;
   amount: number;
   date: string;
@@ -58,27 +60,41 @@ const categoryIcons: { [key: string]: React.ElementType } = {
 export function TransactionList() {
   const router = useRouter();
   const { toast } = useToast();
-  const [transactions, setTransactions] = useLocalStorage<Transaction[]>('zenith-vision-finance', []);
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const [transactionToDelete, setTransactionToDelete] = useState<number | null>(null);
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    if(user && firestore) {
+        const q = query(collection(firestore, "transactions"), where("userId", "==", user.uid));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const userTransactions: Transaction[] = [];
+            snapshot.forEach(doc => {
+                userTransactions.push({ id: doc.id, ...doc.data() } as Transaction);
+            });
+            setTransactions(userTransactions);
+        });
+        return () => unsubscribe();
+    }
+  }, [user, firestore]);
   
   const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: string) => {
     router.push(`/finance/new?id=${id}`);
   };
 
-  const handleDeleteInitiate = (id: number) => {
+  const handleDeleteInitiate = (id: string) => {
     setTransactionToDelete(id);
   };
   
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (transactionToDelete !== null) {
-      setTransactions(transactions.filter(t => t.id !== transactionToDelete));
+      if (!firestore) return;
+      await deleteDoc(doc(firestore, "transactions", transactionToDelete));
       setTransactionToDelete(null);
       toast({
         title: "Transação deletada",

@@ -6,34 +6,56 @@ import { ShoppingList, type ShoppingItem } from "@/components/shopping/shopping-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Trash2, Loader2 } from "lucide-react";
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useFirestore, useUser } from '@/firebase';
+import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, addDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 export default function ShoppingPage() {
-  const [items, setItems] = useLocalStorage<ShoppingItem[]>('zenith-vision-shopping-list', []);
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const [items, setItems] = useState<ShoppingItem[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    if (user && firestore) {
+      const q = query(collection(firestore, "shoppingItems"), where("userId", "==", user.uid));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const userItems: ShoppingItem[] = [];
+        querySnapshot.forEach((doc) => {
+          userItems.push({ id: doc.id, ...doc.data() } as ShoppingItem);
+        });
+        setItems(userItems);
+      });
+      return () => unsubscribe();
+    }
+  }, [user, firestore]);
 
-  const totalCost = isClient ? items.reduce((acc, item) => {
+  const totalCost = items.reduce((acc, item) => {
     if (item.completed && item.quantity && typeof item.price !== 'undefined') {
       return acc + (item.quantity * item.price);
     }
     return acc;
-  }, 0) : 0;
+  }, 0);
 
-  const hasCompletedItems = isClient && items.some(item => item.completed);
+  const hasCompletedItems = items.some(item => item.completed);
 
-  const handleClearCompleted = () => {
-    setItems(prevItems => prevItems.filter(item => !item.completed));
+  const handleClearCompleted = async () => {
+    if (!firestore) return;
+    const batch = writeBatch(firestore);
+    items.forEach(item => {
+      if (item.completed) {
+        batch.delete(doc(firestore, "shoppingItems", item.id));
+      }
+    });
+    await batch.commit();
   };
 
-  const handleFinishShopping = () => {
+  const handleFinishShopping = async () => {
+    if (!firestore) return;
     const completedItems = items.filter(item => item.completed && item.price);
     if (completedItems.length === 0) {
         toast({
@@ -47,13 +69,11 @@ export default function ShoppingPage() {
     const doc = new jsPDF();
     const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
-    // Header
     doc.setFontSize(18);
     doc.text('Recibo da Compra', 14, 22);
     doc.setFontSize(11);
     doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 29);
 
-    // Table
     const tableColumn = ["Item", "Qtd.", "Preço Unit.", "Total"];
     const tableRows = completedItems.map(item => [
       item.name,
@@ -70,18 +90,20 @@ export default function ShoppingPage() {
       headStyles: { fillColor: [251, 146, 60] },
     });
 
-    // Total
     const finalY = (doc as any).lastAutoTable.finalY;
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.text('Total Gasto:', 14, finalY + 10);
     doc.text(currencyFormatter.format(totalCost), 200, finalY + 10, { align: 'right' });
 
-    // Save
     doc.save(`recibo-compra-${new Date().toISOString().split('T')[0]}.pdf`);
 
-    // Clean up
-    setItems([]);
+    // Clean up all items from the list in Firestore
+    const batch = writeBatch(firestore);
+    items.forEach(item => {
+      batch.delete(doc(firestore, "shoppingItems", item.id));
+    });
+    await batch.commit();
   };
 
   return (

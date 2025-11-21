@@ -1,24 +1,44 @@
 "use client";
 
-import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useFirestore, useUser } from "@/firebase";
 import { BarChart3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 
 type FinanceEntry = {
-  id: number;
+  id: string;
   description: string;
   amount: number;
+  date: string;
 };
 
 export function FinanceCard() {
-  const [entries] = useLocalStorage<FinanceEntry[]>("zenith-vision-finance", []);
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const [entries, setEntries] = useState<FinanceEntry[]>([]);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    if (user && firestore) {
+      const today = new Date().toISOString().split('T')[0];
+      const q = query(
+        collection(firestore, "transactions"), 
+        where("userId", "==", user.uid),
+        where("date", "==", today)
+      );
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const dailyEntries: FinanceEntry[] = [];
+        snapshot.forEach(doc => {
+          dailyEntries.push({ id: doc.id, ...doc.data() } as FinanceEntry);
+        });
+        setEntries(dailyEntries);
+      });
+      return () => unsubscribe();
+    }
+  }, [user, firestore]);
   
   const hasActivity = entries.length > 0;
   const totalSpent = entries.reduce((acc, entry) => acc + (entry.amount < 0 ? entry.amount : 0), 0);
@@ -41,7 +61,7 @@ export function FinanceCard() {
             </div>
         ) : hasActivity ? (
             <>
-                <p className="text-2xl font-bold">R$ {totalSpent.toFixed(2)}</p>
+                <p className="text-2xl font-bold">R$ {Math.abs(totalSpent).toFixed(2)}</p>
                 <p className="text-xs text-muted-foreground">gastos hoje</p>
             </>
         ) : (

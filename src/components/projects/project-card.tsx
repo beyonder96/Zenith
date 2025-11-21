@@ -14,23 +14,24 @@ export type Subtask = {
 };
 
 export type Project = {
-    id: number;
+    id: string;
     title: string;
     dueDate: string; // YYYY-MM-DD
     completed: boolean;
     subtasks?: Subtask[];
+    userId: string;
 };
 
 type ProjectCardProps = {
     project: Project;
     isLoading: boolean;
     isExpanded: boolean;
-    onToggleComplete: (id: number) => void;
-    onEdit: (id: number) => void;
-    onAiSplit: (id: number) => void;
-    onDelete: (id: number) => void;
-    onToggleSubtask: (projectId: number, subtaskId: number) => void;
-    onToggleExpand: (id: number) => void;
+    onToggleComplete: (id: string) => void;
+    onEdit: (id: string) => void;
+    onAiSplit: (id: string) => void;
+    onDelete: (id: string) => void;
+    onToggleSubtask: (projectId: string, subtaskId: number) => void;
+    onToggleExpand: (id: string) => void;
 };
 
 export function ProjectCard({ 

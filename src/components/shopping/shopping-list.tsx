@@ -8,13 +8,16 @@ import { Plus, X, Circle, CheckCircle2, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '../ui/skeleton';
 import { ItemDetailsModal } from './item-details-modal';
+import { useFirestore, useUser } from '@/firebase';
+import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 
 export type ShoppingItem = {
-  id: number;
+  id: string;
   name: string;
   completed: boolean;
   quantity?: number;
   price?: number;
+  userId: string;
 };
 
 type ShoppingListProps = {
@@ -26,37 +29,53 @@ export function ShoppingList({ items, setItems }: ShoppingListProps) {
   const [newItem, setNewItem] = useState('');
   const [isClient, setIsClient] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
+  const firestore = useFirestore();
+  const { user } = useUser();
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const handleAddItem = () => {
-    if (newItem.trim()) {
-      setItems(prevItems => [...prevItems, { id: Date.now(), name: newItem.trim(), completed: false }]);
+  const handleAddItem = async () => {
+    if (newItem.trim() && user && firestore) {
+      await addDoc(collection(firestore, 'shoppingItems'), {
+        name: newItem.trim(),
+        completed: false,
+        userId: user.uid,
+      });
       setNewItem('');
     }
   };
 
-  const handleToggleItem = (item: ShoppingItem) => {
-    // If the item is already completed, un-complete it and clear details
+  const handleToggleItem = async (item: ShoppingItem) => {
+    if (!firestore) return;
+    const itemRef = doc(firestore, 'shoppingItems', item.id);
+    
     if (item.completed) {
-      const updatedItem = { ...item, completed: false, quantity: undefined, price: undefined };
-      setItems(prevItems => prevItems.map(i => (i.id === item.id ? updatedItem : i)));
+      await updateDoc(itemRef, {
+        completed: false,
+        quantity: undefined,
+        price: undefined,
+      });
     } else {
-      // If the item is not completed, open the modal to add details
       setEditingItem(item);
     }
   };
 
-  const handleConfirmDetails = (item: ShoppingItem, quantity: number, price: number) => {
-    const updatedItem = { ...item, completed: true, quantity, price };
-    setItems(prevItems => prevItems.map(i => (i.id === item.id ? updatedItem : i)));
+  const handleConfirmDetails = async (item: ShoppingItem, quantity: number, price: number) => {
+    if (!firestore) return;
+    const itemRef = doc(firestore, 'shoppingItems', item.id);
+    await updateDoc(itemRef, {
+      completed: true,
+      quantity,
+      price,
+    });
     setEditingItem(null);
   };
 
-  const handleRemoveItem = (id: number) => {
-    setItems(prevItems => prevItems.filter(item => item.id !== id));
+  const handleRemoveItem = async (id: string) => {
+    if (!firestore) return;
+    await deleteDoc(doc(firestore, 'shoppingItems', id));
   };
   
   return (

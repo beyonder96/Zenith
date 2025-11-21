@@ -13,16 +13,18 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore, useUser } from '@/firebase';
+import { collection, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
 
 type Transaction = {
-  id: number;
+  id: string;
   description: string;
   amount: number;
   date: string;
   type: 'income' | 'expense';
   category: string;
+  userId: string;
 };
 
 type TransactionType = 'expense' | 'income';
@@ -37,10 +39,10 @@ export default function NewTransactionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const { user } = useUser();
   
-  const [transactions, setTransactions] = useLocalStorage<Transaction[]>('zenith-vision-finance', []);
-
-  const [transactionId, setTransactionId] = useState<number | null>(null);
+  const [transactionId, setTransactionId] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -54,21 +56,25 @@ export default function NewTransactionPage() {
 
   useEffect(() => {
     const id = searchParams.get('id');
-    if (id) {
-      const transactionToEdit = transactions.find(t => t.id === Number(id));
-      if (transactionToEdit) {
-        setTransactionId(transactionToEdit.id);
-        setDescription(transactionToEdit.description);
-        setAmount(String(Math.abs(transactionToEdit.amount)).replace('.', ','));
-        setDate(parseISO(transactionToEdit.date));
-        setType(transactionToEdit.type);
-        setCategory(transactionToEdit.category);
-        // You could add recurrence to your Transaction type if needed
-      }
+    if (id && firestore) {
+      const fetchTransaction = async () => {
+        const docRef = doc(firestore, 'transactions', id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const transactionToEdit = { id: docSnap.id, ...docSnap.data() } as Transaction;
+          setTransactionId(transactionToEdit.id);
+          setDescription(transactionToEdit.description);
+          setAmount(String(Math.abs(transactionToEdit.amount)).replace('.', ','));
+          setDate(parseISO(transactionToEdit.date));
+          setType(transactionToEdit.type);
+          setCategory(transactionToEdit.category);
+        }
+      };
+      fetchTransaction();
     }
-  }, [searchParams, transactions]);
+  }, [searchParams, firestore]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!description.trim() || !amount.trim() || !date) {
       toast({
         variant: 'destructive',
@@ -76,6 +82,10 @@ export default function NewTransactionPage() {
         description: 'Descrição, valor e data são necessários.',
       });
       return;
+    }
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Usuário não autenticado' });
+        return;
     }
 
     const numericAmount = parseFloat(amount.replace(',', '.'));
@@ -88,26 +98,20 @@ export default function NewTransactionPage() {
       return;
     }
     
-    if (isEditing) {
-      const updatedTransaction: Transaction = {
-        id: transactionId,
-        description,
-        amount: type === 'expense' ? -Math.abs(numericAmount) : Math.abs(numericAmount),
-        date: format(date, 'yyyy-MM-dd'),
-        type,
-        category: category || categories[type][0],
-      };
-      setTransactions(transactions.map(t => t.id === transactionId ? updatedTransaction : t));
+    const transactionData = {
+      description,
+      amount: type === 'expense' ? -Math.abs(numericAmount) : Math.abs(numericAmount),
+      date: format(date, 'yyyy-MM-dd'),
+      type,
+      category: category || categories[type][0],
+      userId: user.uid,
+    };
+    
+    if (isEditing && transactionId) {
+      const docRef = doc(firestore, 'transactions', transactionId);
+      await setDoc(docRef, transactionData, { merge: true });
     } else {
-      const newTransaction: Transaction = {
-        id: Date.now(),
-        description,
-        amount: type === 'expense' ? -Math.abs(numericAmount) : Math.abs(numericAmount),
-        date: format(date, 'yyyy-MM-dd'),
-        type,
-        category: category || categories[type][0],
-      };
-      setTransactions([...transactions, newTransaction]);
+      await addDoc(collection(firestore, 'transactions'), transactionData);
     }
 
     setShowSuccessAnimation(true);
