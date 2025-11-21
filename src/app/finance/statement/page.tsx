@@ -59,7 +59,7 @@ function StatementContent() {
           collection(firestore, 'transactions'),
           where('userId', '==', user.uid),
           where('date', '>=', startDate),
-          where('date', '<=', `${endDate}T23:59:59`) // Correctly include the entire end day
+          where('date', '<=', endDate) 
         );
 
         const querySnapshot = await getDocs(q);
