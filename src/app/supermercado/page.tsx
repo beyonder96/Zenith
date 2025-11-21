@@ -103,10 +103,12 @@ export default function ShoppingPage() {
       },
       didDrawCell: (data) => {
         if (data.section === 'body' && data.column.index === 0) {
+           const text = data.cell.text[0]; // Get the item text
+           data.cell.text = []; // Clear the original text to prevent it from being drawn by autotable
            // Draw a square for checkbox
            doc.rect(data.cell.x + 2, data.cell.y + data.cell.height / 2 - 2, 4, 4);
            // Redefine cell text position
-           doc.text(data.cell.text, data.cell.x + 8, data.cell.y + data.cell.height / 2 + 3);
+           doc.text(text, data.cell.x + 8, data.cell.y + data.cell.height / 2 + 2);
         }
       }
     });
