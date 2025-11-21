@@ -1,11 +1,33 @@
+'use client';
+
 import { DateSelector } from "@/components/dashboard/date-selector";
 import { FinanceCard } from "@/components/dashboard/finance-card";
 import { GreetingHeader } from "@/components/dashboard/greeting-header";
 import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { ShoppingListCard } from "@/components/dashboard/shopping-list-card";
 import { TasksCard } from "@/components/dashboard/tasks-card";
+import { useUser } from "@/firebase/auth/use-user";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Dashboard() {
+  const { user, loading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return (
+       <div className="relative h-screen w-screen overflow-hidden bg-gray-100 dark:bg-black flex items-center justify-center p-4">
+         <p>Carregando...</p>
+       </div>
+    );
+  }
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-background text-foreground">
       <div className="absolute inset-0 w-full h-full bg-cover bg-center transition-transform duration-500 ease-in-out group-hover:scale-105" style={{ backgroundImage: "url('https://i.pinimg.com/originals/a1/83/83/a183833f4a38543d3513aa67c130b05b.jpg')" }}>

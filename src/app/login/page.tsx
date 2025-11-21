@@ -1,21 +1,48 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useRouter } from 'next/navigation';
+import { useAuth } from "@/firebase";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
+import { useUser } from "@/firebase/auth/use-user";
 
 export default function LoginPage() {
   const router = useRouter();
+  const auth = useAuth();
+  const { toast } = useToast();
+  const { user, loading } = useUser();
 
-  const handleLogin = (e: React.MouseEvent<HTMLButtonElement> | React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    router.push('/dashboard');
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
+
+  const handleGoogleLogin = async () => {
+    if (!auth) return;
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error("Authentication error:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro de Autenticação",
+        description: error.message || "Não foi possível fazer login com o Google.",
+      });
+    }
   };
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    router.push('/dashboard');
-  };
+
+  if (loading || user) {
+    return (
+       <div className="relative h-screen w-screen overflow-hidden bg-gray-100 dark:bg-black flex items-center justify-center p-4">
+         <p>Carregando...</p>
+       </div>
+    );
+  }
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-gray-100 dark:bg-black flex items-center justify-center p-4">
@@ -31,28 +58,9 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-gray-600 dark:text-white/70 font-light">Identifique-se para acessar.</p>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <Input 
-                type="email" placeholder="E-mail" 
-                className="w-full bg-white/50 dark:bg-white/5 border-gray-300 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-orange-400/50 transition-all"
-            />
-            <Input 
-                type="password" placeholder="Senha" 
-                className="w-full bg-white/50 dark:bg-white/5 border-gray-300 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-orange-400/50 transition-all"
-            />
-            <Button type="submit" className="w-full bg-gradient-to-r from-orange-400 to-pink-500 text-white font-bold py-3 h-auto rounded-xl shadow-lg hover:shadow-orange-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200">
-                Entrar
-            </Button>
-        </form>
-
-        <div className="mt-6 flex justify-between text-sm">
-            <a href="#" className="text-orange-400 hover:underline" onClick={(e) => e.preventDefault()}>
-                Criar agora
-            </a>
-            <a href="/dashboard" onClick={handleLogin} className="text-orange-400 hover:underline">
-                Entrar como Convidado
-            </a>
-        </div>
+        <Button onClick={handleGoogleLogin} className="w-full bg-gradient-to-r from-orange-400 to-pink-500 text-white font-bold py-3 h-auto rounded-xl shadow-lg hover:shadow-orange-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200">
+            Entrar com Google
+        </Button>
       </div>
     </div>
   );

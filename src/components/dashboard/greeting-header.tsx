@@ -9,12 +9,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Switch } from '../ui/switch';
 import { useTheme } from 'next-themes';
-import { Moon, Sun } from 'lucide-react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-
+import { Moon, Sun, LogOut } from 'lucide-react';
+import { useUser } from '@/firebase/auth/use-user';
+import { getAuth, signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 const CelestialIcon = ({ type }: { type: 'rising-sun' | 'setting-sun' | 'moon' }) => {
     const typeClasses = {
@@ -26,12 +27,12 @@ const CelestialIcon = ({ type }: { type: 'rising-sun' | 'setting-sun' | 'moon' }
 };
 
 export function GreetingHeader() {
+  const router = useRouter();
+  const { user, loading } = useUser();
   const [greeting, setGreeting] = useState("Boa noite");
   const [iconType, setIconType] = useState<'rising-sun' | 'setting-sun' | 'moon'>("moon");
   const { theme, setTheme } = useTheme();
   const [isClient, setIsClient] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [storedUserImage, setStoredUserImage] = useLocalStorage<string | null>('zenith-user-image', null);
   
   useEffect(() => {
     setIsClient(true);
@@ -51,19 +52,15 @@ export function GreetingHeader() {
     }
   }, []);
 
-  const handleEditPhotoClick = () => {
-    fileInputRef.current?.click();
+  const handleLogout = async () => {
+    const auth = getAuth();
+    await signOut(auth);
+    router.push('/login');
   };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setStoredUserImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  
+  const getInitials = (name?: string | null) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
   return (
@@ -77,22 +74,14 @@ export function GreetingHeader() {
         <DropdownMenuTrigger asChild>
           <button className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
             <Avatar>
-              <AvatarImage src={storedUserImage || undefined} alt="User" />
-              <AvatarFallback>U</AvatarFallback>
+              <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
+              <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
             </Avatar>
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 bg-background/80 dark:bg-black/40 backdrop-blur-xl border-border text-foreground">
-          <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+          <DropdownMenuLabel>{user?.displayName || 'Minha Conta'}</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="hidden"
-            accept="image/*"
-          />
-          <DropdownMenuItem onSelect={handleEditPhotoClick} className="focus:bg-accent">Editar Foto</DropdownMenuItem>
           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex justify-between items-center focus:bg-accent">
             <div className="flex items-center">
               {isClient && theme === 'dark' ? <Moon className="mr-2 h-4 w-4" /> : <Sun className="mr-2 h-4 w-4" />}
@@ -106,7 +95,8 @@ export function GreetingHeader() {
             )}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-red-500 dark:text-red-400 focus:bg-destructive/10 focus:text-destructive">
+          <DropdownMenuItem onClick={handleLogout} className="text-red-500 dark:text-red-400 focus:bg-destructive/10 focus:text-destructive">
+            <LogOut className="mr-2 h-4 w-4" />
             Sair
           </DropdownMenuItem>
         </DropdownMenuContent>
