@@ -9,6 +9,7 @@ import { Loader2, ListX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 
 type SharedShoppingItem = {
   name: string;
@@ -20,13 +21,14 @@ type SharedList = {
   ownerId: string;
 };
 
-export default function SharedListPage({ params }: { params: { listId: string } }) {
+export default function SharedListPage() {
   const firestore = useFirestore();
   const [list, setList] = useState<SharedList | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const { listId } = params;
+  
+  const params = useParams();
+  const listId = params.listId as string;
 
   useEffect(() => {
     if (!firestore || !listId) return;
