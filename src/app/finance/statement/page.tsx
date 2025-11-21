@@ -36,7 +36,6 @@ function StatementContent() {
 
   useEffect(() => {
     if (userLoading) {
-      // Still waiting for user auth state to resolve, do nothing yet.
       return;
     }
     
@@ -47,14 +46,19 @@ function StatementContent() {
     }
     
     if (!user || !firestore) {
-      // User is not logged in or Firestore is not available.
-      setError("Não foi possível conectar ao banco de dados.");
-      setLoading(false);
+      // Still waiting for user or firestore, don't set an error yet
+      // The loading state will cover this period.
+      // If user is definitively not logged in after loading, we can show an error.
+      if(!userLoading && !user) {
+          setError("Você precisa estar logado para ver o extrato.");
+          setLoading(false);
+      }
       return;
     }
 
     const fetchTransactions = async () => {
       setError(null);
+      setLoading(true);
       try {
         const q = query(
           collection(firestore, 'transactions'),
@@ -220,8 +224,10 @@ function StatementContent() {
 
 export default function StatementPage() {
     return (
-        <Suspense fallback={<div>Carregando...</div>}>
-            <StatementContent />
-        </Suspense>
+        <FirebaseClientProvider>
+            <Suspense fallback={<div>Carregando...</div>}>
+                <StatementContent />
+            </Suspense>
+        </FirebaseClientProvider>
     )
 }
