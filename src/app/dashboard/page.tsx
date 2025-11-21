@@ -6,7 +6,7 @@ import { GreetingHeader } from "@/components/dashboard/greeting-header";
 import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { ShoppingListCard } from "@/components/dashboard/shopping-list-card";
 import { TasksCard } from "@/components/dashboard/tasks-card";
-import { useUser } from "@/firebase/auth/use-user";
+import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
