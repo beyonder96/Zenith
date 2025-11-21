@@ -94,8 +94,8 @@ export function FinanceChart() {
               data={chartData}
               margin={{
                 top: 5,
-                right: 20,
-                left: -10,
+                right: 30,
+                left: 20,
                 bottom: 5,
               }}
             >
