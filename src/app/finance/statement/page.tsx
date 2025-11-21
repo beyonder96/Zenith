@@ -30,8 +30,8 @@ function StatementContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const startDate = searchParams.get('start');
-  const endDate = searchParams.get('end');
+  const startDateParam = searchParams.get('start');
+  const endDateParam = searchParams.get('end');
   const statementType = searchParams.get('type') as 'detailed' | 'summary';
 
   useEffect(() => {
@@ -44,17 +44,20 @@ function StatementContent() {
       return;
     }
     
-    if (!startDate || !endDate) {
+    if (!startDateParam || !endDateParam) {
         setError("Período inválido. Por favor, gere o extrato novamente.");
         setLoading(false);
         return;
     }
 
-
     const fetchTransactions = async () => {
       setLoading(true);
       setError(null);
       try {
+        // Ensure dates are in YYYY-MM-DD format for Firestore query
+        const startDate = format(parseISO(startDateParam), 'yyyy-MM-dd');
+        const endDate = format(parseISO(endDateParam), 'yyyy-MM-dd');
+
         const q = query(
           collection(firestore, 'transactions'),
           where('userId', '==', user.uid),
@@ -87,7 +90,7 @@ function StatementContent() {
     };
 
     fetchTransactions();
-  }, [user, userLoading, firestore, startDate, endDate]);
+  }, [user, userLoading, firestore, startDateParam, endDateParam]);
 
   const handlePrint = () => {
     window.print();
@@ -111,6 +114,10 @@ function StatementContent() {
     );
   }
 
+  if (!startDateParam || !endDateParam) {
+    return null; // Should be handled by error state, but as a safeguard.
+  }
+
   const income = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
   const expenses = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
   const balance = income + expenses;
@@ -130,7 +137,7 @@ function StatementContent() {
                  <div>
                     <h1 className="text-3xl font-bold">Extrato Financeiro</h1>
                     <p className="text-muted-foreground">
-                        Período de {format(parseISO(startDate!), 'dd/MM/yy')} a {format(parseISO(endDate!), 'dd/MM/yy')}
+                        Período de {format(parseISO(startDateParam), 'dd/MM/yy')} a {format(parseISO(endDateParam), 'dd/MM/yy')}
                     </p>
                 </div>
                 <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Imprimir ou Salvar PDF</Button>
@@ -141,7 +148,7 @@ function StatementContent() {
         <div className="hidden print:block mb-8">
             <h1 className="text-3xl font-bold">Extrato Financeiro</h1>
             <p className="text-muted-foreground">
-                Período: {format(parseISO(startDate!), 'dd/MM/yyyy', {locale: ptBR})} a {format(parseISO(endDate!), 'dd/MM/yyyy', {locale: ptBR})}
+                Período: {format(parseISO(startDateParam), 'dd/MM/yyyy', {locale: ptBR})} a {format(parseISO(endDateParam), 'dd/MM/yyyy', {locale: ptBR})}
             </p>
             <p className="text-sm text-muted-foreground">Gerado em: {format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
         </div>
