@@ -70,7 +70,7 @@ export function ShoppingList({ items, setItems }: ShoppingListProps) {
         quantity: undefined,
         price: undefined,
       };
-      updateDoc(itemRef, updateData)
+      updateDoc(itemRef, Object.assign({}, updateData)) // Use Object.assign to create a plain object
         .catch(serverError => {
             const permissionError = new FirestorePermissionError({
                 path: `shoppingItems/${item.id}`,

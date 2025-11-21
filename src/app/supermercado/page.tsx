@@ -5,7 +5,7 @@ import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { ShoppingList, type ShoppingItem } from "@/components/shopping/shopping-list";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Trash2, Loader2 } from "lucide-react";
+import { Check, Trash2, Loader2, Share2 } from "lucide-react";
 import { useFirestore, useUser } from '@/firebase';
 import { collection, query, where, onSnapshot, doc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -30,7 +30,7 @@ export default function ShoppingPage() {
         querySnapshot.forEach((doc) => {
           userItems.push({ id: doc.id, ...doc.data() } as ShoppingItem);
         });
-        setItems(userItems);
+        setItems(userItems.sort((a, b) => (a.completed ? 1 : -1) - (b.completed ? 1 : -1) || a.name.localeCompare(b.name)));
       },
       (serverError) => {
         const permissionError = new FirestorePermissionError({
@@ -51,6 +51,7 @@ export default function ShoppingPage() {
   }, 0);
 
   const hasCompletedItems = items.some(item => item.completed);
+  const hasPendingItems = items.some(item => !item.completed);
 
   const handleClearCompleted = () => {
     if (!firestore) return;
@@ -68,6 +69,49 @@ export default function ShoppingPage() {
         });
         errorEmitter.emit('permission-error', permissionError);
       });
+  };
+  
+  const handleShareList = () => {
+    const uncompletedItems = items.filter(item => !item.completed);
+
+    if (uncompletedItems.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Nenhum item pendente",
+        description: "Não há itens para compartilhar na lista.",
+      });
+      return;
+    }
+
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text('Lista de Compras', 14, 22);
+    doc.setFontSize(11);
+    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 29);
+
+    const tableColumn = ["Item"];
+    const tableRows = uncompletedItems.map(item => [item.name]);
+
+    (doc as any).autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 40,
+      theme: 'striped',
+      headStyles: { fillColor: [251, 146, 60] },
+      bodyStyles: {
+        cellPadding: 3,
+      },
+      didDrawCell: (data) => {
+        if (data.section === 'body' && data.column.index === 0) {
+           // Draw a square for checkbox
+           doc.rect(data.cell.x + 2, data.cell.y + data.cell.height / 2 - 2, 4, 4);
+           // Redefine cell text position
+           doc.text(data.cell.text, data.cell.x + 8, data.cell.y + data.cell.height / 2 + 3);
+        }
+      }
+    });
+
+    doc.save(`lista-de-compras-${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const handleFinishShopping = async () => {
@@ -139,13 +183,13 @@ export default function ShoppingPage() {
         </header>
         
         <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-4 pb-28 overflow-y-auto">
-            <div className="w-full max-w-md flex gap-4">
+            <div className="w-full max-w-md grid grid-cols-2 gap-4">
                 <Button 
-                    onClick={handleFinishShopping} 
-                    disabled={!hasCompletedItems}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold h-12 rounded-xl text-base disabled:bg-gray-500 disabled:opacity-50"
+                    onClick={handleShareList} 
+                    disabled={!hasPendingItems}
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold h-12 rounded-xl text-base disabled:bg-gray-500 disabled:opacity-50"
                 >
-                    <Check className="mr-2 h-5 w-5"/> Finalizar
+                    <Share2 className="mr-2 h-5 w-5"/> Compartilhar
                 </Button>
                 <Button 
                     onClick={handleClearCompleted} 
@@ -153,6 +197,13 @@ export default function ShoppingPage() {
                     className="w-full bg-red-500 hover:bg-red-600 text-white font-bold h-12 rounded-xl text-base disabled:bg-gray-500 disabled:opacity-50"
                 >
                     <Trash2 className="mr-2 h-5 w-5"/> Limpar Marcados
+                </Button>
+                <Button 
+                    onClick={handleFinishShopping} 
+                    disabled={!hasCompletedItems}
+                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold h-12 rounded-xl text-base disabled:bg-gray-500 disabled:opacity-50 col-span-2"
+                >
+                    <Check className="mr-2 h-5 w-5"/> Finalizar Compra e Gerar Recibo
                 </Button>
             </div>
 
