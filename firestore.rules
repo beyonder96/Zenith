@@ -32,5 +32,15 @@ service cloud.firestore {
       allow read, delete: if isOwner(resource.data.userId);
       allow create, update: if isOwner(request.resource.data.userId);
     }
+
+    // /sharedLists/{listId}
+    match /sharedLists/{listId} {
+      // Anyone can read and update a shared list (to check/uncheck items).
+      allow read, update: if true;
+      // Only the authenticated owner can create a shared list.
+      allow create: if isOwner(request.resource.data.ownerId);
+      // No one can delete a shared list through the client.
+      allow delete: if false;
+    }
   }
 }

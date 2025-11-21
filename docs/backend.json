@@ -144,6 +144,50 @@
         "completed",
         "userId"
       ]
+    },
+    "SharedShoppingItem": {
+      "title": "Shared Shopping Item",
+      "description": "An item in a shared shopping list.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "price": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "completed"
+      ]
+    },
+    "SharedList": {
+      "title": "Shared List",
+      "description": "A shopping list that can be shared via a unique link.",
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/backend/entities/SharedShoppingItem"
+          }
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "The user ID of the list creator."
+        }
+      },
+      "required": [
+        "items",
+        "ownerId"
+      ]
     }
   },
   "auth": {
@@ -175,6 +219,12 @@
         "$ref": "#/backend/entities/ShoppingItem"
       },
       "description": "Stores user shopping list items."
+    },
+    "/sharedLists/{listId}": {
+      "schema": {
+        "$ref": "#/backend/entities/SharedList"
+      },
+      "description": "Stores shopping lists that are shared publicly via a link."
     }
   }
 }
