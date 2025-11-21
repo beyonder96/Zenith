@@ -36,12 +36,7 @@ function StatementContent() {
 
   useEffect(() => {
     if (userLoading) {
-      return;
-    }
-
-    if (!user || !firestore) {
-      setError("Não foi possível conectar ao banco de dados.");
-      setLoading(false);
+      // Still waiting for user auth state to resolve, do nothing yet.
       return;
     }
     
@@ -50,9 +45,15 @@ function StatementContent() {
         setLoading(false);
         return;
     }
+    
+    if (!user || !firestore) {
+      // User is not logged in or Firestore is not available.
+      setError("Não foi possível conectar ao banco de dados.");
+      setLoading(false);
+      return;
+    }
 
     const fetchTransactions = async () => {
-      setLoading(true);
       setError(null);
       try {
         const q = query(
