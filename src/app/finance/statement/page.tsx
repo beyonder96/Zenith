@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Printer, ArrowUpCircle, ArrowDownCircle, Scale } from 'lucide-react';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 type Transaction = {
   id: string;
@@ -46,13 +47,12 @@ function StatementContent() {
     }
     
     if (!user || !firestore) {
-      // Still waiting for user or firestore, don't set an error yet
-      // The loading state will cover this period.
-      // If user is definitively not logged in after loading, we can show an error.
       if(!userLoading && !user) {
           setError("Você precisa estar logado para ver o extrato.");
-          setLoading(false);
+      } else {
+          setError("Não foi possível conectar ao banco de dados.");
       }
+      setLoading(false);
       return;
     }
 
