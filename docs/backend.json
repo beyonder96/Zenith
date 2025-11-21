@@ -188,6 +188,40 @@
         "items",
         "ownerId"
       ]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "Represents a user's note.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the note."
+        },
+        "content": {
+          "type": "string",
+          "description": "The content of the note."
+        },
+        "color": {
+          "type": "string",
+          "description": "The background color of the note card."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns the note."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the note was created."
+        }
+      },
+      "required": [
+        "title",
+        "content",
+        "userId",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -225,6 +259,12 @@
         "$ref": "#/backend/entities/SharedList"
       },
       "description": "Stores shopping lists that are shared publicly via a link."
+    },
+    "/notes/{noteId}": {
+      "schema": {
+        "$ref": "#/backend/entities/Note"
+      },
+      "description": "Stores user notes."
     }
   }
 }

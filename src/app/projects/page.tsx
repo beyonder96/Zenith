@@ -6,7 +6,7 @@ import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { ProjectCard, Project, Subtask } from "@/components/projects/project-card";
 import { QuickAccessCard } from "@/components/projects/quick-access-card";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, StickyNote, ListTodo } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useUser } from '@/firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
@@ -25,23 +25,30 @@ import { getTaskBreakdown } from '../actions';
 import { useRouter } from 'next/navigation';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { Note } from '@/components/notes/notes';
+import { NoteCard } from '@/components/notes/note-card';
 
 export default function ProjectsPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const { user } = useUser();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
   const [loadingProjectId, setLoadingProjectId] = useState<string | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
+  const [isFabOpen, setIsFabOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
     if (user && firestore) {
-      const q = query(collection(firestore, "projects"), where("userId", "==", user.uid));
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      // Projects listener
+      const projectsQuery = query(collection(firestore, "projects"), where("userId", "==", user.uid));
+      const unsubscribeProjects = onSnapshot(projectsQuery, (querySnapshot) => {
         const userProjects: Project[] = [];
         querySnapshot.forEach((doc) => {
           userProjects.push({ id: doc.id, ...doc.data() } as Project);
@@ -49,13 +56,28 @@ export default function ProjectsPage() {
         setProjects(userProjects.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()));
       },
       (serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: 'projects',
-          operation: 'list',
-        });
+        const permissionError = new FirestorePermissionError({ path: 'projects', operation: 'list' });
         errorEmitter.emit('permission-error', permissionError);
       });
-      return () => unsubscribe();
+
+      // Notes listener
+      const notesQuery = query(collection(firestore, "notes"), where("userId", "==", user.uid));
+      const unsubscribeNotes = onSnapshot(notesQuery, (querySnapshot) => {
+        const userNotes: Note[] = [];
+        querySnapshot.forEach((doc) => {
+          userNotes.push({ id: doc.id, ...doc.data() } as Note);
+        });
+        setNotes(userNotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      },
+      (serverError) => {
+        const permissionError = new FirestorePermissionError({ path: 'notes', operation: 'list' });
+        errorEmitter.emit('permission-error', permissionError);
+      });
+
+      return () => {
+        unsubscribeProjects();
+        unsubscribeNotes();
+      };
     }
   }, [user, firestore]);
 
@@ -75,8 +97,12 @@ export default function ProjectsPage() {
         });
   };
 
-  const handleDeleteInitiate = (id: string) => {
+  const handleDeleteProjectInitiate = (id: string) => {
     setProjectToDelete(id);
+  };
+  
+  const handleDeleteNoteInitiate = (id: string) => {
+    setNoteToDelete(id);
   };
 
   const handleDeleteConfirm = () => {
@@ -84,23 +110,32 @@ export default function ProjectsPage() {
       const docRef = doc(firestore, "projects", projectToDelete);
       deleteDoc(docRef).then(() => {
           setProjectToDelete(null);
-          toast({
-            title: "Projeto deletado",
-            description: "O projeto foi removido com sucesso.",
-          });
+          toast({ title: "Projeto deletado", description: "O projeto foi removido com sucesso." });
       }).catch(serverError => {
-          const permissionError = new FirestorePermissionError({
-              path: `projects/${projectToDelete}`,
-              operation: 'delete',
-          });
+          const permissionError = new FirestorePermissionError({ path: `projects/${projectToDelete}`, operation: 'delete' });
           errorEmitter.emit('permission-error', permissionError);
           setProjectToDelete(null);
       });
     }
+    if (noteToDelete !== null && firestore) {
+        const docRef = doc(firestore, "notes", noteToDelete);
+        deleteDoc(docRef).then(() => {
+            setNoteToDelete(null);
+            toast({ title: "Nota deletada", description: "A nota foi removida com sucesso." });
+        }).catch(serverError => {
+            const permissionError = new FirestorePermissionError({ path: `notes/${noteToDelete}`, operation: 'delete' });
+            errorEmitter.emit('permission-error', permissionError);
+            setNoteToDelete(null);
+        });
+    }
   };
 
-  const handleEdit = (id: string) => {
+  const handleEditProject = (id: string) => {
     router.push(`/tasks/new?id=${id}`);
+  };
+
+  const handleEditNote = (id: string) => {
+    router.push(`/notes/new?id=${id}`);
   };
   
   const handleAiSplit = async (id: string) => {
@@ -123,31 +158,16 @@ export default function ProjectsPage() {
 
             updateDoc(projectRef, updateData).then(() => {
                 handleToggleExpand(id, true);
-                toast({
-                    title: "Tarefa dividida!",
-                    description: "Novas subtarefas foram adicionadas ao projeto.",
-                });
+                toast({ title: "Tarefa dividida!", description: "Novas subtarefas foram adicionadas ao projeto." });
             }).catch(serverError => {
-                 const permissionError = new FirestorePermissionError({
-                    path: `projects/${id}`,
-                    operation: 'update',
-                    requestResourceData: updateData
-                });
-                errorEmitter.emit('permission-error', permissionError);
+                 const permissionError = new FirestorePermissionError({ path: `projects/${id}`, operation: 'update', requestResourceData: updateData });
+                 errorEmitter.emit('permission-error', permissionError);
             });
         } else {
-             toast({
-                variant: "destructive",
-                title: "Falha na divisão com IA",
-                description: result.error || "Não foi possível dividir a tarefa.",
-            });
+             toast({ variant: "destructive", title: "Falha na divisão com IA", description: result.error || "Não foi possível dividir a tarefa." });
         }
     } catch (error) {
-        toast({
-            variant: "destructive",
-            title: "Erro de Conexão",
-            description: "Não foi possível conectar ao serviço de IA.",
-        });
+        toast({ variant: "destructive", title: "Erro de Conexão", description: "Não foi possível conectar ao serviço de IA." });
     } finally {
         setLoadingProjectId(null);
     }
@@ -165,11 +185,7 @@ export default function ProjectsPage() {
     const updateData = { subtasks: updatedSubtasks };
     updateDoc(projectRef, updateData)
         .catch(serverError => {
-            const permissionError = new FirestorePermissionError({
-                path: `projects/${projectId}`,
-                operation: 'update',
-                requestResourceData: updateData
-            });
+            const permissionError = new FirestorePermissionError({ path: `projects/${projectId}`, operation: 'update', requestResourceData: updateData });
             errorEmitter.emit('permission-error', permissionError);
         });
   };
@@ -186,7 +202,7 @@ export default function ProjectsPage() {
         }
         return newSet;
     });
-};
+  };
 
   return (
     <>
@@ -194,46 +210,98 @@ export default function ProjectsPage() {
         <div className="relative z-10 flex flex-col h-screen text-gray-800 dark:text-white">
           <header className="p-4 sm:p-6 lg:p-8 flex-shrink-0">
             <h1 className="text-4xl font-light tracking-wider text-center bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
-              Projetos
+              Produtividade
             </h1>
           </header>
           
           <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-4 pb-28 overflow-y-auto">
-              <div className="w-full max-w-md space-y-4">
-                  <QuickAccessCard />
-                  {!isClient ? (
-                     <div className="flex justify-center items-center h-48">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                     </div>
-                  ) : projects.length === 0 ? (
-                    <div className="text-center py-10 text-muted-foreground">
-                      <p>Nenhum projeto ainda.</p>
-                      <p className="text-sm">Clique em '+' para criar seu primeiro projeto.</p>
+              <Tabs defaultValue="projects" className="w-full max-w-md">
+                <TabsList className="grid w-full grid-cols-2 bg-gray-200 dark:bg-zinc-800">
+                  <TabsTrigger value="projects">Projetos</TabsTrigger>
+                  <TabsTrigger value="notes">Notas</TabsTrigger>
+                </TabsList>
+                <TabsContent value="projects" className="mt-4">
+                  <div className="w-full space-y-4">
+                      <QuickAccessCard />
+                      {!isClient ? (
+                        <div className="flex justify-center items-center h-48">
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : projects.length === 0 ? (
+                        <div className="text-center py-10 text-muted-foreground">
+                          <p>Nenhum projeto ainda.</p>
+                          <p className="text-sm">Clique em '+' para criar seu primeiro projeto.</p>
+                        </div>
+                      ) : (
+                        projects.map(project => (
+                          <ProjectCard 
+                            key={project.id}
+                            project={project}
+                            isLoading={loadingProjectId === project.id}
+                            isExpanded={expandedProjects.has(project.id)}
+                            onToggleExpand={handleToggleExpand}
+                            onToggleComplete={handleToggleComplete}
+                            onEdit={handleEditProject}
+                            onAiSplit={handleAiSplit}
+                            onDelete={handleDeleteProjectInitiate}
+                            onToggleSubtask={handleToggleSubtask}
+                          />
+                        ))
+                      )}
+                  </div>
+                </TabsContent>
+                <TabsContent value="notes" className="mt-4">
+                    <div className="w-full space-y-4">
+                         {!isClient ? (
+                            <div className="flex justify-center items-center h-48">
+                                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                            </div>
+                        ) : notes.length === 0 ? (
+                            <div className="text-center py-10 text-muted-foreground">
+                            <p>Nenhuma nota ainda.</p>
+                            <p className="text-sm">Clique em '+' para criar sua primeira nota.</p>
+                            </div>
+                        ) : (
+                           <div className="columns-2 gap-4">
+                             {notes.map(note => (
+                                <NoteCard 
+                                    key={note.id}
+                                    note={note}
+                                    onEdit={handleEditNote}
+                                    onDelete={handleDeleteNoteInitiate}
+                                />
+                            ))}
+                           </div>
+                        )}
                     </div>
-                  ) : (
-                    projects.map(project => (
-                      <ProjectCard 
-                        key={project.id}
-                        project={project}
-                        isLoading={loadingProjectId === project.id}
-                        isExpanded={expandedProjects.has(project.id)}
-                        onToggleExpand={handleToggleExpand}
-                        onToggleComplete={handleToggleComplete}
-                        onEdit={handleEdit}
-                        onAiSplit={handleAiSplit}
-                        onDelete={handleDeleteInitiate}
-                        onToggleSubtask={handleToggleSubtask}
-                      />
-                    ))
-                  )}
-              </div>
+                </TabsContent>
+              </Tabs>
           </main>
           
-          <Button asChild className="fixed z-20 bottom-28 right-6 w-16 h-16 rounded-full bg-gradient-to-r from-orange-400 to-pink-500 text-white shadow-lg transition-transform hover:scale-110 active:scale-100">
-            <Link href="/tasks/new">
-              <Plus size={32} />
-            </Link>
-          </Button>
+          <div className="fixed z-20 bottom-28 right-6">
+            <div className="relative flex flex-col items-center gap-2">
+                <div className={`transition-all duration-300 ease-in-out ${isFabOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                    <div className="flex flex-col items-center gap-2">
+                        <Button asChild variant="secondary" className="w-32 justify-start" onClick={() => setIsFabOpen(false)}>
+                            <Link href="/tasks/new">
+                                <ListTodo className="mr-2 h-4 w-4" /> Nova Tarefa
+                            </Link>
+                        </Button>
+                        <Button asChild variant="secondary" className="w-32 justify-start" onClick={() => setIsFabOpen(false)}>
+                            <Link href="/notes/new">
+                                <StickyNote className="mr-2 h-4 w-4" /> Nova Nota
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+                <Button 
+                    onClick={() => setIsFabOpen(!isFabOpen)}
+                    className="w-16 h-16 rounded-full bg-gradient-to-r from-orange-400 to-pink-500 text-white shadow-lg transition-transform hover:scale-110 active:scale-100"
+                >
+                    <Plus size={32} className={`transition-transform duration-300 ${isFabOpen ? 'rotate-45' : ''}`} />
+                </Button>
+            </div>
+          </div>
           
           <div className="flex-shrink-0">
             <BottomNav active="produtividade" />
@@ -241,16 +309,21 @@ export default function ProjectsPage() {
         </div>
       </div>
 
-      <AlertDialog open={projectToDelete !== null} onOpenChange={(open) => !open && setProjectToDelete(null)}>
+      <AlertDialog open={projectToDelete !== null || noteToDelete !== null} onOpenChange={(open) => {
+        if (!open) {
+          setProjectToDelete(null);
+          setNoteToDelete(null);
+        }
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-              Essa ação não pode ser desfeita. Isso irá deletar permanentemente o projeto.
+              Essa ação não pode ser desfeita. Isso irá deletar permanentemente o item.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setProjectToDelete(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => { setProjectToDelete(null); setNoteToDelete(null); }}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteConfirm}>Deletar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

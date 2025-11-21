@@ -42,5 +42,11 @@ service cloud.firestore {
       // No one can delete a shared list through the client.
       allow delete: if false;
     }
+
+    // /notes/{noteId}
+    match /notes/{noteId} {
+      allow read, delete: if isOwner(resource.data.userId);
+      allow create, update: if isOwner(request.resource.data.userId);
+    }
   }
 }
