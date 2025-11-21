@@ -17,17 +17,20 @@ service cloud.firestore {
 
     // /projects/{projectId}
     match /projects/{projectId} {
-      allow read, create, update, delete: if isOwner(resource.data.userId);
+      allow read, delete: if isOwner(resource.data.userId);
+      allow create, update: if isOwner(request.resource.data.userId);
     }
     
     // /transactions/{transactionId}
     match /transactions/{transactionId} {
-      allow read, create, update, delete: if isOwner(resource.data.userId);
+      allow read, delete: if isOwner(resource.data.userId);
+      allow create, update: if isOwner(request.resource.data.userId);
     }
 
     // /shoppingItems/{itemId}
     match /shoppingItems/{itemId} {
-      allow read, create, update, delete: if isOwner(resource.data.userId);
+      allow read, delete: if isOwner(resource.data.userId);
+      allow create, update: if isOwner(request.resource.data.userId);
     }
   }
 }
