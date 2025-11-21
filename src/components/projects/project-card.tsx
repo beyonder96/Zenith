@@ -60,13 +60,13 @@ export function ProjectCard({
                 project.completed ? "bg-green-500" : "bg-gradient-to-b from-orange-400 to-pink-500"
             )}></div>
             <CardContent className="p-4 ml-1.5">
-                <div className="flex items-center justify-between">
+                <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4 flex-grow min-w-0">
                         <div className="text-center w-12 flex-shrink-0">
                             <p className="text-2xl font-bold text-gray-800 dark:text-white">{day}</p>
                             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">{month}</p>
                         </div>
-                        <div className="flex-grow min-w-0">
+                        <div className="flex-grow min-w-0 pt-1">
                             <p className={cn("font-semibold text-gray-800 dark:text-white truncate", project.completed && "line-through")}>
                                 {project.title}
                             </p>
@@ -83,6 +83,18 @@ export function ProjectCard({
                            {project.completed ? <CheckCircle2 size={20} className="text-green-500" /> : <Circle size={20} className="text-gray-400" />}
                         </button>
                     </div>
+                </div>
+
+                <div className="pl-16 flex items-center justify-end gap-1 pt-2">
+                    <button onClick={() => onEdit(project.id)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        <Pencil size={18} />
+                    </button>
+                    <button onClick={() => onAiSplit(project.id)} disabled={isLoading} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700 disabled:cursor-not-allowed">
+                        {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                    </button>
+                    <button onClick={() => onDelete(project.id)} className="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-500/10">
+                        <Trash2 size={18} />
+                    </button>
                 </div>
 
                 <div 
@@ -115,17 +127,6 @@ export function ProjectCard({
                                 ))}
                             </div>
                         )}
-                         <div className="flex items-center justify-end gap-1 pl-16 pt-4">
-                            <button onClick={() => onEdit(project.id)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                                <Pencil size={18} />
-                            </button>
-                            <button onClick={() => onAiSplit(project.id)} disabled={isLoading} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700 disabled:cursor-not-allowed">
-                                {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
-                            </button>
-                            <button onClick={() => onDelete(project.id)} className="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-500/10">
-                                <Trash2 size={18} />
-                            </button>
-                        </div>
                     </div>
                 </div>
             </CardContent>
