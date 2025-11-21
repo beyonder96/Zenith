@@ -26,7 +26,7 @@ export default function SharedListPage({ params }: { params: { listId: string } 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const listId = params.listId;
+  const { listId } = params;
 
   useEffect(() => {
     if (!firestore || !listId) return;
