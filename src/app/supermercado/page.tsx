@@ -5,7 +5,7 @@ import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { ShoppingList, type ShoppingItem } from "@/components/shopping/shopping-list";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Trash2, Loader2, Link2 } from "lucide-react";
+import { Check, Trash2, Loader2, Link2, FileDown } from "lucide-react";
 import { useFirestore, useUser } from '@/firebase';
 import { collection, query, where, onSnapshot, doc, writeBatch, addDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -13,6 +13,8 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 export default function ShoppingPage() {
   const firestore = useFirestore();
@@ -189,38 +191,48 @@ export default function ShoppingPage() {
   return (
     <div className="relative min-h-screen w-full bg-background dark:bg-zinc-900 overflow-hidden">
        <div className="relative z-10 flex flex-col h-screen text-foreground">
-        <header className="p-4 sm:p-6 lg:p-8 flex-shrink-0">
+        <header className="p-4 sm:p-6 lg:p-8 flex-shrink-0 flex flex-col items-center gap-4">
           <h1 className="text-4xl font-light tracking-wider text-center bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
             Lista de Compras
           </h1>
+          <TooltipProvider>
+            <div className="flex items-center gap-2 bg-card dark:bg-zinc-800 p-2 rounded-full">
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={handleShareList} disabled={!hasPendingItems || isSharing}>
+                           {isSharing ? <Loader2 className="h-5 w-5 animate-spin"/> : <Link2 className="h-5 w-5"/>}
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Copiar Link da Lista</p>
+                    </TooltipContent>
+                </Tooltip>
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                         <Button variant="ghost" size="icon" onClick={handleClearCompleted} disabled={!hasCompletedItems}>
+                            <Trash2 className="h-5 w-5"/>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Limpar Itens Marcados</p>
+                    </TooltipContent>
+                </Tooltip>
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={handleFinishShopping} disabled={!hasCompletedItems}>
+                            <FileDown className="h-5 w-5"/>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Finalizar e Gerar Recibo (PDF)</p>
+                    </TooltipContent>
+                </Tooltip>
+            </div>
+          </TooltipProvider>
         </header>
         
         <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-4 pb-28 overflow-y-auto">
-            <div className="w-full max-w-md grid grid-cols-2 gap-4">
-                <Button 
-                    onClick={handleShareList} 
-                    disabled={!hasPendingItems || isSharing}
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold h-12 rounded-xl text-base disabled:bg-gray-500 disabled:opacity-50"
-                >
-                    {isSharing ? <Loader2 className="mr-2 h-5 w-5 animate-spin"/> : <Link2 className="mr-2 h-5 w-5"/>}
-                    Copiar Link
-                </Button>
-                <Button 
-                    onClick={handleClearCompleted} 
-                    disabled={!hasCompletedItems}
-                    className="w-full bg-red-500 hover:bg-red-600 text-white font-bold h-12 rounded-xl text-base disabled:bg-gray-500 disabled:opacity-50"
-                >
-                    <Trash2 className="mr-2 h-5 w-5"/> Limpar Marcados
-                </Button>
-                <Button 
-                    onClick={handleFinishShopping} 
-                    disabled={!hasCompletedItems}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold h-12 rounded-xl text-base disabled:bg-gray-500 disabled:opacity-50 col-span-2"
-                >
-                    <Check className="mr-2 h-5 w-5"/> Finalizar Compra e Gerar Recibo
-                </Button>
-            </div>
-
+            
             <Card className="w-full max-w-md bg-card dark:bg-zinc-800/50 border-none shadow-sm rounded-xl">
                 <CardContent className="p-4 text-center">
                     <p className="text-sm text-muted-foreground">Total Gasto na Compra</p>
