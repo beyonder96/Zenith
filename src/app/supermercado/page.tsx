@@ -195,40 +195,6 @@ export default function ShoppingPage() {
           <h1 className="text-4xl font-light tracking-wider text-center bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
             Lista de Compras
           </h1>
-          <TooltipProvider>
-            <div className="flex items-center gap-4">
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" onClick={handleShareList} disabled={!hasPendingItems || isSharing} className="w-16 h-16 bg-card dark:bg-zinc-800 rounded-full shadow-md">
-                           {isSharing ? <Loader2 className="h-7 w-7 animate-spin"/> : <Link2 className="h-7 w-7"/>}
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Copiar Link da Lista</p>
-                    </TooltipContent>
-                </Tooltip>
-                 <Tooltip>
-                    <TooltipTrigger asChild>
-                         <Button variant="ghost" size="icon" onClick={handleClearCompleted} disabled={!hasCompletedItems} className="w-16 h-16 bg-card dark:bg-zinc-800 rounded-full shadow-md">
-                            <Trash2 className="h-7 w-7"/>
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Limpar Itens Marcados</p>
-                    </TooltipContent>
-                </Tooltip>
-                 <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" onClick={handleFinishShopping} disabled={!hasCompletedItems} className="w-16 h-16 bg-card dark:bg-zinc-800 rounded-full shadow-md">
-                            <FileDown className="h-7 w-7"/>
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Finalizar e Gerar Recibo (PDF)</p>
-                    </TooltipContent>
-                </Tooltip>
-            </div>
-          </TooltipProvider>
         </header>
         
         <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-4 pb-28 overflow-y-auto">
@@ -247,6 +213,41 @@ export default function ShoppingPage() {
             <div className="w-full max-w-md">
                 <ShoppingList items={items} setItems={setItems} />
             </div>
+
+            <TooltipProvider>
+              <div className="flex items-center gap-4 pt-4">
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={handleShareList} disabled={!hasPendingItems || isSharing} className="w-16 h-16 bg-card dark:bg-zinc-800 rounded-full shadow-md">
+                            {isSharing ? <Loader2 className="h-7 w-7 animate-spin"/> : <Link2 className="h-7 w-7"/>}
+                          </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                          <p>Copiar Link da Lista</p>
+                      </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={handleClearCompleted} disabled={!hasCompletedItems} className="w-16 h-16 bg-card dark:bg-zinc-800 rounded-full shadow-md">
+                              <Trash2 className="h-7 w-7"/>
+                          </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                          <p>Limpar Itens Marcados</p>
+                      </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={handleFinishShopping} disabled={!hasCompletedItems} className="w-16 h-16 bg-card dark:bg-zinc-800 rounded-full shadow-md">
+                              <FileDown className="h-7 w-7"/>
+                          </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                          <p>Finalizar e Gerar Recibo (PDF)</p>
+                      </TooltipContent>
+                  </Tooltip>
+              </div>
+            </TooltipProvider>
         </main>
         
         <div className="flex-shrink-0">
