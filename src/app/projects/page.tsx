@@ -6,7 +6,7 @@ import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { ProjectCard, Project, Subtask } from "@/components/projects/project-card";
 import { QuickAccessCard } from "@/components/projects/quick-access-card";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, StickyNote, ListTodo } from "lucide-react";
+import { Plus, Loader2, StickyNote, ListTodo, Edit, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useUser } from '@/firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
@@ -20,6 +20,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
 import { getTaskBreakdown } from '../actions';
 import { useRouter } from 'next/navigation';
@@ -28,6 +36,9 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Note } from '@/components/notes/notes';
 import { NoteCard } from '@/components/notes/note-card';
+import { Badge } from '@/components/ui/badge';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -37,6 +48,7 @@ export default function ProjectsPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
+  const [viewingNote, setViewingNote] = useState<Note | null>(null);
   const [loadingProjectId, setLoadingProjectId] = useState<string | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const { toast } = useToast();
@@ -102,7 +114,8 @@ export default function ProjectsPage() {
   };
   
   const handleDeleteNoteInitiate = (id: string) => {
-    setNoteToDelete(id);
+    setViewingNote(null); // Fecha o modal de visualização
+    setTimeout(() => setNoteToDelete(id), 150); // Dá tempo para o modal fechar
   };
 
   const handleDeleteConfirm = () => {
@@ -135,6 +148,7 @@ export default function ProjectsPage() {
   };
 
   const handleEditNote = (id: string) => {
+    setViewingNote(null);
     router.push(`/notes/new?id=${id}`);
   };
   
@@ -267,8 +281,7 @@ export default function ProjectsPage() {
                                 <NoteCard 
                                     key={note.id}
                                     note={note}
-                                    onEdit={handleEditNote}
-                                    onDelete={handleDeleteNoteInitiate}
+                                    onView={() => setViewingNote(note)}
                                 />
                             ))}
                            </div>
@@ -308,6 +321,38 @@ export default function ProjectsPage() {
           </div>
         </div>
       </div>
+
+      <Dialog open={viewingNote !== null} onOpenChange={(open) => !open && setViewingNote(null)}>
+        {viewingNote && (
+          <DialogContent className="max-w-md w-full" onPointerDownOutside={(e) => e.preventDefault()}>
+            <DialogHeader className="flex flex-row justify-between items-center pr-12">
+              <DialogTitle className="truncate">{viewingNote.title}</DialogTitle>
+              <div className="flex gap-1">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditNote(viewingNote.id)}>
+                    <Edit size={16} />
+                </Button>
+                 <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-500 hover:bg-red-500/10" onClick={() => handleDeleteNoteInitiate(viewingNote.id)}>
+                    <Trash2 size={16} />
+                </Button>
+              </div>
+            </DialogHeader>
+            <DialogDescription asChild>
+                <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+                     <p className="text-sm text-foreground/80 whitespace-pre-wrap">{viewingNote.content}</p>
+                    <div className="flex flex-wrap gap-2">
+                        {viewingNote.tags?.map(tag => (
+                            <Badge key={tag} variant="secondary" className="font-normal">{tag}</Badge>
+                        ))}
+                    </div>
+                    <p className="text-xs text-foreground/50 text-right pt-4">
+                        Criado em: {format(parseISO(viewingNote.createdAt), "dd 'de' MMMM, yyyy", { locale: ptBR })}
+                    </p>
+                </div>
+            </DialogDescription>
+          </DialogContent>
+        )}
+      </Dialog>
+
 
       <AlertDialog open={projectToDelete !== null || noteToDelete !== null} onOpenChange={(open) => {
         if (!open) {
