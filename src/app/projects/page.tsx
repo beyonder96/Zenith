@@ -26,19 +26,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
 import { getTaskBreakdown } from '../actions';
 import { useRouter } from 'next/navigation';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Note } from '@/components/notes/notes';
 import { NoteCard } from '@/components/notes/note-card';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -53,7 +52,7 @@ export default function ProjectsPage() {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isFabOpen, setIsFabOpen] = useState(false);
+  const [activeView, setActiveView] = useState<'projects' | 'notes'>('projects');
 
   useEffect(() => {
     setIsClient(true);
@@ -229,12 +228,30 @@ export default function ProjectsPage() {
           </header>
           
           <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-4 pb-28 overflow-y-auto">
-              <Tabs defaultValue="projects" className="w-full max-w-md">
-                <TabsList className="grid w-full grid-cols-2 bg-gray-200 dark:bg-zinc-800">
-                  <TabsTrigger value="projects">Projetos</TabsTrigger>
-                  <TabsTrigger value="notes">Notas</TabsTrigger>
-                </TabsList>
-                <TabsContent value="projects" className="mt-4">
+              <div className="w-full max-w-md">
+                 <div className="flex w-full items-center justify-center gap-2 mb-4">
+                  <Button
+                    onClick={() => setActiveView('projects')}
+                    variant={activeView === 'projects' ? 'default' : 'ghost'}
+                    className={cn(
+                      'rounded-full px-6 transition-all',
+                      activeView === 'projects' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800'
+                    )}
+                  >
+                    Projetos
+                  </Button>
+                  <Button
+                    onClick={() => setActiveView('notes')}
+                    variant={activeView === 'notes' ? 'default' : 'ghost'}
+                    className={cn(
+                      'rounded-full px-6 transition-all',
+                      activeView === 'notes' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800'
+                    )}
+                  >
+                    Notas
+                  </Button>
+                </div>
+                {activeView === 'projects' && (
                   <div className="w-full space-y-4">
                       <QuickAccessCard />
                       {!isClient ? (
@@ -263,8 +280,8 @@ export default function ProjectsPage() {
                         ))
                       )}
                   </div>
-                </TabsContent>
-                <TabsContent value="notes" className="mt-4">
+                )}
+                {activeView === 'notes' && (
                     <div className="w-full space-y-4">
                          {!isClient ? (
                             <div className="flex justify-center items-center h-48">
@@ -287,33 +304,21 @@ export default function ProjectsPage() {
                            </div>
                         )}
                     </div>
-                </TabsContent>
-              </Tabs>
+                )}
+              </div>
           </main>
           
-          <div className="fixed z-20 bottom-28 right-6">
-            <div className="relative flex flex-col items-center gap-2">
-                <div className={`transition-all duration-300 ease-in-out ${isFabOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                    <div className="flex flex-col items-center gap-2">
-                        <Button asChild variant="secondary" className="w-32 justify-start" onClick={() => setIsFabOpen(false)}>
-                            <Link href="/tasks/new">
-                                <ListTodo className="mr-2 h-4 w-4" /> Nova Tarefa
-                            </Link>
-                        </Button>
-                        <Button asChild variant="secondary" className="w-32 justify-start" onClick={() => setIsFabOpen(false)}>
-                            <Link href="/notes/new">
-                                <StickyNote className="mr-2 h-4 w-4" /> Nova Nota
-                            </Link>
-                        </Button>
-                    </div>
-                </div>
-                <Button 
-                    onClick={() => setIsFabOpen(!isFabOpen)}
-                    className="w-16 h-16 rounded-full bg-gradient-to-r from-orange-400 to-pink-500 text-white shadow-lg transition-transform hover:scale-110 active:scale-100"
-                >
-                    <Plus size={32} className={`transition-transform duration-300 ${isFabOpen ? 'rotate-45' : ''}`} />
-                </Button>
-            </div>
+          <div className="fixed z-20 bottom-28 right-6 flex items-center gap-2">
+            <Button asChild variant="secondary" className="rounded-full shadow-lg">
+                <Link href="/tasks/new">
+                    <ListTodo className="mr-2 h-4 w-4" /> Nova Tarefa
+                </Link>
+            </Button>
+            <Button asChild variant="secondary" className="rounded-full shadow-lg">
+                <Link href="/notes/new">
+                    <StickyNote className="mr-2 h-4 w-4" /> Nova Nota
+                </Link>
+            </Button>
           </div>
           
           <div className="flex-shrink-0">
@@ -324,31 +329,38 @@ export default function ProjectsPage() {
 
       <Dialog open={viewingNote !== null} onOpenChange={(open) => !open && setViewingNote(null)}>
         {viewingNote && (
-          <DialogContent className="max-w-md w-full" onPointerDownOutside={(e) => e.preventDefault()}>
-            <DialogHeader className="flex flex-row justify-between items-center pr-12">
-              <DialogTitle className="truncate">{viewingNote.title}</DialogTitle>
-              <div className="flex gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditNote(viewingNote.id)}>
-                    <Edit size={16} />
-                </Button>
-                 <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-500 hover:bg-red-500/10" onClick={() => handleDeleteNoteInitiate(viewingNote.id)}>
-                    <Trash2 size={16} />
-                </Button>
-              </div>
-            </DialogHeader>
-            <DialogDescription asChild>
-                <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-                     <p className="text-sm text-foreground/80 whitespace-pre-wrap">{viewingNote.content}</p>
-                    <div className="flex flex-wrap gap-2">
-                        {viewingNote.tags?.map(tag => (
-                            <Badge key={tag} variant="secondary" className="font-normal">{tag}</Badge>
-                        ))}
-                    </div>
-                    <p className="text-xs text-foreground/50 text-right pt-4">
-                        Criado em: {format(parseISO(viewingNote.createdAt), "dd 'de' MMMM, yyyy", { locale: ptBR })}
-                    </p>
+          <DialogContent 
+            className={cn("max-w-md w-full p-0 border-none", viewingNote.color || 'bg-card')}
+            onPointerDownOutside={(e) => e.preventDefault()}
+          >
+            <div className='p-6 flex flex-col'>
+              <DialogHeader className="flex flex-row justify-between items-start pr-0">
+                <DialogTitle className="text-2xl font-bold pr-12">{viewingNote.title}</DialogTitle>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditNote(viewingNote.id)}>
+                      <Edit size={16} />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-500 hover:bg-red-500/10" onClick={() => handleDeleteNoteInitiate(viewingNote.id)}>
+                      <Trash2 size={16} />
+                  </Button>
                 </div>
-            </DialogDescription>
+              </DialogHeader>
+              <DialogDescription asChild>
+                  <div className="mt-4 space-y-4 max-h-[60vh] overflow-y-auto pr-4">
+                      <p className="text-foreground/90 whitespace-pre-wrap text-base">{viewingNote.content}</p>
+                      <div className="flex flex-wrap gap-2">
+                          {viewingNote.tags?.map(tag => (
+                              <Badge key={tag} variant="secondary" className="font-normal bg-black/10 dark:bg-white/10 border-transparent">{tag}</Badge>
+                          ))}
+                      </div>
+                  </div>
+              </DialogDescription>
+            </div>
+            <div className="p-6 pt-2 text-right">
+              <p className="text-xs text-foreground/60">
+                  Criado em: {format(parseISO(viewingNote.createdAt), "dd 'de' MMMM, yyyy", { locale: ptBR })}
+              </p>
+            </div>
           </DialogContent>
         )}
       </Dialog>
