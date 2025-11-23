@@ -9,6 +9,8 @@ import { TasksCard } from "@/components/dashboard/tasks-card";
 import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { RelationshipCard } from "@/components/dashboard/relationship-card";
+import { Heart, Ring } from "lucide-react";
 
 export default function Dashboard() {
   const { user, loading } = useUser();
@@ -51,6 +53,20 @@ export default function Dashboard() {
 
           <div className="w-full max-w-md space-y-4 animate-pop-in">
             <DateSelector />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <RelationshipCard 
+                title="Dias Casados"
+                icon={Ring}
+                storageKey="weddingDate"
+                unit="days"
+              />
+              <RelationshipCard 
+                title="Tempo Juntos"
+                icon={Heart}
+                storageKey="togetherDate"
+                unit="full"
+              />
+            </div>
             <FinanceCard />
             <ShoppingListCard />
             <TasksCard />
