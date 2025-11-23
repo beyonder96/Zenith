@@ -3,43 +3,75 @@
 import { Button } from "@/components/ui/button";
 import { useRouter } from 'next/navigation';
 import { useAuth } from "@/firebase";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useUser } from "@/firebase/auth/use-user";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const auth = useAuth();
   const { toast } = useToast();
-  const { user, loading } = useUser();
+  const { user, loading: userLoading } = useUser();
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
 
   useEffect(() => {
-    if (!loading && user) {
-      router.push('/dashboard');
+    if (auth) {
+      getRedirectResult(auth)
+        .then((result) => {
+          if (result) {
+            // User has successfully signed in.
+            router.push('/dashboard');
+          } else {
+            // This is the initial page load, not a redirect.
+            // Or the user is already logged in from a previous session.
+            if (!userLoading && user) {
+              router.push('/dashboard');
+            } else {
+              setIsAuthenticating(false);
+            }
+          }
+        })
+        .catch((error) => {
+          console.error("Redirect result error:", error);
+          toast({
+            variant: "destructive",
+            title: "Erro de Autenticação",
+            description: "Não foi possível completar o login após o redirecionamento.",
+          });
+          setIsAuthenticating(false);
+        });
+    } else {
+        if (!userLoading) {
+            setIsAuthenticating(false);
+        }
     }
-  }, [user, loading, router]);
+  }, [auth, router, toast, user, userLoading]);
 
   const handleGoogleLogin = async () => {
     if (!auth) return;
+    setIsAuthenticating(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
+      await signInWithRedirect(auth, provider);
+      // The user will be redirected, and the result will be handled by the useEffect.
     } catch (error: any) {
       console.error("Authentication error:", error);
       toast({
         variant: "destructive",
         title: "Erro de Autenticação",
-        description: error.message || "Não foi possível fazer login com o Google.",
+        description: error.message || "Não foi possível iniciar o login com o Google.",
       });
+      setIsAuthenticating(false);
     }
   };
 
-  if (loading || user) {
+  if (userLoading || isAuthenticating) {
     return (
        <div className="relative h-screen w-screen overflow-hidden bg-gray-100 dark:bg-black flex items-center justify-center p-4">
-         <p>Carregando...</p>
+         <Loader2 className="h-8 w-8 animate-spin" />
+         <p className="ml-2">Carregando...</p>
        </div>
     );
   }
