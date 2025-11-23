@@ -4,7 +4,6 @@
 import { useState, useEffect } from 'react';
 import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { ProjectCard, Project, Subtask } from "@/components/projects/project-card";
-import { QuickAccessCard } from "@/components/projects/quick-access-card";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2, StickyNote, ListTodo, Edit, Trash2, X } from "lucide-react";
 import Link from "next/link";
@@ -253,7 +252,6 @@ export default function ProjectsPage() {
                 </div>
                 {activeView === 'projects' && (
                   <div className="w-full space-y-4">
-                      <QuickAccessCard />
                       {!isClient ? (
                         <div className="flex justify-center items-center h-48">
                             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
