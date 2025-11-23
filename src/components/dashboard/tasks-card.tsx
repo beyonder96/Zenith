@@ -9,6 +9,7 @@ import type { Project } from "@/components/projects/project-card";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { FirestorePermissionError } from "@/firebase/errors";
 import { errorEmitter } from "@/firebase/error-emitter";
+import Link from "next/link";
 
 
 export function TasksCard() {
@@ -43,30 +44,32 @@ export function TasksCard() {
     const todayTasks = projects.filter(p => p.dueDate === today);
 
     return (
-        <Card className="bg-card text-card-foreground rounded-2xl">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <div className="flex flex-col">
-                    <CardTitle className="text-base font-semibold text-card-foreground/90">
-                        Tarefas do Dia
-                    </CardTitle>
-                </div>
-                <CheckCircle2 className="text-muted-foreground" size={20} />
-            </CardHeader>
-            <CardContent>
-                {!isClient ? (
-                    <div className="space-y-2">
-                        <Skeleton className="h-7 w-20" />
-                        <Skeleton className="h-3 w-16" />
+        <Link href="/projects" className="block transition-transform hover:scale-[1.02]">
+            <Card className="bg-card text-card-foreground rounded-2xl">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <div className="flex flex-col">
+                        <CardTitle className="text-base font-semibold text-card-foreground/90">
+                            Tarefas do Dia
+                        </CardTitle>
                     </div>
-                ) : todayTasks.length > 0 ? (
-                    <>
-                      <p className="text-2xl font-bold">{todayTasks.filter(t => t.completed).length}/{todayTasks.length}</p>
-                      <p className="text-xs text-muted-foreground">concluídas</p>
-                    </>
-                ) : (
-                    <p className="text-sm text-muted-foreground">Nenhuma tarefa para hoje.</p>
-                )}
-            </CardContent>
-        </Card>
+                    <CheckCircle2 className="text-muted-foreground" size={20} />
+                </CardHeader>
+                <CardContent>
+                    {!isClient ? (
+                        <div className="space-y-2">
+                            <Skeleton className="h-7 w-20" />
+                            <Skeleton className="h-3 w-16" />
+                        </div>
+                    ) : todayTasks.length > 0 ? (
+                        <>
+                        <p className="text-2xl font-bold">{todayTasks.filter(t => t.completed).length}/{todayTasks.length}</p>
+                        <p className="text-xs text-muted-foreground">concluídas</p>
+                        </>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">Nenhuma tarefa para hoje.</p>
+                    )}
+                </CardContent>
+            </Card>
+        </Link>
     );
 }
