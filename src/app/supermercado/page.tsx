@@ -196,11 +196,11 @@ export default function ShoppingPage() {
             Lista de Compras
           </h1>
           <TooltipProvider>
-            <div className="flex items-center gap-2 bg-card dark:bg-zinc-800 p-2 rounded-full">
+            <div className="flex items-center gap-4">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" onClick={handleShareList} disabled={!hasPendingItems || isSharing}>
-                           {isSharing ? <Loader2 className="h-5 w-5 animate-spin"/> : <Link2 className="h-5 w-5"/>}
+                        <Button variant="ghost" size="icon" onClick={handleShareList} disabled={!hasPendingItems || isSharing} className="w-14 h-14 bg-card dark:bg-zinc-800 rounded-full shadow-md">
+                           {isSharing ? <Loader2 className="h-6 w-6 animate-spin"/> : <Link2 className="h-6 w-6"/>}
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -209,8 +209,8 @@ export default function ShoppingPage() {
                 </Tooltip>
                  <Tooltip>
                     <TooltipTrigger asChild>
-                         <Button variant="ghost" size="icon" onClick={handleClearCompleted} disabled={!hasCompletedItems}>
-                            <Trash2 className="h-5 w-5"/>
+                         <Button variant="ghost" size="icon" onClick={handleClearCompleted} disabled={!hasCompletedItems} className="w-14 h-14 bg-card dark:bg-zinc-800 rounded-full shadow-md">
+                            <Trash2 className="h-6 w-6"/>
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -219,8 +219,8 @@ export default function ShoppingPage() {
                 </Tooltip>
                  <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" onClick={handleFinishShopping} disabled={!hasCompletedItems}>
-                            <FileDown className="h-5 w-5"/>
+                        <Button variant="ghost" size="icon" onClick={handleFinishShopping} disabled={!hasCompletedItems} className="w-14 h-14 bg-card dark:bg-zinc-800 rounded-full shadow-md">
+                            <FileDown className="h-6 w-6"/>
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent>
