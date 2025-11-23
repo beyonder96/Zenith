@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, doc, getDoc, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import type { Note } from '@/components/notes/notes';
@@ -96,14 +96,25 @@ export default function NewNotePage() {
         color,
         tags,
         userId: user.uid,
-        createdAt: new Date().toISOString(),
     };
     
     const operation = isEditing && noteId ? 'update' : 'create';
+    
+    let promise;
 
-    const promise = isEditing && noteId
-      ? setDoc(doc(firestore, 'notes', noteId), noteData, { merge: true })
-      : addDoc(collection(firestore, 'notes'), noteData);
+    if (isEditing && noteId) {
+        const docRef = doc(firestore, 'notes', noteId);
+        promise = updateDoc(docRef, {
+            ...noteData,
+            updatedAt: serverTimestamp(),
+        });
+    } else {
+        promise = addDoc(collection(firestore, 'notes'), {
+            ...noteData,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        });
+    }
 
     promise.then(() => {
         toast({
