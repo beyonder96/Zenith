@@ -5,22 +5,19 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import type { Project } from '@/components/projects/project-card';
+import type { Project, Subtask } from '@/components/projects/project-card';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
 import { collection, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
-
-type Importance = 'Baixa' | 'Média' | 'Alta';
-type RecurrenceFrequency = 'diario' | 'semanal' | 'mensal' | 'anual';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function NewTaskPage() {
   const router = useRouter();
@@ -31,10 +28,11 @@ export default function NewTaskPage() {
   
   const [projectId, setProjectId] = useState<string | null>(null);
   const [taskName, setTaskName] = useState('');
+  const [details, setDetails] = useState('');
   const [date, setDate] = useState<Date | undefined>();
-  const [importance, setImportance] = useState<Importance>('Baixa');
-  const [isRecurrent, setIsRecurrent] = useState(false);
-  const [recurrenceFrequency, setRecurrenceFrequency] = useState<RecurrenceFrequency>('mensal');
+  const [subtasks, setSubtasks] = useState<Subtask[]>([]);
+  const [newSubtaskText, setNewSubtaskText] = useState('');
+
 
   const isEditing = projectId !== null;
 
@@ -48,6 +46,8 @@ export default function NewTaskPage() {
             const projectToEdit = {id: docSnap.id, ...docSnap.data()} as Project;
             setProjectId(projectToEdit.id);
             setTaskName(projectToEdit.title);
+            setDetails(projectToEdit.details || '');
+            setSubtasks(projectToEdit.subtasks || []);
             if (projectToEdit.dueDate) {
                 setDate(parseISO(projectToEdit.dueDate));
             }
@@ -57,12 +57,23 @@ export default function NewTaskPage() {
     }
   }, [searchParams, firestore]);
 
+  const handleAddSubtask = () => {
+    if (newSubtaskText.trim() !== '') {
+        setSubtasks([...subtasks, { id: Date.now(), text: newSubtaskText, completed: false }]);
+        setNewSubtaskText('');
+    }
+  };
+
+  const handleRemoveSubtask = (id: number) => {
+    setSubtasks(subtasks.filter(sub => sub.id !== id));
+  };
+
+
   const handleSave = async () => {
     if (!taskName.trim()) {
       toast({
         variant: "destructive",
         title: "Nome da tarefa é obrigatório.",
-        description: "Por favor, dê um nome para sua tarefa.",
       });
       return;
     }
@@ -70,7 +81,6 @@ export default function NewTaskPage() {
         toast({
           variant: "destructive",
           title: "Data de conclusão é obrigatória.",
-          description: "Por favor, selecione uma data.",
         });
         return;
     }
@@ -81,9 +91,10 @@ export default function NewTaskPage() {
 
     const projectData = {
         title: taskName,
+        details: details,
         dueDate: format(date, 'yyyy-MM-dd'),
         completed: false,
-        subtasks: [],
+        subtasks: subtasks,
         userId: user.uid,
     };
     
@@ -96,7 +107,6 @@ export default function NewTaskPage() {
     promise.then(() => {
         toast({
             title: isEditing ? "Projeto atualizado!" : "Projeto criado!",
-            description: isEditing ? "Suas alterações foram salvas." : "O novo projeto foi adicionado à sua lista.",
         });
         router.push('/projects');
     }).catch(serverError => {
@@ -107,12 +117,6 @@ export default function NewTaskPage() {
         });
         errorEmitter.emit('permission-error', permissionError);
     });
-  };
-
-  const importanceColors = {
-    Baixa: 'bg-green-500 text-white border-green-500 hover:bg-green-600',
-    Média: 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600',
-    Alta: 'bg-red-500 text-white border-red-500 hover:bg-red-600'
   };
 
   return (
@@ -129,14 +133,53 @@ export default function NewTaskPage() {
 
       <main className="p-6 space-y-8">
         <div className="space-y-2">
-          <Label htmlFor="taskName">Tarefa</Label>
           <Input
             id="taskName"
-            placeholder="Ex: Preparar relatório trimestral"
+            placeholder="Nome da Tarefa"
             value={taskName}
             onChange={(e) => setTaskName(e.target.value)}
-            className="bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-md"
+            className="bg-card dark:bg-zinc-800 border-none rounded-md h-12 text-lg"
           />
+        </div>
+        
+        <div className="space-y-2">
+            <Textarea 
+                id="details"
+                placeholder="Adicionar detalhes"
+                value={details}
+                onChange={(e) => setDetails(e.target.value)}
+                className="bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-md"
+            />
+        </div>
+
+        <div className="space-y-4">
+            <Label>Subtarefas</Label>
+            <div className="space-y-2">
+                {subtasks.map(subtask => (
+                    <div key={subtask.id} className="flex items-center gap-2">
+                        <Input 
+                            value={subtask.text}
+                            onChange={(e) => setSubtasks(subtasks.map(s => s.id === subtask.id ? {...s, text: e.target.value} : s))}
+                            className="bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-md"
+                        />
+                        <Button variant="ghost" size="icon" onClick={() => handleRemoveSubtask(subtask.id)}>
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                    </div>
+                ))}
+            </div>
+            <div className="flex gap-2">
+                 <Input
+                    placeholder="Nova subtarefa"
+                    value={newSubtaskText}
+                    onChange={(e) => setNewSubtaskText(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddSubtask()}
+                    className="bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-md"
+                />
+                <Button onClick={handleAddSubtask} size="icon">
+                    <Plus />
+                </Button>
+            </div>
         </div>
 
         <div className="space-y-2">
@@ -164,60 +207,6 @@ export default function NewTaskPage() {
               />
             </PopoverContent>
           </Popover>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Importância</Label>
-          <div className="flex gap-2">
-            {(['Baixa', 'Média', 'Alta'] as Importance[]).map((level) => (
-              <Button
-                key={level}
-                variant={importance === level ? 'default' : 'outline'}
-                onClick={() => setImportance(level)}
-                className={cn(
-                  'flex-1',
-                  importance === level 
-                    ? importanceColors[level] 
-                    : 'bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 text-foreground'
-                )}
-              >
-                {level}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-4 p-4 bg-card dark:bg-zinc-800 rounded-md">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="recurrent-task" className="m-0">Tarefa Recorrente</Label>
-            <Switch
-              id="recurrent-task"
-              checked={isRecurrent}
-              onCheckedChange={setIsRecurrent}
-            />
-          </div>
-           {isRecurrent && (
-                <div className="space-y-2 pt-4 border-t border-border dark:border-zinc-700">
-                    <Label>Frequência</Label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {(['diario', 'semanal', 'mensal', 'anual'] as RecurrenceFrequency[]).map((freq) => (
-                            <Button
-                                key={freq}
-                                variant={recurrenceFrequency === freq ? 'default' : 'outline'}
-                                onClick={() => setRecurrenceFrequency(freq)}
-                                className={cn(
-                                'capitalize',
-                                recurrenceFrequency === freq 
-                                    ? 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600'
-                                    : 'bg-muted dark:bg-zinc-700 border-border dark:border-zinc-600 text-foreground hover:bg-accent dark:hover:bg-zinc-600 dark:text-white'
-                                )}
-                            >
-                                {freq}
-                            </Button>
-                        ))}
-                    </div>
-                </div>
-            )}
         </div>
       </main>
     </div>

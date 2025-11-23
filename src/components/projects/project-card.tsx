@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle2, Circle, Loader2, Pencil, Sparkles, Trash2, ChevronDown } from "lucide-react";
+import { CheckCircle2, Circle, Loader2, Pencil, Sparkles, Trash2, ChevronDown, AlignLeft } from "lucide-react";
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ export type Subtask = {
 export type Project = {
     id: string;
     title: string;
+    details?: string;
     dueDate: string; // YYYY-MM-DD
     completed: boolean;
     subtasks?: Subtask[];
@@ -50,6 +51,7 @@ export function ProjectCard({
     const month = format(date, 'MMM', { locale: ptBR }).toUpperCase();
     const fullDate = format(date, "d 'de' MMMM 'de' yyyy", { locale: ptBR });
     const hasSubtasks = project.subtasks && project.subtasks.length > 0;
+    const hasDetails = project.details && project.details.trim().length > 0;
 
     return (
         <Card className={cn(
@@ -71,11 +73,14 @@ export function ProjectCard({
                             <p className={cn("font-semibold text-gray-800 dark:text-white truncate", project.completed && "line-through")}>
                                 {project.title}
                             </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{fullDate}</p>
+                            <div className="flex items-center gap-2">
+                               <p className="text-sm text-gray-500 dark:text-gray-400">{fullDate}</p>
+                               {hasDetails && <AlignLeft size={14} className="text-gray-400" />}
+                            </div>
                         </div>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                        {hasSubtasks && (
+                        {(hasSubtasks || hasDetails) && (
                             <button onClick={() => onToggleExpand(project.id)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700">
                                 <ChevronDown size={20} className={cn("transition-transform duration-300", isExpanded && "rotate-180")} />
                             </button>
@@ -105,29 +110,34 @@ export function ProjectCard({
                     )}
                 >
                     <div className="overflow-hidden">
-                        {hasSubtasks && (
-                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700 pl-16 space-y-3">
-                                {project.subtasks.map(subtask => (
-                                    <div key={subtask.id} className="flex items-center gap-3">
-                                        <Checkbox
-                                            id={`subtask-${subtask.id}`}
-                                            checked={subtask.completed}
-                                            onCheckedChange={() => onToggleSubtask(project.id, subtask.id)}
-                                            className="border-gray-400"
-                                        />
-                                        <label
-                                            htmlFor={`subtask-${subtask.id}`}
-                                            className={cn(
-                                                "text-sm font-medium leading-none text-gray-600 dark:text-gray-300",
-                                                subtask.completed && "line-through text-gray-400 dark:text-gray-500"
-                                            )}
-                                        >
-                                            {subtask.text}
-                                        </label>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700 pl-16 space-y-3">
+                            {hasDetails && (
+                                <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{project.details}</p>
+                            )}
+                            {hasSubtasks && (
+                                <div className="space-y-3 pt-2">
+                                    {project.subtasks.map(subtask => (
+                                        <div key={subtask.id} className="flex items-center gap-3">
+                                            <Checkbox
+                                                id={`subtask-${subtask.id}`}
+                                                checked={subtask.completed}
+                                                onCheckedChange={() => onToggleSubtask(project.id, subtask.id)}
+                                                className="border-gray-400"
+                                            />
+                                            <label
+                                                htmlFor={`subtask-${subtask.id}`}
+                                                className={cn(
+                                                    "text-sm font-medium leading-none text-gray-600 dark:text-gray-300",
+                                                    subtask.completed && "line-through text-gray-400 dark:text-gray-500"
+                                                )}
+                                            >
+                                                {subtask.text}
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </CardContent>
