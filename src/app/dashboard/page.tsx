@@ -10,7 +10,7 @@ import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { RelationshipCard } from "@/components/dashboard/relationship-card";
-import { Heart, Ring } from "lucide-react";
+import { Heart, Gem } from "lucide-react";
 
 export default function Dashboard() {
   const { user, loading } = useUser();
@@ -56,7 +56,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <RelationshipCard 
                 title="Dias Casados"
-                icon={Ring}
+                icon={Gem}
                 storageKey="weddingDate"
                 unit="days"
               />
