@@ -120,7 +120,9 @@ export default function NewNotePage() {
         toast({
             title: isEditing ? "Nota atualizada!" : "Nota criada!",
         });
-        router.push('/projects');
+        if (!isEditing) {
+          router.back();
+        }
     }).catch(serverError => {
         const permissionError = new FirestorePermissionError({
             path: isEditing && noteId ? `notes/${noteId}` : 'notes',
@@ -135,7 +137,7 @@ export default function NewNotePage() {
     <div className="bg-background min-h-screen text-foreground">
       <header className="flex items-center justify-between p-4 border-b border-border">
         <Button variant="link" onClick={() => router.back()} className="text-orange-500">
-          Cancelar
+          Voltar
         </Button>
         <h1 className="font-bold text-lg">{isEditing ? 'Editar Nota' : 'Nova Nota'}</h1>
         <Button variant="link" onClick={handleSave} className="font-bold text-orange-500">
