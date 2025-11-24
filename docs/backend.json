@@ -114,6 +114,10 @@
         "category": {
           "type": "string"
         },
+        "completed": {
+          "type": "boolean",
+          "description": "Indicates if the transaction has been processed."
+        },
         "userId": {
           "type": "string"
         }
@@ -124,6 +128,7 @@
         "date",
         "type",
         "category",
+        "completed",
         "userId"
       ]
     },

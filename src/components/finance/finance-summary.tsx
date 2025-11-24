@@ -2,7 +2,7 @@
 
 import { useFirestore, useUser } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Hourglass } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '../ui/skeleton';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -16,6 +16,7 @@ type Transaction = {
   date: string;
   type: 'income' | 'expense';
   category: string;
+  completed: boolean;
 };
 
 export function FinanceSummary() {
@@ -50,12 +51,16 @@ export function FinanceSummary() {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
-  const currentMonthTransactions = transactions.filter(t => {
+  const completedTransactions = transactions.filter(t => t.completed);
+  const futureTransactions = transactions.filter(t => !t.completed);
+
+  const currentMonthTransactions = completedTransactions.filter(t => {
     const transactionDate = new Date(t.date);
     return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
   });
   
-  const balance = transactions.reduce((acc, t) => acc + t.amount, 0);
+  const balance = completedTransactions.reduce((acc, t) => acc + t.amount, 0);
+  const futureBalance = futureTransactions.reduce((acc, t) => acc + t.amount, 0);
   const income = currentMonthTransactions.reduce((acc, t) => (t.type === 'income' ? acc + t.amount : acc), 0);
   const expenses = currentMonthTransactions.reduce((acc, t) => (t.type === 'expense' ? acc + t.amount : acc), 0);
   
@@ -69,6 +74,12 @@ export function FinanceSummary() {
       amount: formatCurrency(balance),
       icon: Wallet,
       color: 'text-foreground',
+    },
+    {
+      title: 'Saldo Futuro',
+      amount: formatCurrency(futureBalance),
+      icon: Hourglass,
+      color: 'text-muted-foreground',
     },
     {
       title: 'Receitas do Mês',
@@ -86,8 +97,8 @@ export function FinanceSummary() {
 
   if (!isClient) {
     return (
-        <div className="grid gap-4 md:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, index) => (
+        <div className="grid grid-cols-2 gap-4">
+            {Array.from({ length: 4 }).map((_, index) => (
                 <Card key={index} className="bg-card/80 dark:bg-black/20 border-border dark:border-white/10 backdrop-blur-md text-card-foreground">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <Skeleton className="h-4 w-24" />
@@ -103,7 +114,7 @@ export function FinanceSummary() {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid grid-cols-2 gap-4">
       {summaryData.map((item, index) => (
         <Card key={index} className="bg-card/80 dark:bg-black/20 border-border dark:border-white/10 backdrop-blur-md text-card-foreground">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

@@ -26,6 +26,7 @@ type Transaction = {
   date: string;
   type: 'income' | 'expense';
   category: string;
+  completed: boolean;
   userId: string;
 };
 
@@ -50,6 +51,7 @@ export default function NewTransactionPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [type, setType] = useState<TransactionType>('expense');
   const [category, setCategory] = useState('');
+  const [isCompleted, setIsCompleted] = useState(true);
   const [isRecurrent, setIsRecurrent] = useState(false);
   const [recurrenceFrequency, setRecurrenceFrequency] = useState<RecurrenceFrequency>('mensal');
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
@@ -70,6 +72,7 @@ export default function NewTransactionPage() {
           setDate(parseISO(transactionToEdit.date));
           setType(transactionToEdit.type);
           setCategory(transactionToEdit.category);
+          setIsCompleted(transactionToEdit.completed);
         }
       };
       fetchTransaction();
@@ -106,6 +109,7 @@ export default function NewTransactionPage() {
       date: format(date, 'yyyy-MM-dd'),
       type,
       category: category || categories[type][0],
+      completed: isCompleted,
       userId: user.uid,
     };
     
@@ -243,6 +247,17 @@ export default function NewTransactionPage() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+        
+        <div className="space-y-4 p-4 bg-card dark:bg-zinc-800 rounded-md">
+            <div className="flex items-center justify-between">
+                <Label htmlFor="completed-transaction" className="m-0">Transação Efetuada</Label>
+                <Switch
+                    id="completed-transaction"
+                    checked={isCompleted}
+                    onCheckedChange={setIsCompleted}
+                />
+            </div>
         </div>
 
         <div className="space-y-4 p-4 bg-card dark:bg-zinc-800 rounded-md">

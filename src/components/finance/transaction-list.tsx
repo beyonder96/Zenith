@@ -14,6 +14,7 @@ import {
   Utensils,
   MoreHorizontal,
   ShoppingBag,
+  Check,
 } from 'lucide-react';
 import { useFirestore, useUser } from '@/firebase';
 import { useEffect, useState } from 'react';
@@ -33,9 +34,11 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { cn } from '@/lib/utils';
+import { Button } from '../ui/button';
 
 type Transaction = {
   id: string;
@@ -44,6 +47,7 @@ type Transaction = {
   date: string;
   type: 'income' | 'expense';
   category: string;
+  completed: boolean;
 };
 
 const categoryIcons: { [key: string]: React.ElementType } = {
@@ -89,7 +93,12 @@ export function TransactionList() {
     }
   }, [user, firestore]);
   
-  const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const sortedTransactions = [...transactions].sort((a, b) => {
+    if (a.completed !== b.completed) {
+      return a.completed ? 1 : -1;
+    }
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
 
   const handleEdit = (id: string) => {
     router.push(`/finance/new?id=${id}`);
@@ -99,6 +108,24 @@ export function TransactionList() {
     setTransactionToDelete(id);
   };
   
+  const handleMarkAsCompleted = (id: string) => {
+    if (!firestore) return;
+    const docRef = doc(firestore, "transactions", id);
+    const updateData = { completed: true };
+    updateDoc(docRef, updateData)
+      .then(() => {
+        toast({ title: "Transação efetuada!" });
+      })
+      .catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+            path: `transactions/${id}`,
+            operation: 'update',
+            requestResourceData: updateData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
+  };
+
   const handleDeleteConfirm = () => {
     if (transactionToDelete !== null && firestore) {
       const docRef = doc(firestore, "transactions", transactionToDelete);
@@ -157,7 +184,7 @@ export function TransactionList() {
                     onSwipeLeft={() => handleDeleteInitiate(transaction.id)}
                     onSwipeRight={() => handleEdit(transaction.id)}
                   >
-                    <div className="flex items-center w-full p-2 rounded-lg">
+                    <div className={cn("flex items-center w-full p-2 rounded-lg", !transaction.completed && "opacity-60")}>
                       <div className="p-3 bg-muted dark:bg-white/10 rounded-lg mr-4">
                         <Icon className="h-5 w-5 text-foreground" />
                       </div>
@@ -168,7 +195,7 @@ export function TransactionList() {
                         </p>
                       </div>
                       <div
-                        className={`font-semibold ${
+                        className={`font-semibold mr-4 ${
                           transaction.type === "income"
                             ? "text-cyan-500"
                             : "text-pink-500"
@@ -176,6 +203,11 @@ export function TransactionList() {
                       >
                         {transaction.type === 'expense' ? "-" : "+"}R$ {Math.abs(transaction.amount).toFixed(2).replace(".", ",")}
                       </div>
+                      {!transaction.completed && (
+                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => handleMarkAsCompleted(transaction.id)}>
+                            <Check className="h-5 w-5 text-green-500" />
+                        </Button>
+                      )}
                     </div>
                   </SwipeableListItem>
                 );
