@@ -41,18 +41,17 @@ function StatementContent() {
       return;
     }
 
-    // If auth is loaded and there's no user, then show error
-    if (!user) {
-      setError("Você precisa estar logado para ver o extrato.");
-      setLoading(false);
-      return;
-    }
-    
-    // Check for other required params
     if (!startDateParam || !endDateParam) {
         setError("Período inválido. Por favor, gere o extrato novamente.");
         setLoading(false);
         return;
+    }
+
+    // If auth is loaded and there's still no user, then show error
+    if (!user) {
+      setError("Você precisa estar logado para ver o extrato.");
+      setLoading(false);
+      return;
     }
     
     if (!firestore) {
@@ -103,7 +102,7 @@ function StatementContent() {
     window.print();
   };
 
-  if (loading) {
+  if (loading || userLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
