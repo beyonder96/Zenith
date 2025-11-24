@@ -108,7 +108,9 @@ export default function NewTaskPage() {
         toast({
             title: isEditing ? "Projeto atualizado!" : "Projeto criado!",
         });
-        router.back();
+        if (!isEditing) {
+          router.back();
+        }
     }).catch(serverError => {
         const permissionError = new FirestorePermissionError({
             path: isEditing && projectId ? `projects/${projectId}` : 'projects',
