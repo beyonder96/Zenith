@@ -19,6 +19,7 @@ type FinanceEntry = {
   amount: number;
   date: string;
   type: 'income' | 'expense';
+  completed: boolean;
 };
 
 export function FinanceCard() {
@@ -38,7 +39,7 @@ export function FinanceCard() {
       const q = query(
         collection(firestore, 'transactions'),
         where('userId', '==', user.uid),
-        where('date', '==', today)
+        where('date', '<=', today)
       );
       const unsubscribe = onSnapshot(
         q,
@@ -60,9 +61,10 @@ export function FinanceCard() {
       return () => unsubscribe();
     }
   }, [user, firestore]);
-
-  const hasActivity = entries.length > 0;
-  const dailyBalance = entries.reduce((acc, entry) => acc + entry.amount, 0);
+  
+  const dailyTransactions = entries.filter(e => e.date === new Date().toISOString().split('T')[0]);
+  const hasActivity = dailyTransactions.length > 0;
+  const dailyBalance = dailyTransactions.reduce((acc, entry) => entry.completed ? acc + entry.amount : acc, 0);
 
   const handleToggleVisibility = (e: React.MouseEvent) => {
     e.preventDefault(); // Impede a navegação do Link
