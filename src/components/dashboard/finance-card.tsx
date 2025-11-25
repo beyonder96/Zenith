@@ -35,20 +35,18 @@ export function FinanceCard() {
   useEffect(() => {
     setIsClient(true);
     if (user && firestore) {
-      const today = new Date().toISOString().split('T')[0];
       const q = query(
         collection(firestore, 'transactions'),
-        where('userId', '==', user.uid),
-        where('date', '<=', today)
+        where('userId', '==', user.uid)
       );
       const unsubscribe = onSnapshot(
         q,
         (snapshot) => {
-          const dailyEntries: FinanceEntry[] = [];
+          const allEntries: FinanceEntry[] = [];
           snapshot.forEach((doc) => {
-            dailyEntries.push({ id: doc.id, ...doc.data() } as FinanceEntry);
+            allEntries.push({ id: doc.id, ...doc.data() } as FinanceEntry);
           });
-          setEntries(dailyEntries);
+          setEntries(allEntries);
         },
         (serverError) => {
           const permissionError = new FirestorePermissionError({
@@ -62,9 +60,10 @@ export function FinanceCard() {
     }
   }, [user, firestore]);
   
-  const dailyTransactions = entries.filter(e => e.date === new Date().toISOString().split('T')[0]);
+  const today = new Date().toISOString().split('T')[0];
+  const dailyTransactions = entries.filter(e => e.date === today && e.completed);
   const hasActivity = dailyTransactions.length > 0;
-  const dailyBalance = dailyTransactions.reduce((acc, entry) => entry.completed ? acc + entry.amount : acc, 0);
+  const dailyBalance = dailyTransactions.reduce((acc, entry) => acc + entry.amount, 0);
 
   const handleToggleVisibility = (e: React.MouseEvent) => {
     e.preventDefault(); // Impede a navegação do Link
