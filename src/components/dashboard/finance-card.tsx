@@ -60,10 +60,8 @@ export function FinanceCard() {
     }
   }, [user, firestore]);
   
-  const today = new Date().toISOString().split('T')[0];
-  const dailyTransactions = entries.filter(e => e.date === today && e.completed);
-  const hasActivity = dailyTransactions.length > 0;
-  const dailyBalance = dailyTransactions.reduce((acc, entry) => acc + entry.amount, 0);
+  const completedTransactions = entries.filter(e => e.completed);
+  const totalBalance = completedTransactions.reduce((acc, entry) => acc + entry.amount, 0);
 
   const handleToggleVisibility = (e: React.MouseEvent) => {
     e.preventDefault(); // Impede a navegação do Link
@@ -76,7 +74,7 @@ export function FinanceCard() {
       <Card className="bg-card text-card-foreground rounded-2xl">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-base font-semibold text-card-foreground/90">
-            Saldo do Dia
+            Saldo Atual
           </CardTitle>
           <BarChart3 className="text-muted-foreground" size={20} />
         </CardHeader>
@@ -86,18 +84,18 @@ export function FinanceCard() {
               <Skeleton className="h-7 w-24" />
               <Skeleton className="h-3 w-16" />
             </div>
-          ) : hasActivity ? (
+          ) : completedTransactions.length > 0 ? (
             <div>
               <p
                 className={cn(
                   'text-2xl font-bold transition-all duration-300',
-                  dailyBalance >= 0 ? 'text-cyan-500' : 'text-pink-500',
+                  totalBalance >= 0 ? 'text-cyan-500' : 'text-pink-500',
                   !isBalanceVisible && 'blur-md select-none'
                 )}
               >
-                R$ {dailyBalance.toFixed(2).replace('.', ',')}
+                R$ {totalBalance.toFixed(2).replace('.', ',')}
               </p>
-              <p className="text-xs text-muted-foreground">Balanço de hoje</p>
+              <p className="text-xs text-muted-foreground">Balanço total</p>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">Nenhuma atividade registrada.</p>
