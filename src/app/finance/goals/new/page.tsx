@@ -31,6 +31,7 @@ export default function NewGoalPage() {
   const [targetAmount, setTargetAmount] = useState('');
   const [deadline, setDeadline] = useState<Date | undefined>();
   const [currentAmount, setCurrentAmount] = useState(0);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const isEditing = goalId !== null;
@@ -103,10 +104,18 @@ export default function NewGoalPage() {
     }
 
     promise.then(() => {
-        toast({
-            title: isEditing ? "Cofrinho atualizado!" : "Cofrinho criado!",
-        });
-        router.push('/finance/goals');
+        if (isEditing) {
+            toast({ title: "Cofrinho atualizado!" });
+            router.push('/finance/goals');
+        } else {
+            setShowSuccessAnimation(true);
+            setTimeout(() => {
+                router.push('/finance/goals');
+            }, 1500);
+            setTimeout(() => {
+              setShowSuccessAnimation(false)
+            }, 2000);
+        }
     }).catch(serverError => {
         const permissionError = new FirestorePermissionError({
             path: isEditing && goalId ? `goals/${goalId}` : 'goals',
@@ -144,6 +153,19 @@ export default function NewGoalPage() {
     });
   };
 
+
+  if (showSuccessAnimation) {
+    return (
+      <div className="fixed inset-0 bg-background z-50 flex items-center justify-center animate-fade-in">
+        <div className="success-checkmark__container">
+          <svg className="success-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle className="success-checkmark__circle" cx="26" cy="26" r="25" fill="none" />
+            <path className="success-checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+          </svg>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
