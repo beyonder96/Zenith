@@ -34,9 +34,24 @@ function StatementContent() {
   const startDateParam = searchParams.get('start');
   const endDateParam = searchParams.get('end');
   const statementType = searchParams.get('type') as 'detailed' | 'summary';
+  const period = searchParams.get('period');
+
+  const getPeriodText = () => {
+    if (!startDateParam || !endDateParam) return "Período inválido";
+
+    const formattedStart = format(parseISO(startDateParam), 'dd/MM/yy');
+    const formattedEnd = format(parseISO(endDateParam), 'dd/MM/yy');
+    
+    switch (period) {
+        case '3d': return 'Últimos 3 dias';
+        case '7d': return 'Últimos 7 dias';
+        case '2w': return 'Últimas 2 semanas';
+        case '1m': return 'Último mês';
+        default: return `De ${formattedStart} a ${formattedEnd}`;
+    }
+  };
 
   useEffect(() => {
-    // Wait until Firebase auth state is determined
     if (userLoading) {
       return;
     }
@@ -47,7 +62,6 @@ function StatementContent() {
         return;
     }
 
-    // If auth is loaded and there's still no user, then show error
     if (!user) {
       setError("Você precisa estar logado para ver o extrato.");
       setLoading(false);
@@ -121,7 +135,7 @@ function StatementContent() {
   }
 
   if (!startDateParam || !endDateParam) {
-    return null; // Should be handled by error state, but as a safeguard.
+    return null;
   }
 
   const income = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
@@ -143,7 +157,7 @@ function StatementContent() {
                  <div>
                     <h1 className="text-3xl font-bold">Extrato Financeiro</h1>
                     <p className="text-muted-foreground">
-                        Período de {format(parseISO(startDateParam), 'dd/MM/yy')} a {format(parseISO(endDateParam), 'dd/MM/yy')}
+                        {getPeriodText()}
                     </p>
                 </div>
                 <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Imprimir ou Salvar PDF</Button>
@@ -154,7 +168,7 @@ function StatementContent() {
         <div className="hidden print:block mb-8">
             <h1 className="text-3xl font-bold">Extrato Financeiro</h1>
             <p className="text-muted-foreground">
-                Período: {format(parseISO(startDateParam), 'dd/MM/yyyy', {locale: ptBR})} a {format(parseISO(endDateParam), 'dd/MM/yyyy', {locale: ptBR})}
+                Período: {getPeriodText()}
             </p>
             <p className="text-sm text-muted-foreground">Gerado em: {format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
         </div>
