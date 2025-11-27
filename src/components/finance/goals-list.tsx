@@ -17,7 +17,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import type { Goal } from '@/components/finance/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export default function GoalsPage() {
+export function GoalsList() {
   const router = useRouter();
   const firestore = useFirestore();
   const { user } = useUser();
@@ -116,23 +116,8 @@ export default function GoalsPage() {
 
   return (
     <>
-      <div className="bg-background min-h-screen">
-        <header className="p-4 sm:p-6 lg:p-8 flex items-center justify-between">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft />
-          </Button>
-          <h1 className="text-2xl font-light tracking-wider bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
-            Meus Cofrinhos
-          </h1>
-          <Button asChild variant="ghost" size="icon">
-            <Link href="/finance/goals/new">
-                <Plus />
-            </Link>
-          </Button>
-        </header>
-
-        <main className="p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-6 pb-28">
-            <Card className="w-full max-w-lg bg-card/80 dark:bg-black/20 border-none">
+      <div className="w-full max-w-lg space-y-4">
+            <Card className="w-full bg-card/80 dark:bg-black/20 border-none">
                 <CardHeader>
                     <CardTitle className="text-sm font-medium text-muted-foreground">Total Guardado</CardTitle>
                 </CardHeader>
@@ -150,7 +135,7 @@ export default function GoalsPage() {
                 </CardContent>
             </Card>
 
-            <div className="w-full max-w-lg space-y-4">
+            <div className="w-full space-y-4">
                 {loading ? (
                     <div className="flex justify-center items-center h-48">
                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -172,7 +157,6 @@ export default function GoalsPage() {
                     ))
                 )}
             </div>
-        </main>
       </div>
       {dialogState.isOpen && dialogState.goal && (
         <GoalTransactionDialog
