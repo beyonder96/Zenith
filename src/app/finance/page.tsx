@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { Plus, PiggyBank, LayoutGrid } from "lucide-react";
+import { Plus, PiggyBank, LayoutGrid, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { FinanceSummary } from "@/components/finance/finance-summary";
@@ -10,9 +10,11 @@ import { TransactionList } from "@/components/finance/transaction-list";
 import Link from "next/link";
 import { GoalsList } from "@/components/finance/goals-list";
 import { cn } from "@/lib/utils";
+import { StatementOptionsDialog } from "@/components/finance/statement-options-dialog";
 
 export default function FinancePage() {
   const [activeView, setActiveView] = useState<'overview' | 'goals'>('overview');
+  const [isStatementDialogOpen, setIsStatementDialogOpen] = useState(false);
 
   return (
     <>
@@ -29,6 +31,9 @@ export default function FinancePage() {
             <h1 className="text-4xl font-light tracking-wider bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
               Finanças
             </h1>
+            <Button variant="ghost" size="icon" onClick={() => setIsStatementDialogOpen(true)} className="text-foreground/80">
+                <FileText />
+            </Button>
           </header>
           
           <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-6 pb-28 overflow-y-auto">
@@ -81,6 +86,7 @@ export default function FinancePage() {
           </div>
         </div>
       </div>
+      <StatementOptionsDialog open={isStatementDialogOpen} onOpenChange={setIsStatementDialogOpen} />
     </>
   );
 }
