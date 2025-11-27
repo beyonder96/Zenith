@@ -19,6 +19,7 @@ type FinanceEntry = {
   amount: number;
   date: string;
   type: 'income' | 'expense';
+  category: string;
   completed: boolean;
 };
 
@@ -30,6 +31,10 @@ export function FinanceCard() {
   const [isBalanceVisible, setIsBalanceVisible] = useLocalStorage(
     'finance-balance-visible',
     true
+  );
+  const [includeSavingsInBalance] = useLocalStorage(
+    'savings-in-balance-visible',
+    false
   );
 
   useEffect(() => {
@@ -61,7 +66,12 @@ export function FinanceCard() {
   }, [user, firestore]);
   
   const completedTransactions = entries.filter(e => e.completed);
-  const totalBalance = completedTransactions.reduce((acc, entry) => acc + entry.amount, 0);
+
+  const transactionsToCalculate = includeSavingsInBalance
+    ? completedTransactions
+    : completedTransactions.filter(t => t.category !== 'Meta');
+
+  const totalBalance = transactionsToCalculate.reduce((acc, entry) => acc + entry.amount, 0);
 
   const handleToggleVisibility = (e: React.MouseEvent) => {
     e.preventDefault(); // Impede a navegação do Link

@@ -8,6 +8,8 @@ import { Skeleton } from '../ui/skeleton';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+
 
 type Transaction = {
   id: string;
@@ -24,6 +26,11 @@ export function FinanceSummary() {
   const { user } = useUser();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [includeSavingsInBalance] = useLocalStorage(
+    'savings-in-balance-visible',
+    false
+  );
+
 
   useEffect(() => {
     setIsClient(true);
@@ -52,17 +59,21 @@ export function FinanceSummary() {
   const currentYear = now.getFullYear();
 
   const completedTransactions = transactions.filter(t => t.completed);
-  const futureTransactions = transactions.filter(t => !t.completed);
+  const futureTransactions = transactions.filter(t => !t.completed && t.category !== 'Meta');
 
-  const currentMonthTransactions = completedTransactions.filter(t => {
+  const transactionsToCalculate = includeSavingsInBalance
+    ? completedTransactions
+    : completedTransactions.filter(t => t.category !== 'Meta');
+  
+  const currentMonthTransactions = transactions.filter(t => {
     const transactionDate = new Date(t.date);
     return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
   });
   
-  const balance = completedTransactions.reduce((acc, t) => acc + t.amount, 0);
+  const balance = transactionsToCalculate.reduce((acc, t) => acc + t.amount, 0);
   const futureBalance = futureTransactions.reduce((acc, t) => acc + t.amount, 0);
-  const income = currentMonthTransactions.reduce((acc, t) => (t.type === 'income' ? acc + t.amount : acc), 0);
-  const expenses = currentMonthTransactions.reduce((acc, t) => (t.type === 'expense' ? acc + t.amount : acc), 0);
+  const income = currentMonthTransactions.reduce((acc, t) => (t.type === 'income' && t.category !== 'Meta' ? acc + t.amount : acc), 0);
+  const expenses = currentMonthTransactions.reduce((acc, t) => (t.type === 'expense' && t.category !== 'Meta' ? acc + t.amount : acc), 0);
   
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });

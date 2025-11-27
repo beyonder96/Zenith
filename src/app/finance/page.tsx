@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { Plus, PiggyBank, LayoutGrid, FileText } from "lucide-react";
+import { Plus, PiggyBank, LayoutGrid, FileText, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { FinanceSummary } from "@/components/finance/finance-summary";
@@ -11,10 +11,23 @@ import Link from "next/link";
 import { GoalsList } from "@/components/finance/goals-list";
 import { cn } from "@/lib/utils";
 import { StatementOptionsDialog } from "@/components/finance/statement-options-dialog";
+import { SavingsList } from "@/components/finance/savings-list";
 
 export default function FinancePage() {
-  const [activeView, setActiveView] = useState<'overview' | 'goals'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'goals' | 'savings'>('overview');
   const [isStatementDialogOpen, setIsStatementDialogOpen] = useState(false);
+
+  const getFabLink = () => {
+    switch (activeView) {
+      case 'goals':
+        return "/finance/goals/new";
+      case 'savings':
+        return "/finance/goals"; // Maybe link to goals page to deposit
+      case 'overview':
+      default:
+        return "/finance/new";
+    }
+  }
 
   return (
     <>
@@ -43,7 +56,7 @@ export default function FinancePage() {
                         onClick={() => setActiveView('overview')}
                         variant={activeView === 'overview' ? 'default' : 'ghost'}
                         className={cn(
-                        'rounded-full px-6 transition-all flex items-center gap-2',
+                        'rounded-full px-4 sm:px-6 transition-all flex items-center gap-2 text-xs sm:text-sm',
                         activeView === 'overview' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800'
                         )}
                     >
@@ -53,11 +66,21 @@ export default function FinancePage() {
                         onClick={() => setActiveView('goals')}
                         variant={activeView === 'goals' ? 'default' : 'ghost'}
                         className={cn(
-                        'rounded-full px-6 transition-all flex items-center gap-2',
+                        'rounded-full px-4 sm:px-6 transition-all flex items-center gap-2 text-xs sm:text-sm',
                         activeView === 'goals' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800'
                         )}
                     >
                         <PiggyBank size={16} /> Metas
+                    </Button>
+                     <Button
+                        onClick={() => setActiveView('savings')}
+                        variant={activeView === 'savings' ? 'default' : 'ghost'}
+                        className={cn(
+                        'rounded-full px-4 sm:px-6 transition-all flex items-center gap-2 text-xs sm:text-sm',
+                        activeView === 'savings' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800'
+                        )}
+                    >
+                        <Landmark size={16} /> Poupança
                     </Button>
                 </div>
 
@@ -72,11 +95,15 @@ export default function FinancePage() {
                 {activeView === 'goals' && (
                    <GoalsList />
                 )}
+                
+                {activeView === 'savings' && (
+                    <SavingsList />
+                )}
             </div>
           </main>
           
           <Button asChild className="fixed z-20 bottom-28 right-6 w-16 h-16 rounded-full bg-gradient-to-r from-orange-400 to-pink-500 text-white shadow-lg transition-transform hover:scale-110 active:scale-100">
-            <Link href={activeView === 'goals' ? "/finance/goals/new" : "/finance/new"}>
+            <Link href={getFabLink()}>
               <Plus size={32} />
             </Link>
           </Button>
