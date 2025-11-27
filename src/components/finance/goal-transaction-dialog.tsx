@@ -38,7 +38,7 @@ export function GoalTransactionDialog({ goal, type, onClose, onConfirm }: GoalTr
         <DialogHeader>
           <DialogTitle className="capitalize">{type === 'deposit' ? 'Depositar' : 'Resgatar'}</DialogTitle>
           <DialogDescription>
-            {type === 'deposit' ? 'Quanto você quer adicionar ao cofrinho' : 'Quanto você quer retirar do cofrinho'} "{goal.name}"?
+            {type === 'deposit' ? 'Quanto você quer adicionar à meta' : 'Quanto você quer retirar da meta'} "{goal.name}"?
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">

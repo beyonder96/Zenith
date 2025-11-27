@@ -57,7 +57,7 @@ export default function FinancePage() {
                         activeView === 'goals' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800'
                         )}
                     >
-                        <PiggyBank size={16} /> Cofrinhos
+                        <PiggyBank size={16} /> Metas
                     </Button>
                 </div>
 

@@ -105,7 +105,7 @@ export default function NewGoalPage() {
 
     promise.then(() => {
         if (isEditing) {
-            toast({ title: "Cofrinho atualizado!" });
+            toast({ title: "Meta atualizada!" });
             router.push('/finance/goals');
         } else {
             setShowSuccessAnimation(true);
@@ -133,7 +133,7 @@ export default function NewGoalPage() {
         toast({
             variant: "destructive",
             title: "Não é possível excluir",
-            description: "Resgate o valor do cofrinho antes de excluí-lo.",
+            description: "Resgate o valor da meta antes de excluí-la.",
         });
         setIsDeleteDialogOpen(false);
         return;
@@ -141,7 +141,7 @@ export default function NewGoalPage() {
 
     deleteDoc(doc(firestore, 'goals', goalId)).then(() => {
         toast({
-            title: "Cofrinho excluído!",
+            title: "Meta excluída!",
         });
         router.push('/finance/goals');
     }).catch(serverError => {
@@ -174,7 +174,7 @@ export default function NewGoalPage() {
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft />
         </Button>
-        <h1 className="font-bold text-lg">{isEditing ? 'Editar Cofrinho' : 'Novo Cofrinho'}</h1>
+        <h1 className="font-bold text-lg">{isEditing ? 'Editar Meta' : 'Nova Meta'}</h1>
         <Button variant="link" onClick={handleSave} className="font-bold text-orange-500">
           Salvar
         </Button>
@@ -182,7 +182,7 @@ export default function NewGoalPage() {
 
       <main className="p-6 space-y-8">
         <div className="space-y-2">
-            <Label htmlFor="name">Nome do Cofrinho</Label>
+            <Label htmlFor="name">Nome da Meta</Label>
             <Input
                 id="name"
                 placeholder="Ex: Viagem de Férias"
@@ -235,7 +235,7 @@ export default function NewGoalPage() {
 
         {isEditing && (
              <Button variant="destructive" className="w-full" onClick={() => setIsDeleteDialogOpen(true)}>
-                <Trash2 className="mr-2 h-4 w-4" /> Excluir Cofrinho
+                <Trash2 className="mr-2 h-4 w-4" /> Excluir Meta
             </Button>
         )}
       </main>
@@ -245,7 +245,7 @@ export default function NewGoalPage() {
             <AlertDialogHeader>
             <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-                Esta ação não pode ser desfeita. Isso irá deletar permanentemente este cofrinho.
+                Esta ação não pode ser desfeita. Isso irá deletar permanentemente esta meta.
             </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

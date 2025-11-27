@@ -72,7 +72,7 @@ export function GoalsList() {
       toast({
         variant: 'destructive',
         title: 'Valor de resgate inválido',
-        description: 'Você não pode resgatar mais do que o valor atual no cofrinho.',
+        description: 'Você não pode resgatar mais do que o valor atual na meta.',
       });
       return;
     }
@@ -84,11 +84,11 @@ export function GoalsList() {
   
         // 2. Create a corresponding financial transaction
         const transactionData = {
-          description: `${type === 'deposit' ? 'Depósito' : 'Resgate'} no cofrinho: ${goal.name}`,
+          description: `${type === 'deposit' ? 'Depósito' : 'Resgate'} na meta: ${goal.name}`,
           amount: type === 'deposit' ? -amount : amount, // Deposit is an expense, withdraw is income
           date: format(new Date(), 'yyyy-MM-dd'),
           type: type === 'deposit' ? 'expense' : 'income',
-          category: 'Cofrinho',
+          category: 'Meta',
           completed: true,
           userId: user.uid,
         };
@@ -142,8 +142,8 @@ export function GoalsList() {
                     </div>
                 ) : goals.length === 0 ? (
                     <div className="text-center py-16 text-muted-foreground bg-card/50 rounded-xl">
-                        <p className="font-semibold">Nenhum cofrinho por aqui!</p>
-                        <p className="text-sm">Clique no botão '+' para criar seu primeiro cofrinho.</p>
+                        <p className="font-semibold">Nenhuma meta por aqui!</p>
+                        <p className="text-sm">Clique no botão '+' para criar sua primeira meta.</p>
                     </div>
                 ) : (
                     goals.map(goal => (
