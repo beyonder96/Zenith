@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import type { Goal } from '@/components/finance/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function GoalsPage() {
   const router = useRouter();
