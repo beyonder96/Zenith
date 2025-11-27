@@ -238,7 +238,7 @@ export default function ProjectsPage() {
                       activeView === 'projects' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800'
                     )}
                   >
-                    Projetos
+                    Tarefas
                   </Button>
                   <Button
                     onClick={() => setActiveView('notes')}
@@ -387,3 +387,5 @@ export default function ProjectsPage() {
     </>
   );
 }
+
+    
