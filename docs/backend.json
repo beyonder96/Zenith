@@ -243,6 +243,41 @@
         "userId",
         "createdAt"
       ]
+    },
+    "Goal": {
+      "title": "Goal",
+      "description": "Represents a user's financial goal.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the financial goal."
+        },
+        "targetAmount": {
+          "type": "number",
+          "description": "The target amount to be saved."
+        },
+        "currentAmount": {
+          "type": "number",
+          "description": "The amount currently saved."
+        },
+        "deadline": {
+          "type": "string",
+          "format": "date",
+          "description": "The deadline to reach the goal."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns the goal."
+        }
+      },
+      "required": [
+        "name",
+        "targetAmount",
+        "currentAmount",
+        "deadline",
+        "userId"
+      ]
     }
   },
   "auth": {
@@ -286,6 +321,12 @@
         "$ref": "#/backend/entities/Note"
       },
       "description": "Stores user notes."
+    },
+    "/goals/{goalId}": {
+      "schema": {
+        "$ref": "#/backend/entities/Goal"
+      },
+      "description": "Stores user financial goals."
     }
   }
 }
