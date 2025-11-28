@@ -30,7 +30,7 @@ export function FinanceCard() {
   const [isClient, setIsClient] = useState(false);
   const [isBalanceVisible, setIsBalanceVisible] = useLocalStorage(
     'finance-balance-visible',
-    true
+    false
   );
   const [includeSavingsInBalance] = useLocalStorage(
     'savings-in-balance-visible',
