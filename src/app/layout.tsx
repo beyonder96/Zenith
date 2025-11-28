@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { Inter } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { NotificationManager } from '@/components/notifications/notification-manager';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -33,6 +34,7 @@ export default function RootLayout({
           >
             {children}
             <Toaster />
+            <NotificationManager />
           </ThemeProvider>
         </FirebaseClientProvider>
       </body>
