@@ -104,7 +104,14 @@ export function Wishlist() {
                 <Card key={item.id} className="w-full bg-card/80 dark:bg-black/20 border-border dark:border-white/10 backdrop-blur-sm overflow-hidden">
                     <CardContent className="p-0 flex">
                        <div className="w-1/3 flex items-center justify-center bg-white/5 p-2">
-                         <Image src={item.imageUrl} alt={item.name} width={120} height={120} className="object-contain" />
+                         <Image 
+                            src={item.imageUrl} 
+                            alt={item.name} 
+                            width={120} 
+                            height={120} 
+                            className="object-contain"
+                            data-ai-hint={item.name.split(' ').slice(0, 2).join(' ')}
+                         />
                        </div>
                         <div className="p-4 flex-1 flex flex-col justify-between">
                             <div>

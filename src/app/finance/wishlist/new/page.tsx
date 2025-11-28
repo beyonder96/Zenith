@@ -49,10 +49,14 @@ export default function NewWishlistItemPage() {
     setIsFetching(false);
 
     if (result.success && result.productInfo) {
-      const { name, price, imageUrl } = result.productInfo;
+      const { name, price } = result.productInfo;
       setName(name);
       setPrice(String(price));
-      setImageUrl(imageUrl);
+      
+      // Generate a placeholder image URL based on the product name
+      const seed = name.replace(/\s+/g, '-').toLowerCase();
+      setImageUrl(`https://picsum.photos/seed/${seed}/400/400`);
+
       toast({ title: 'Informações do produto extraídas com sucesso!' });
     } else {
       toast({ variant: 'destructive', title: 'Falha ao extrair', description: result.error || 'Não foi possível buscar as informações do link.' });
