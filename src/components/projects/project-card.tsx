@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle2, Circle, Loader2, Pencil, Sparkles, Trash2, ChevronDown, AlignLeft } from "lucide-react";
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isPast, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 
@@ -53,21 +53,25 @@ export function ProjectCard({
     const hasSubtasks = project.subtasks && project.subtasks.length > 0;
     const hasDetails = project.details && project.details.trim().length > 0;
 
+    const isOverdue = !project.completed && isPast(date) && !isToday(date);
+
+
     return (
         <Card className={cn(
             "w-full max-w-md bg-white dark:bg-zinc-800 border-none shadow-sm rounded-xl relative overflow-hidden transition-all",
-            project.completed && "opacity-60"
+            project.completed && "opacity-60",
+            isOverdue && "animate-pulse-glow"
         )}>
             <div className={cn(
                 "absolute left-0 top-0 bottom-0 w-1.5",
-                project.completed ? "bg-green-500" : "bg-gradient-to-b from-orange-400 to-pink-500"
+                project.completed ? "bg-green-500" : isOverdue ? "bg-red-500" : "bg-gradient-to-b from-orange-400 to-pink-500"
             )}></div>
             <CardContent className="p-4 ml-1.5">
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4 flex-grow min-w-0">
-                        <div className="text-center w-12 flex-shrink-0">
-                            <p className="text-2xl font-bold text-gray-800 dark:text-white">{day}</p>
-                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">{month}</p>
+                        <div className={cn("text-center w-12 flex-shrink-0 rounded-md p-1", isOverdue && "bg-red-500/10")}>
+                            <p className={cn("text-2xl font-bold", isOverdue ? "text-red-500" : "text-gray-800 dark:text-white")}>{day}</p>
+                            <p className={cn("text-xs font-semibold", isOverdue ? "text-red-500/80" : "text-gray-500 dark:text-gray-400")}>{month}</p>
                         </div>
                         <div className="flex-grow min-w-0 pt-1">
                             <p className={cn("font-semibold text-gray-800 dark:text-white truncate", project.completed && "line-through")}>
