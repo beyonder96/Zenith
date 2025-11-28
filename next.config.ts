@@ -33,6 +33,12 @@ const nextConfig: NextConfig = {
         hostname: '**.media-amazon.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'http2.mlstatic.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
