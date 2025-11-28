@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useFirestore, useUser } from '@/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -80,9 +80,7 @@ function StatementContent() {
       try {
         const q = query(
           collection(firestore, 'transactions'),
-          where('userId', '==', user.uid),
-          where('date', '>=', startDateParam),
-          where('date', '<=', endDateParam) 
+          where('userId', '==', user.uid)
         );
 
         const querySnapshot = await getDocs(q);
@@ -90,8 +88,16 @@ function StatementContent() {
         querySnapshot.forEach((doc) => {
           fetchedTransactions.push({ id: doc.id, ...doc.data() } as Transaction);
         });
+        
+        const start = parseISO(startDateParam);
+        const end = parseISO(endDateParam);
+        end.setHours(23, 59, 59, 999); // Include the whole end day
 
-        setTransactions(fetchedTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+        const filteredTransactions = fetchedTransactions.filter(t => 
+            isWithinInterval(parseISO(t.date), { start, end })
+        );
+
+        setTransactions(filteredTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
       } catch (err: any) {
         console.error(err);
          if (err.code === 'permission-denied') {
