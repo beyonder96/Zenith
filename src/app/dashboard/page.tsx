@@ -54,7 +54,6 @@ export default function Dashboard() {
 
           <div className="w-full max-w-md space-y-4 animate-pop-in">
             <DateSelector />
-            <NextEventCard />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <RelationshipCard 
                 title="Dias Casados"
