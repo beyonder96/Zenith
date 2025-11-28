@@ -8,10 +8,18 @@ export const useUser = () => {
   const auth = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (!auth) {
-      setLoading(false);
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!auth || !isClient) {
+      // Defer auth state observation until on the client and auth is available
+      if (isClient) {
+        setLoading(false);
+      }
       return;
     }
 
@@ -21,7 +29,8 @@ export const useUser = () => {
     });
 
     return () => unsubscribe();
-  }, [auth]);
+  }, [auth, isClient]);
 
-  return { user, loading };
+  // Return a loading state that accounts for both client hydration and auth state
+  return { user, loading: loading || !isClient };
 };
