@@ -196,11 +196,11 @@ export function TransactionList() {
                       </div>
                       <div className="flex items-center flex-shrink-0 ml-4">
                           <div
-                            className={`font-semibold w-24 text-right ${
+                            className={cn('font-semibold text-right text-nowrap',
                               transaction.type === "income"
                                 ? "text-cyan-500"
                                 : "text-pink-500"
-                            }`}
+                            )}
                           >
                             {transaction.type === 'expense' ? "-" : "+"}R$ {Math.abs(transaction.amount).toFixed(2).replace(".", ",")}
                           </div>
