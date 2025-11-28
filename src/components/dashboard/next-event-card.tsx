@@ -84,6 +84,7 @@ export function NextEventCard() {
     const daysLeft = differenceInDays(eventDate, new Date());
 
     const daysText = () => {
+        if (daysLeft < 0) return "Evento passado";
         if (daysLeft === 0) return "É Hoje!";
         if (daysLeft === 1) return "Falta 1 dia";
         return <>Faltam <AnimatedNumber n={daysLeft} /> dias</>;
@@ -91,7 +92,7 @@ export function NextEventCard() {
 
     return (
       <div>
-        <div className="text-4xl font-bold text-cyan-400">
+        <div className="text-4xl font-bold text-cyan-400 flex items-center gap-1.5">
           {daysLeft >= 1 ? daysText() : "É Hoje!"}
         </div>
         <p className="text-xs text-muted-foreground truncate" title={nextEvent.title}>
