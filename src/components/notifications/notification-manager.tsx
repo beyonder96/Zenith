@@ -5,33 +5,33 @@ import { useFirestore, useUser } from '@/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { isToday, isTomorrow, parseISO } from 'date-fns';
 import type { Project } from '../projects/project-card';
-import { BellRing } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useNotifications } from '@/context/notification-context';
 
 function requestNotificationPermission() {
-  if (!("Notification" in window)) {
-    console.log("Este navegador não suporta notificações de desktop");
-  } else if (Notification.permission !== "denied") {
-    Notification.requestPermission();
+  if (typeof window !== 'undefined' && "Notification" in window) {
+    if (Notification.permission !== "denied") {
+      Notification.requestPermission();
+    }
   }
 }
 
 function showNotification(title: string, body: string) {
-    if (Notification.permission === "granted") {
-        new Notification(title, {
-            body: body,
-            icon: '/favicon.ico', // Opcional: adicione um ícone
-        });
+    if (typeof window !== 'undefined' && "Notification" in window) {
+        if (Notification.permission === "granted") {
+            new Notification(title, {
+                body: body,
+                icon: '/favicon.ico',
+            });
+        }
     }
 }
-
 
 export function NotificationManager() {
   const { user } = useUser();
   const firestore = useFirestore();
   const [notifiedTasks, setNotifiedTasks] = useState<Set<string>>(new Set());
+  const { addNotification } = useNotifications();
 
-  // Solicita permissão assim que o componente é montado no cliente
   useEffect(() => {
     requestNotificationPermission();
   }, []);
@@ -54,7 +54,7 @@ export function NotificationManager() {
         const taskId = project.id;
 
         if (notifiedTasks.has(taskId)) {
-          return; // Already notified for this task in this session
+          return; 
         }
 
         let notificationTitle = '';
@@ -69,8 +69,14 @@ export function NotificationManager() {
         }
 
         if (notificationTitle) {
-          // Usa a notificação nativa do navegador
           showNotification(notificationTitle, notificationDescription);
+          addNotification({
+            id: `task-${taskId}-${Date.now()}`,
+            title: notificationTitle,
+            body: notificationDescription,
+            read: false,
+            timestamp: new Date().toISOString(),
+          });
           newNotifiedTasks.add(taskId);
         }
       });
@@ -80,7 +86,7 @@ export function NotificationManager() {
 
     return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, firestore]);
+  }, [user, firestore, addNotification]);
 
-  return null; // This component doesn't render anything
+  return null;
 }
