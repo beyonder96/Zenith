@@ -3,16 +3,38 @@
 import { useEffect, useState } from 'react';
 import { useFirestore, useUser } from '@/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { useToast } from '@/hooks/use-toast';
 import { isToday, isTomorrow, parseISO } from 'date-fns';
 import type { Project } from '../projects/project-card';
 import { BellRing } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+function requestNotificationPermission() {
+  if (!("Notification" in window)) {
+    console.log("Este navegador não suporta notificações de desktop");
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission();
+  }
+}
+
+function showNotification(title: string, body: string) {
+    if (Notification.permission === "granted") {
+        new Notification(title, {
+            body: body,
+            icon: '/favicon.ico', // Opcional: adicione um ícone
+        });
+    }
+}
+
 
 export function NotificationManager() {
   const { user } = useUser();
   const firestore = useFirestore();
-  const { toast } = useToast();
   const [notifiedTasks, setNotifiedTasks] = useState<Set<string>>(new Set());
+
+  // Solicita permissão assim que o componente é montado no cliente
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
 
   useEffect(() => {
     if (!user || !firestore) return;
@@ -47,14 +69,9 @@ export function NotificationManager() {
         }
 
         if (notificationTitle) {
-          setTimeout(() => {
-            toast({
-              title: notificationTitle,
-              description: notificationDescription,
-              action: <BellRing className="text-foreground" />,
-            });
-            newNotifiedTasks.add(taskId);
-          }, 1000); // Small delay to avoid toast spam on load
+          // Usa a notificação nativa do navegador
+          showNotification(notificationTitle, notificationDescription);
+          newNotifiedTasks.add(taskId);
         }
       });
 
@@ -62,7 +79,6 @@ export function NotificationManager() {
     });
 
     return () => unsubscribe();
-    // We only want to run this on user/firestore changes, not on every toast change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, firestore]);
 
