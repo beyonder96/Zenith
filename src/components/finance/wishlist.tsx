@@ -103,9 +103,9 @@ export function Wishlist() {
             {items.map((item) => (
                 <Card key={item.id} className="w-full bg-card/80 dark:bg-black/20 border-border dark:border-white/10 backdrop-blur-sm overflow-hidden">
                     <CardContent className="p-0 flex">
-                       <a href={item.link} target="_blank" rel="noopener noreferrer" className="w-1/3 relative aspect-square">
-                         <Image src={item.imageUrl} alt={item.name} layout="fill" objectFit="cover" />
-                       </a>
+                       <div className="w-1/3 flex items-center justify-center bg-white/5 p-2">
+                         <Image src={item.imageUrl} alt={item.name} width={120} height={120} className="object-contain" />
+                       </div>
                         <div className="p-4 flex-1 flex flex-col justify-between">
                             <div>
                                 <div className="flex justify-between items-start">
