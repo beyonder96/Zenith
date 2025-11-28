@@ -51,9 +51,8 @@ service cloud.firestore {
 
     // /events/{eventId}
     match /events/{eventId} {
-      allow get, delete: if isOwner(resource.data.userId);
+      allow get, list, delete: if isOwner(resource.data.userId);
       allow create, update: if isOwner(request.resource.data.userId);
-      allow list: if request.auth != null && request.query.get("userId") == request.auth.uid;
     }
 
     // /goals/{goalId}
