@@ -18,6 +18,7 @@ export type ProductInfoInput = z.infer<typeof ProductInfoInputSchema>;
 const ProductInfoOutputSchema = z.object({
   name: z.string().describe('The name of the product.'),
   price: z.number().describe('The price of the product as a number.'),
+  imageUrl: z.string().url().describe('The absolute URL of the main product image.'),
 });
 export type ProductInfoOutput = z.infer<typeof ProductInfoOutputSchema>;
 
@@ -34,8 +35,9 @@ const prompt = ai.definePrompt({
 Please analyze the content of the following product page: {{{productUrl}}}
 
 Extract the following information:
-1. Product Name: The main title or name of the product.
-2. Price: The current price of the product. Extract only the numbers, convert comma to dot for decimals. If there are multiple prices (e.g., discounted and original), extract the main, final price.
+1.  **Product Name**: The main title or name of the product.
+2.  **Price**: The current price of the product. Extract only the numbers, converting comma to dot for decimals. If there are multiple prices (e.g., discounted, installment), extract the main, most prominent price.
+3.  **Image URL**: The absolute URL (starting with http or https) of the main, high-resolution product image.
 
 Return the data in the specified JSON format.`,
 });
