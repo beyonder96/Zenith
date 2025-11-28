@@ -33,6 +33,13 @@ export default function FinancePage() {
         return "/finance/new";
     }
   }
+  
+  const navItems = [
+    { id: 'overview', label: 'Visão Geral', icon: LayoutGrid },
+    { id: 'goals', label: 'Metas', icon: PiggyBank },
+    { id: 'savings', label: 'Poupança', icon: Landmark },
+    { id: 'wishlist', label: 'Desejos', icon: ShoppingBag },
+  ] as const;
 
   return (
     <>
@@ -61,40 +68,22 @@ export default function FinancePage() {
           
           <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-6 pb-28 overflow-y-auto">
             <div className="w-full max-w-lg">
-                <div className="grid grid-cols-2 sm:grid-cols-4 items-center justify-center gap-1 mb-6 bg-gray-200 dark:bg-zinc-800 p-1 rounded-full">
-                    <Button
-                        onClick={() => setActiveView('overview')}
-                        variant={activeView === 'overview' ? 'default' : 'ghost'}
-                        className={cn('rounded-full transition-all flex items-center gap-2 text-xs h-8',
-                        activeView === 'overview' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-transparent text-foreground')}
-                    >
-                        <LayoutGrid size={16} /> Visão Geral
-                    </Button>
-                    <Button
-                        onClick={() => setActiveView('goals')}
-                        variant={activeView === 'goals' ? 'default' : 'ghost'}
-                        className={cn('rounded-full transition-all flex items-center gap-2 text-xs h-8',
-                        activeView === 'goals' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-transparent text-foreground')}
-                    >
-                        <PiggyBank size={16} /> Metas
-                    </Button>
-                     <Button
-                        onClick={() => setActiveView('savings')}
-                        variant={activeView === 'savings' ? 'default' : 'ghost'}
-                        className={cn('rounded-full transition-all flex items-center gap-2 text-xs h-8',
-                        activeView === 'savings' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-transparent text-foreground')}
-                    >
-                        <Landmark size={16} /> Poupança
-                    </Button>
-                    <Button
-                        onClick={() => setActiveView('wishlist')}
-                        variant={activeView === 'wishlist' ? 'default' : 'ghost'}
-                        className={cn('rounded-full transition-all flex items-center gap-2 text-xs h-8',
-                        activeView === 'wishlist' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-transparent text-foreground')}
-                    >
-                        <ShoppingBag size={16} /> Desejos
-                    </Button>
-                </div>
+                <Carousel opts={{ align: "start", dragFree: true }} className="w-full mb-6">
+                    <CarouselContent className="-ml-2">
+                        {navItems.map((item) => (
+                        <CarouselItem key={item.id} className="basis-auto pl-2">
+                            <Button
+                                onClick={() => setActiveView(item.id)}
+                                variant={activeView === item.id ? 'default' : 'ghost'}
+                                className={cn('rounded-full transition-all flex items-center gap-2 text-xs h-9 px-4',
+                                activeView === item.id ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800 text-foreground')}
+                            >
+                                <item.icon size={16} /> {item.label}
+                            </Button>
+                        </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                </Carousel>
 
                 {activeView === 'overview' && (
                     <div className="space-y-6">
