@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { Plus, PiggyBank, LayoutGrid, FileText, Landmark, Settings } from "lucide-react";
+import { Plus, PiggyBank, LayoutGrid, FileText, Landmark, Settings, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { FinanceSummary } from "@/components/finance/finance-summary";
@@ -14,15 +14,18 @@ import { StatementOptionsDialog } from "@/components/finance/statement-options-d
 import { SavingsList } from "@/components/finance/savings-list";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { CategoryChart } from "@/components/finance/category-chart";
+import { Wishlist } from "@/components/finance/wishlist";
 
 export default function FinancePage() {
-  const [activeView, setActiveView] = useState<'overview' | 'goals' | 'savings'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'goals' | 'savings' | 'wishlist'>('overview');
   const [isStatementDialogOpen, setIsStatementDialogOpen] = useState(false);
 
   const getFabLink = () => {
     switch (activeView) {
       case 'goals':
         return "/finance/goals/new";
+      case 'wishlist':
+        return "/finance/wishlist/new";
       case 'savings':
         return "/finance/goals"; // Maybe link to goals page to deposit
       case 'overview':
@@ -58,36 +61,38 @@ export default function FinancePage() {
           
           <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-6 pb-28 overflow-y-auto">
             <div className="w-full max-w-lg">
-                <div className="flex w-full items-center justify-center gap-2 mb-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 items-center justify-center gap-1 mb-6 bg-gray-200 dark:bg-zinc-800 p-1 rounded-full">
                     <Button
                         onClick={() => setActiveView('overview')}
                         variant={activeView === 'overview' ? 'default' : 'ghost'}
-                        className={cn(
-                        'rounded-full px-4 sm:px-6 transition-all flex items-center gap-2 text-xs sm:text-sm',
-                        activeView === 'overview' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800'
-                        )}
+                        className={cn('rounded-full transition-all flex items-center gap-2 text-xs h-8',
+                        activeView === 'overview' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-transparent text-foreground')}
                     >
                         <LayoutGrid size={16} /> Visão Geral
                     </Button>
                     <Button
                         onClick={() => setActiveView('goals')}
                         variant={activeView === 'goals' ? 'default' : 'ghost'}
-                        className={cn(
-                        'rounded-full px-4 sm:px-6 transition-all flex items-center gap-2 text-xs sm:text-sm',
-                        activeView === 'goals' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800'
-                        )}
+                        className={cn('rounded-full transition-all flex items-center gap-2 text-xs h-8',
+                        activeView === 'goals' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-transparent text-foreground')}
                     >
                         <PiggyBank size={16} /> Metas
                     </Button>
                      <Button
                         onClick={() => setActiveView('savings')}
                         variant={activeView === 'savings' ? 'default' : 'ghost'}
-                        className={cn(
-                        'rounded-full px-4 sm:px-6 transition-all flex items-center gap-2 text-xs sm:text-sm',
-                        activeView === 'savings' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800'
-                        )}
+                        className={cn('rounded-full transition-all flex items-center gap-2 text-xs h-8',
+                        activeView === 'savings' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-transparent text-foreground')}
                     >
                         <Landmark size={16} /> Poupança
+                    </Button>
+                    <Button
+                        onClick={() => setActiveView('wishlist')}
+                        variant={activeView === 'wishlist' ? 'default' : 'ghost'}
+                        className={cn('rounded-full transition-all flex items-center gap-2 text-xs h-8',
+                        activeView === 'wishlist' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-transparent text-foreground')}
+                    >
+                        <ShoppingBag size={16} /> Desejos
                     </Button>
                 </div>
 
@@ -114,6 +119,10 @@ export default function FinancePage() {
                 
                 {activeView === 'savings' && (
                     <SavingsList />
+                )}
+
+                {activeView === 'wishlist' && (
+                    <Wishlist />
                 )}
             </div>
           </main>

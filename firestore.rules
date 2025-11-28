@@ -54,5 +54,11 @@ service cloud.firestore {
       allow list, get, delete: if isOwner(resource.data.userId);
       allow create, update: if isOwner(request.resource.data.userId);
     }
+
+    // /wishlistItems/{itemId}
+    match /wishlistItems/{itemId} {
+      allow read, delete: if isOwner(resource.data.userId);
+      allow create, update: if isOwner(request.resource.data.userId);
+    }
   }
 }

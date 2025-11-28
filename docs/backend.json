@@ -299,6 +299,45 @@
         }
       },
       "required": ["id", "name", "type"]
+    },
+    "WishlistItem": {
+      "title": "Wishlist Item",
+      "description": "An item in the user's wishlist.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the product."
+        },
+        "link": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URL to the product page."
+        },
+        "price": {
+          "type": "number",
+          "description": "The estimated price of the product."
+        },
+        "category": {
+          "type": "string",
+          "description": "User-defined category for the item."
+        },
+        "importance": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "description": "The importance level of the wish."
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URL of the product's image."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns the wishlist item."
+        }
+      },
+      "required": ["name", "link", "price", "importance", "imageUrl", "userId"]
     }
   },
   "auth": {
@@ -348,6 +387,12 @@
         "$ref": "#/backend/entities/Goal"
       },
       "description": "Stores user financial goals."
+    },
+    "/wishlistItems/{itemId}": {
+      "schema": {
+        "$ref": "#/backend/entities/WishlistItem"
+      },
+      "description": "Stores user wishlist items."
     }
   }
 }
