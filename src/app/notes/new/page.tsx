@@ -139,7 +139,7 @@ export default function NewNotePage() {
         <Button variant="link" onClick={() => router.back()} className="text-orange-500">
           Voltar
         </Button>
-        <h1 className="font-bold text-lg">{isEditing ? 'Editar Nota' : 'Nova Nota'}</h1>
+        <h1 className="font-bold text-lg">{isEditing ? 'Editar Nota' : 'Nota'}</h1>
         <Button variant="link" onClick={handleSave} className="font-bold text-orange-500">
           Salvar
         </Button>

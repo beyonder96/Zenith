@@ -382,17 +382,17 @@ export default function ProjectsPage() {
           <div className="fixed z-20 bottom-28 right-6 flex items-center gap-2">
             <Button asChild variant="secondary" className="rounded-full shadow-lg">
                 <Link href="/tasks/new">
-                    <ListTodo className="mr-2 h-4 w-4" /> Nova Tarefa
+                    <ListTodo className="mr-2 h-4 w-4" /> Tarefa
                 </Link>
             </Button>
             <Button asChild variant="secondary" className="rounded-full shadow-lg">
                 <Link href="/notes/new">
-                    <StickyNote className="mr-2 h-4 w-4" /> Nova Nota
+                    <StickyNote className="mr-2 h-4 w-4" /> Nota
                 </Link>
             </Button>
             <Button asChild variant="secondary" className="rounded-full shadow-lg">
                 <Link href="/events/new">
-                    <CalendarDays className="mr-2 h-4 w-4" /> Novo Evento
+                    <CalendarDays className="mr-2 h-4 w-4" /> Evento
                 </Link>
             </Button>
           </div>
