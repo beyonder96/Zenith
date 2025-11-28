@@ -188,26 +188,34 @@ export function TransactionList() {
                       <div className="p-3 bg-muted dark:bg-white/10 rounded-lg mr-4">
                         <Icon className="h-5 w-5 text-foreground" />
                       </div>
-                      <div className="flex-grow">
-                        <p className="font-semibold">{transaction.description}</p>
+                      <div className="flex-grow min-w-0">
+                        <p className="font-semibold truncate">{transaction.description}</p>
                         <p className="text-sm text-muted-foreground">
                           {formattedDate}
                         </p>
                       </div>
-                      <div
-                        className={`font-semibold mr-4 ${
-                          transaction.type === "income"
-                            ? "text-cyan-500"
-                            : "text-pink-500"
-                        }`}
-                      >
-                        {transaction.type === 'expense' ? "-" : "+"}R$ {Math.abs(transaction.amount).toFixed(2).replace(".", ",")}
+                      <div className="flex items-center flex-shrink-0 ml-4">
+                          <div
+                            className={`font-semibold w-24 text-right ${
+                              transaction.type === "income"
+                                ? "text-cyan-500"
+                                : "text-pink-500"
+                            }`}
+                          >
+                            {transaction.type === 'expense' ? "-" : "+"}R$ {Math.abs(transaction.amount).toFixed(2).replace(".", ",")}
+                          </div>
+                          <div className="w-8 flex justify-center">
+                          {!transaction.completed ? (
+                            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => handleMarkAsCompleted(transaction.id)}>
+                                <Check className="h-5 w-5 text-green-500" />
+                            </Button>
+                          ) : (
+                            <div className='h-8 w-8 flex items-center justify-center'>
+                                <Check className='h-5 w-5 text-green-500 opacity-50'/>
+                            </div>
+                          )}
+                          </div>
                       </div>
-                      {!transaction.completed && (
-                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => handleMarkAsCompleted(transaction.id)}>
-                            <Check className="h-5 w-5 text-green-500" />
-                        </Button>
-                      )}
                     </div>
                   </SwipeableListItem>
                 );
