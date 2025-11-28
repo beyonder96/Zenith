@@ -278,6 +278,27 @@
         "deadline",
         "userId"
       ]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Represents a user-defined category for financial transactions.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "A unique identifier for the category."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the category."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["income", "expense"],
+          "description": "The type of transaction this category applies to."
+        }
+      },
+      "required": ["id", "name", "type"]
     }
   },
   "auth": {

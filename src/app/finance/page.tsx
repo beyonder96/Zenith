@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { Plus, PiggyBank, LayoutGrid, FileText, Landmark } from "lucide-react";
+import { Plus, PiggyBank, LayoutGrid, FileText, Landmark, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { FinanceSummary } from "@/components/finance/finance-summary";
@@ -12,6 +12,8 @@ import { GoalsList } from "@/components/finance/goals-list";
 import { cn } from "@/lib/utils";
 import { StatementOptionsDialog } from "@/components/finance/statement-options-dialog";
 import { SavingsList } from "@/components/finance/savings-list";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { CategoryChart } from "@/components/finance/category-chart";
 
 export default function FinancePage() {
   const [activeView, setActiveView] = useState<'overview' | 'goals' | 'savings'>('overview');
@@ -44,9 +46,14 @@ export default function FinancePage() {
             <h1 className="text-4xl font-light tracking-wider bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
               Finanças
             </h1>
-            <Button variant="ghost" size="icon" onClick={() => setIsStatementDialogOpen(true)} className="text-foreground/80">
-                <FileText />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="ghost" size="icon" className="text-foreground/80">
+                <Link href="/finance/categories"><Settings /></Link>
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setIsStatementDialogOpen(true)} className="text-foreground/80">
+                  <FileText />
+              </Button>
+            </div>
           </header>
           
           <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-6 pb-28 overflow-y-auto">
@@ -87,7 +94,16 @@ export default function FinancePage() {
                 {activeView === 'overview' && (
                     <div className="space-y-6">
                         <FinanceSummary />
-                        <FinanceChart />
+                        <Carousel>
+                            <CarouselContent>
+                                <CarouselItem>
+                                    <FinanceChart />
+                                </CarouselItem>
+                                <CarouselItem>
+                                    <CategoryChart />
+                                </CarouselItem>
+                            </CarouselContent>
+                        </Carousel>
                         <TransactionList />
                     </div>
                 )}

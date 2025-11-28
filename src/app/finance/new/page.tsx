@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -18,6 +18,7 @@ import { useFirestore, useUser } from '@/firebase';
 import { collection, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 type Transaction = {
   id: string;
@@ -33,7 +34,7 @@ type Transaction = {
 type TransactionType = 'expense' | 'income';
 type RecurrenceFrequency = 'diario' | 'semanal' | 'mensal' | 'anual';
 
-const categories = {
+const defaultCategories = {
   expense: ['Contas', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Compras', 'Outros'],
   income: ['Salário', 'Freelance', 'Investimentos', 'Outros'],
 };
@@ -44,6 +45,8 @@ export default function NewTransactionPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
+
+  const [storedCategories, setStoredCategories] = useLocalStorage('user-categories', defaultCategories);
   
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [description, setDescription] = useState('');
@@ -55,6 +58,8 @@ export default function NewTransactionPage() {
   const [isRecurrent, setIsRecurrent] = useState(false);
   const [recurrenceFrequency, setRecurrenceFrequency] = useState<RecurrenceFrequency>('mensal');
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategory, setNewCategory] = useState('');
 
   const isEditing = transactionId !== null;
 
@@ -78,6 +83,19 @@ export default function NewTransactionPage() {
       fetchTransaction();
     }
   }, [searchParams, firestore]);
+
+  const handleAddNewCategory = () => {
+    if (newCategory.trim()) {
+      const updatedCategories = {
+        ...storedCategories,
+        [type]: [...storedCategories[type], newCategory.trim()],
+      };
+      setStoredCategories(updatedCategories);
+      setCategory(newCategory.trim());
+      setNewCategory('');
+      setIsAddingCategory(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!description.trim() || !amount.trim() || !date) {
@@ -108,7 +126,7 @@ export default function NewTransactionPage() {
       amount: type === 'expense' ? -Math.abs(numericAmount) : Math.abs(numericAmount),
       date: format(date, 'yyyy-MM-dd'),
       type,
-      category: category || categories[type][0],
+      category: category || storedCategories[type][0],
       completed: isCompleted,
       userId: user.uid,
     };
@@ -237,16 +255,41 @@ export default function NewTransactionPage() {
 
         <div className="space-y-2">
           <Label htmlFor="category">Categoria</Label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger id="category" className="bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-md">
-              <SelectValue placeholder="Selecione uma categoria" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories[type].map(cat => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isAddingCategory ? (
+            <div className="flex gap-2">
+              <Input
+                placeholder="Nome da nova categoria"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddNewCategory()}
+                className="bg-card dark:bg-zinc-800 border-border dark:border-zinc-700"
+                autoFocus
+              />
+              <Button onClick={handleAddNewCategory} size="icon">
+                <Plus />
+              </Button>
+            </div>
+          ) : (
+            <Select value={category} onValueChange={(value) => {
+              if (value === 'add-new') {
+                setIsAddingCategory(true);
+              } else {
+                setCategory(value);
+              }
+            }}>
+              <SelectTrigger id="category" className="bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-md">
+                <SelectValue placeholder="Selecione uma categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                {storedCategories[type].map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+                 <SelectItem value="add-new" className="text-orange-500">
+                    <span className='flex items-center gap-2'><Plus size={16}/> Adicionar nova</span>
+                 </SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
         
         <div className="space-y-4 p-4 bg-card dark:bg-zinc-800 rounded-md">
