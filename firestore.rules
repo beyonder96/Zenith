@@ -59,7 +59,7 @@ service cloud.firestore {
     match /wishlistItems/{itemId} {
       allow get, delete: if isOwner(resource.data.userId);
       allow create, update: if isOwner(request.resource.data.userId);
-      allow list: if request.auth != null && request.query.where.userId == request.auth.uid;
+      allow list: if request.auth != null;
     }
   }
 }
