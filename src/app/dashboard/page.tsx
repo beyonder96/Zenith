@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { RelationshipCard } from "@/components/dashboard/relationship-card";
 import { Heart, Gem } from "lucide-react";
+import { NextEventCard } from "@/components/dashboard/next-event-card";
 
 export default function Dashboard() {
   const { user, loading } = useUser();
@@ -53,6 +54,7 @@ export default function Dashboard() {
 
           <div className="w-full max-w-md space-y-4 animate-pop-in">
             <DateSelector />
+            <NextEventCard />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <RelationshipCard 
                 title="Dias Casados"
