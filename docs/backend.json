@@ -244,6 +244,44 @@
         "createdAt"
       ]
     },
+    "Event": {
+      "title": "Event",
+      "description": "Represents a calendar event.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the event."
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "The date of the event."
+        },
+        "time": {
+          "type": "string",
+          "format": "time",
+          "description": "The time of the event."
+        },
+        "location": {
+          "type": "string",
+          "description": "The location of the event."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the event."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns the event."
+        }
+      },
+      "required": [
+        "title",
+        "date",
+        "userId"
+      ]
+    },
     "Goal": {
       "title": "Goal",
       "description": "Represents a user's financial goal.",
@@ -381,6 +419,12 @@
         "$ref": "#/backend/entities/Note"
       },
       "description": "Stores user notes."
+    },
+    "/events/{eventId}": {
+      "schema": {
+        "$ref": "#/backend/entities/Event"
+      },
+      "description": "Stores user calendar events."
     },
     "/goals/{goalId}": {
       "schema": {

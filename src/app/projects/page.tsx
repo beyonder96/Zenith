@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { ProjectCard, Project, Subtask } from "@/components/projects/project-card";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, StickyNote, ListTodo, Edit, Trash2, X } from "lucide-react";
+import { Plus, Loader2, StickyNote, ListTodo, Edit, Trash2, X, CalendarDays } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useUser } from '@/firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
@@ -38,6 +38,8 @@ import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import type { Event } from '@/components/events/events';
+import { EventCard } from '@/components/events/event-card';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -45,14 +47,16 @@ export default function ProjectsPage() {
   const { user } = useUser();
   const [projects, setProjects] = useState<Project[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
+  const [eventToDelete, setEventToDelete] = useState<string | null>(null);
   const [viewingNote, setViewingNote] = useState<Note | null>(null);
   const [loadingProjectId, setLoadingProjectId] = useState<string | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [activeView, setActiveView] = useState<'projects' | 'notes'>('projects');
+  const [activeView, setActiveView] = useState<'projects' | 'notes' | 'events'>('projects');
 
   useEffect(() => {
     setIsClient(true);
@@ -85,9 +89,24 @@ export default function ProjectsPage() {
         errorEmitter.emit('permission-error', permissionError);
       });
 
+      // Events listener
+      const eventsQuery = query(collection(firestore, "events"), where("userId", "==", user.uid));
+      const unsubscribeEvents = onSnapshot(eventsQuery, (querySnapshot) => {
+        const userEvents: Event[] = [];
+        querySnapshot.forEach((doc) => {
+          userEvents.push({ id: doc.id, ...doc.data() } as Event);
+        });
+        setEvents(userEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+      },
+      (serverError) => {
+        const permissionError = new FirestorePermissionError({ path: 'events', operation: 'list' });
+        errorEmitter.emit('permission-error', permissionError);
+      });
+
       return () => {
         unsubscribeProjects();
         unsubscribeNotes();
+        unsubscribeEvents();
       };
     }
   }, [user, firestore]);
@@ -116,6 +135,10 @@ export default function ProjectsPage() {
     setViewingNote(null); // Fecha o modal de visualização
     setTimeout(() => setNoteToDelete(id), 150); // Dá tempo para o modal fechar
   };
+  
+  const handleDeleteEventInitiate = (id: string) => {
+    setEventToDelete(id);
+  };
 
   const handleDeleteConfirm = () => {
     if (projectToDelete !== null && firestore) {
@@ -140,6 +163,17 @@ export default function ProjectsPage() {
             setNoteToDelete(null);
         });
     }
+    if (eventToDelete !== null && firestore) {
+        const docRef = doc(firestore, "events", eventToDelete);
+        deleteDoc(docRef).then(() => {
+            setEventToDelete(null);
+            toast({ title: "Evento deletado", description: "O evento foi removido com sucesso." });
+        }).catch(serverError => {
+            const permissionError = new FirestorePermissionError({ path: `events/${eventToDelete}`, operation: 'delete' });
+            errorEmitter.emit('permission-error', permissionError);
+            setEventToDelete(null);
+        });
+    }
   };
 
   const handleEditProject = (id: string) => {
@@ -150,6 +184,10 @@ export default function ProjectsPage() {
     setViewingNote(null);
     router.push(`/notes/new?id=${id}`);
   };
+
+  const handleEditEvent = (id: string) => {
+    router.push(`/events/new?id=${id}`);
+  }
   
   const handleAiSplit = async (id: string) => {
     const project = projects.find(p => p.id === id);
@@ -234,7 +272,7 @@ export default function ProjectsPage() {
                     onClick={() => setActiveView('projects')}
                     variant={activeView === 'projects' ? 'default' : 'ghost'}
                     className={cn(
-                      'rounded-full px-6 transition-all',
+                      'rounded-full px-4 transition-all',
                       activeView === 'projects' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800'
                     )}
                   >
@@ -244,13 +282,24 @@ export default function ProjectsPage() {
                     onClick={() => setActiveView('notes')}
                     variant={activeView === 'notes' ? 'default' : 'ghost'}
                     className={cn(
-                      'rounded-full px-6 transition-all',
+                      'rounded-full px-4 transition-all',
                       activeView === 'notes' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800'
                     )}
                   >
                     Notas
                   </Button>
+                  <Button
+                    onClick={() => setActiveView('events')}
+                    variant={activeView === 'events' ? 'default' : 'ghost'}
+                    className={cn(
+                      'rounded-full px-4 transition-all',
+                      activeView === 'events' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800'
+                    )}
+                  >
+                    Eventos
+                  </Button>
                 </div>
+
                 {activeView === 'projects' && (
                   <div className="w-full space-y-4">
                       {!isClient ? (
@@ -260,7 +309,7 @@ export default function ProjectsPage() {
                       ) : projects.length === 0 ? (
                         <div className="text-center py-10 text-muted-foreground">
                           <p>Nenhum projeto ainda.</p>
-                          <p className="text-sm">Clique em '+' para criar seu primeiro projeto.</p>
+                          <p className="text-sm">Crie seu primeiro projeto.</p>
                         </div>
                       ) : (
                         projects.map(project => (
@@ -289,7 +338,7 @@ export default function ProjectsPage() {
                         ) : notes.length === 0 ? (
                             <div className="text-center py-10 text-muted-foreground">
                             <p>Nenhuma nota ainda.</p>
-                            <p className="text-sm">Clique em '+' para criar sua primeira nota.</p>
+                            <p className="text-sm">Crie sua primeira nota.</p>
                             </div>
                         ) : (
                            <div className="columns-2 gap-4">
@@ -304,6 +353,29 @@ export default function ProjectsPage() {
                         )}
                     </div>
                 )}
+                {activeView === 'events' && (
+                  <div className="w-full space-y-4">
+                      {!isClient ? (
+                        <div className="flex justify-center items-center h-48">
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : events.length === 0 ? (
+                        <div className="text-center py-10 text-muted-foreground">
+                          <p>Nenhum evento agendado.</p>
+                          <p className="text-sm">Crie seu primeiro evento.</p>
+                        </div>
+                      ) : (
+                        events.map(event => (
+                          <EventCard 
+                            key={event.id}
+                            event={event}
+                            onEdit={() => handleEditEvent(event.id)}
+                            onDelete={() => handleDeleteEventInitiate(event.id)}
+                          />
+                        ))
+                      )}
+                  </div>
+                )}
               </div>
           </main>
           
@@ -316,6 +388,11 @@ export default function ProjectsPage() {
             <Button asChild variant="secondary" className="rounded-full shadow-lg">
                 <Link href="/notes/new">
                     <StickyNote className="mr-2 h-4 w-4" /> Nova Nota
+                </Link>
+            </Button>
+            <Button asChild variant="secondary" className="rounded-full shadow-lg">
+                <Link href="/events/new">
+                    <CalendarDays className="mr-2 h-4 w-4" /> Novo Evento
                 </Link>
             </Button>
           </div>
@@ -365,10 +442,11 @@ export default function ProjectsPage() {
       </Dialog>
 
 
-      <AlertDialog open={projectToDelete !== null || noteToDelete !== null} onOpenChange={(open) => {
+      <AlertDialog open={projectToDelete !== null || noteToDelete !== null || eventToDelete !== null} onOpenChange={(open) => {
         if (!open) {
           setProjectToDelete(null);
           setNoteToDelete(null);
+          setEventToDelete(null);
         }
       }}>
         <AlertDialogContent>
@@ -379,7 +457,7 @@ export default function ProjectsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => { setProjectToDelete(null); setNoteToDelete(null); }}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => { setProjectToDelete(null); setNoteToDelete(null); setEventToDelete(null); }}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteConfirm}>Deletar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
