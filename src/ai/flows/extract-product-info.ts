@@ -18,7 +18,7 @@ export type ProductInfoInput = z.infer<typeof ProductInfoInputSchema>;
 const ProductInfoOutputSchema = z.object({
   name: z.string().describe('The name of the product.'),
   price: z.number().describe('The price of the product as a number.'),
-  imageUrl: z.string().url().describe('The absolute URL of the main product image.'),
+  imageUrl: z.string().url().describe('The absolute URL of a representative product image.'),
 });
 export type ProductInfoOutput = z.infer<typeof ProductInfoOutputSchema>;
 
@@ -30,14 +30,14 @@ const prompt = ai.definePrompt({
   name: 'extractProductInfoPrompt',
   input: { schema: ProductInfoInputSchema },
   output: { schema: ProductInfoOutputSchema },
-  prompt: `You are an expert web scraper and data extractor. Your task is to extract product information from the content of the provided URL.
+  prompt: `You are an expert at identifying products from web links. Based on the following URL, identify the product and return its name, its approximate price as a number, and a publicly accessible, representative image URL for it.
 
-Please analyze the content of the following product page: {{{productUrl}}}
+URL: {{{productUrl}}}
 
 Extract the following information:
 1.  **Product Name**: The main title or name of the product.
-2.  **Price**: The current price of the product. Extract only the numbers, converting comma to dot for decimals. If there are multiple prices (e.g., discounted, installment), extract the main, most prominent price.
-3.  **Image URL**: The absolute URL (starting with http or https) of the main, high-resolution product image.
+2.  **Price**: The current price of the product. Extract only the numbers, converting comma to dot for decimals. Find the most representative price.
+3.  **Image URL**: A valid, absolute URL (starting with http or https) of a high-quality, representative image for this product.
 
 Return the data in the specified JSON format.`,
 });
