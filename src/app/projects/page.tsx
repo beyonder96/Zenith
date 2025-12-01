@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { ProjectCard, Project, Subtask } from "@/components/projects/project-card";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, StickyNote, ListTodo, Edit, Trash2, X, CalendarDays, Search } from "lucide-react";
+import { Plus, Loader2, StickyNote, ListTodo, Edit, Trash2, X, CalendarDays, Search, Home } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useUser } from '@/firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
@@ -58,7 +58,7 @@ export default function ProjectsPage() {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [activeView, setActiveView] = useState<'projects' | 'notes' | 'events'>('projects');
+  const [activeView, setActiveView] = useState<'projects' | 'notes' | 'events' | 'casa'>('projects');
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -366,6 +366,16 @@ export default function ProjectsPage() {
                   >
                     Eventos
                   </Button>
+                   <Button
+                    onClick={() => setActiveView('casa')}
+                    variant={activeView === 'casa' ? 'default' : 'ghost'}
+                    className={cn(
+                      'rounded-full px-4 transition-all',
+                      activeView === 'casa' ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800'
+                    )}
+                  >
+                    Casa
+                  </Button>
                 </div>
                 
                  {activeView === 'projects' && hasCompletedProjects && (
@@ -456,6 +466,11 @@ export default function ProjectsPage() {
                         ))
                       )}
                   </div>
+                )}
+                {activeView === 'casa' && (
+                    <div className="text-center py-10 text-muted-foreground">
+                        <p>Seção em construção.</p>
+                    </div>
                 )}
               </div>
           </main>
