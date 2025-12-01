@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirestore, useUser } from '@/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { Loader2, Plus, Home } from 'lucide-react';
+import { Loader2, Plus, Cat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -61,7 +61,7 @@ export function PetsSection() {
   if (pets.length === 0) {
     return (
       <div className="text-center py-10 text-muted-foreground bg-card/50 dark:bg-black/20 rounded-xl">
-        <Home className="mx-auto h-12 w-12 text-muted-foreground" />
+        <Cat className="mx-auto h-12 w-12 text-muted-foreground" />
         <h3 className="mt-4 text-lg font-semibold">Gerencie seus Pets</h3>
         <p className="mt-2 text-sm">Adicione seu primeiro pet para começar a gerenciar vacinas, consultas e mais.</p>
         <Button asChild className="mt-4">
