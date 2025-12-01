@@ -13,7 +13,7 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, addDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -125,6 +125,28 @@ export default function NewPetPage() {
     setVaccines(vaccines.filter((_, i) => i !== index));
   };
 
+  const uploadFile = async (file: File, folder: string) => {
+    if (!user) throw new Error("User not authenticated for upload.");
+    const filePath = `pets/${user.uid}/${folder}/${uuidv4()}-${file.name}`;
+    const storageRef = ref(storage, filePath);
+    const snapshot = await uploadBytes(storageRef, file);
+    return getDownloadURL(snapshot.ref);
+  };
+  
+  const deleteFile = async (url: string) => {
+    if (!url) return;
+    try {
+      const fileRef = ref(storage, url);
+      await deleteObject(fileRef);
+    } catch (e) {
+      if (e instanceof Error && (e as any).code === 'storage/object-not-found') {
+        console.warn("Could not delete file, it might not exist or has a different path structure.", e);
+      } else {
+        console.error("Error deleting file", e);
+      }
+    }
+  }
+
   const handleSave = async () => {
     if (!name.trim() || !birthDate) {
       toast({ variant: "destructive", title: "Campos obrigatórios", description: "Nome e data de nascimento são obrigatórios." });
@@ -141,38 +163,22 @@ export default function NewPetPage() {
         let finalPhotoUrl = originalPhotoUrl;
         let finalRgaUrl = originalRgaUrl;
 
-        // Upload new photo if provided
+        // Execute uploads in parallel
+        const uploadPromises = [];
         if (photoFile) {
-            const photoPath = `pets/${user.uid}/photos/${uuidv4()}-${photoFile.name}`;
-            const photoStorageRef = ref(storage, photoPath);
-            const photoSnapshot = await uploadBytes(photoStorageRef, photoFile);
-            finalPhotoUrl = await getDownloadURL(photoSnapshot.ref);
-            // Optionally delete old photo if it exists and is different
-            if(originalPhotoUrl && originalPhotoUrl !== finalPhotoUrl) {
-                try {
-                    const oldPhotoRef = ref(storage, originalPhotoUrl);
-                    await deleteObject(oldPhotoRef);
-                } catch(e) {
-                    console.warn("Could not delete old photo, it might not exist.", e);
-                }
-            }
+            uploadPromises.push(uploadFile(photoFile, 'photos').then(url => {
+                finalPhotoUrl = url;
+                if (originalPhotoUrl) deleteFile(originalPhotoUrl);
+            }));
         }
-
-        // Upload new RGA if provided
         if (rgaFile) {
-            const rgaPath = `pets/${user.uid}/rga/${uuidv4()}-${rgaFile.name}`;
-            const rgaStorageRef = ref(storage, rgaPath);
-            const rgaSnapshot = await uploadBytes(rgaStorageRef, rgaFile);
-            finalRgaUrl = await getDownloadURL(rgaSnapshot.ref);
-             if(originalRgaUrl && originalRgaUrl !== finalRgaUrl) {
-                 try {
-                    const oldRgaRef = ref(storage, originalRgaUrl);
-                    await deleteObject(oldRgaRef);
-                 } catch(e) {
-                    console.warn("Could not delete old RGA file, it might not exist.", e);
-                 }
-            }
+            uploadPromises.push(uploadFile(rgaFile, 'rga').then(url => {
+                finalRgaUrl = url;
+                if (originalRgaUrl) deleteFile(originalRgaUrl);
+            }));
         }
+        
+        await Promise.all(uploadPromises);
 
         const petData = {
             name,
@@ -201,7 +207,7 @@ export default function NewPetPage() {
         console.error("Save error:", error);
         const operation = isEditing ? 'update' : 'create';
         const path = isEditing ? `pets/${petId}` : 'pets';
-        if (error.code?.includes('permission-denied')) {
+        if (error.code?.includes('permission-denied') || error.message.includes('permission-denied')) {
              const permissionError = new FirestorePermissionError({ path, operation });
             errorEmitter.emit('permission-error', permissionError);
         } else {
