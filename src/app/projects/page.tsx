@@ -327,12 +327,12 @@ export default function ProjectsPage() {
               <div className="w-full max-w-md">
                  <div className="relative w-full max-w-md mb-4">
                     <Input
-                        placeholder="Pesquisar em tarefas, notas e eventos..."
+                        placeholder="Pesquisar..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-lg h-11"
+                        className="pl-10 bg-card/50 dark:bg-black/20 border-none rounded-full h-11 backdrop-blur-sm"
                     />
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                  </div>
 
                  <div className="flex w-full items-center justify-center gap-2 mb-4">
