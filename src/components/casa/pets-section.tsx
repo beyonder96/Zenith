@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { PetCard } from './pet-card';
 
 // You would define this type based on your Pet entity
 type Pet = {
@@ -75,16 +76,15 @@ export function PetsSection() {
 
   return (
     <div className="grid grid-cols-2 gap-4">
-      {/* This is where PetCard components will be rendered */}
       {pets.map(pet => (
-        <div key={pet.id}>{pet.name}</div>
+        <PetCard key={pet.id} pet={pet} />
       ))}
-       <Button asChild variant="outline" className="h-full">
-          <Link href="/casa/pets/new" className="flex flex-col items-center justify-center gap-2">
+       <Link href="/casa/pets/new" className="group">
+          <div className="aspect-square w-full h-full flex flex-col items-center justify-center gap-2 bg-card/50 dark:bg-black/20 rounded-xl border-2 border-dashed border-muted-foreground hover:border-primary hover:text-primary transition-colors">
             <Plus className="h-8 w-8" />
-            <span>Adicionar Pet</span>
-          </Link>
-        </Button>
+            <span className="font-semibold text-sm">Adicionar Pet</span>
+          </div>
+        </Link>
     </div>
   );
 }
