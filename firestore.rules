@@ -71,8 +71,11 @@ service cloud.firestore {
 
     // /pets/{petId}
     match /pets/{petId} {
-      allow read, create, update, delete: if request.auth != null && isOwner(request.resource.data.userId);
-      allow list: if request.auth != null && isOwner(request.query.filters.userId);
+      // Rule for individual document access (get, create, update, delete)
+      allow read, create, update, delete: if isOwner(request.auth.uid);
+      
+      // Rule for collection-level reads (list/queries)
+      allow list: if request.auth != null && request.query.where.userId == request.auth.uid;
     }
   }
 }
