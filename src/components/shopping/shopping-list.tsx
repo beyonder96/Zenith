@@ -120,6 +120,14 @@ export function ShoppingList({ items, setItems }: ShoppingListProps) {
       });
   };
   
+  const formatQuantity = (quantity: number | undefined) => {
+    if (!quantity) return '';
+    if (quantity < 1) { // Assuming anything less than 1 is a weight in kg
+        return `${quantity * 1000}g`;
+    }
+    return `${quantity}x`;
+  }
+  
   return (
     <>
       <div className="space-y-4">
@@ -168,7 +176,7 @@ export function ShoppingList({ items, setItems }: ShoppingListProps) {
                     </span>
                     {item.completed && item.quantity && typeof item.price !== 'undefined' && (
                        <p className="text-xs text-muted-foreground">
-                         {item.quantity} x R$ {item.price.toFixed(2).replace('.',',')} = R$ {(item.quantity * item.price).toFixed(2).replace('.',',')}
+                         {formatQuantity(item.quantity)} @ R$ {item.price.toFixed(2).replace('.',',')} = R$ {(item.quantity * item.price).toFixed(2).replace('.',',')}
                        </p>
                     )}
                   </div>
