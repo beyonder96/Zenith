@@ -148,8 +148,8 @@ export default function PetDetailPage() {
                 </div>
             </header>
 
-            <main className="p-6">
-                <div className="flex flex-col items-center -mt-16">
+            <main className="p-6 space-y-6">
+                <div className="flex flex-col items-center space-y-4">
                     <div className="relative h-32 w-32 rounded-full border-4 border-background shadow-md bg-secondary flex items-center justify-center">
                         {pet.photoUrl ? (
                             <Image src={pet.photoUrl} alt={pet.name} layout="fill" className="rounded-full object-cover" />
@@ -157,11 +157,13 @@ export default function PetDetailPage() {
                             <Cat className="w-16 h-16 text-muted-foreground" />
                         )}
                     </div>
-                    <h1 className="text-3xl font-bold mt-4">{pet.name}</h1>
-                    <p className="text-muted-foreground">{pet.breed || 'Raça não informada'}</p>
+                    <div>
+                        <h1 className="text-3xl font-bold text-center">{pet.name}</h1>
+                        <p className="text-muted-foreground text-center">{pet.breed || 'Raça não informada'}</p>
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mt-8 text-center">
+                <div className="grid grid-cols-2 gap-4 text-center">
                     <div className="bg-card p-4 rounded-xl">
                         <p className="text-sm text-muted-foreground">Idade</p>
                         <p className="text-lg font-semibold">{age} anos</p>
@@ -172,7 +174,7 @@ export default function PetDetailPage() {
                     </div>
                 </div>
 
-                <div className="mt-6 space-y-4">
+                <div className="space-y-4">
                      <Card className="bg-card">
                         <CardContent className="p-4 flex items-center justify-between">
                             <div className="flex items-center gap-4">
@@ -208,7 +210,7 @@ export default function PetDetailPage() {
                      )}
                 </div>
 
-                 <div className="mt-8">
+                 <div className="mt-2">
                     <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><ShieldCheck/> Vacinas</h2>
                     <div className="space-y-3">
                         {pet.vaccines && pet.vaccines.length > 0 ? pet.vaccines.map((vaccine, index) => (
