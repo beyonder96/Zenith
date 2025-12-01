@@ -120,9 +120,7 @@ export default function NewNotePage() {
         toast({
             title: isEditing ? "Nota atualizada!" : "Nota criada!",
         });
-        if (!isEditing) {
-          router.back();
-        }
+        router.back();
     }).catch(serverError => {
         const permissionError = new FirestorePermissionError({
             path: isEditing && noteId ? `notes/${noteId}` : 'notes',
