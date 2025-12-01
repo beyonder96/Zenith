@@ -7,6 +7,8 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Loader2, Plus, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 // You would define this type based on your Pet entity
 type Pet = {
@@ -37,9 +39,12 @@ export function PetsSection() {
       setPets(userPets);
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching pets:", error);
-      // Here you would emit a FirestorePermissionError if it's a permission issue
-      setLoading(false);
+        const permissionError = new FirestorePermissionError({
+            path: 'pets',
+            operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setLoading(false);
     });
 
     return () => unsubscribe();
