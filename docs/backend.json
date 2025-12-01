@@ -414,7 +414,6 @@
         },
         "photoUrl": {
           "type": "string",
-          "format": "uri",
           "description": "URL for the pet's photo."
         },
         "gender": {
@@ -527,3 +526,4 @@
     }
   }
 }
+    

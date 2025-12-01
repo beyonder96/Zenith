@@ -57,7 +57,6 @@ export default function NewPetPage() {
   const [birthDate, setBirthDate] = useState<Date | undefined>();
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [originalPhotoUrl, setOriginalPhotoUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [gender, setGender] = useState<'Macho' | 'Fêmea' | null>(null);
   const [isNeutered, setIsNeutered] = useState(false);
@@ -65,8 +64,7 @@ export default function NewPetPage() {
   const [microchipNumber, setMicrochipNumber] = useState('');
   const [rgaUrl, setRgaUrl] = useState('');
   const [rgaFile, setRgaFile] = useState<File | null>(null);
-  const [originalRgaUrl, setOriginalRgaUrl] = useState('');
-
+  
   const isEditing = petId !== null;
 
   useEffect(() => {
@@ -82,13 +80,11 @@ export default function NewPetPage() {
             setBreed(petToEdit.breed || '');
             if(petToEdit.birthDate) setBirthDate(parseISO(petToEdit.birthDate));
             setPhotoUrl(petToEdit.photoUrl);
-            setOriginalPhotoUrl(petToEdit.photoUrl);
             setGender(petToEdit.gender || null);
             setIsNeutered(petToEdit.isNeutered || false);
             setVaccines(petToEdit.vaccines || []);
             setMicrochipNumber(petToEdit.microchipNumber || '');
             setRgaUrl(petToEdit.rgaUrl || '');
-            setOriginalRgaUrl(petToEdit.rgaUrl || '');
         } else {
              toast({ variant: 'destructive', title: 'Erro', description: 'Pet não encontrado ou você não tem permissão para editá-lo.' });
              router.push('/projects');
@@ -160,21 +156,21 @@ export default function NewPetPage() {
     setIsSaving(true);
     
     try {
-        let finalPhotoUrl = originalPhotoUrl;
-        let finalRgaUrl = originalRgaUrl;
+        let finalPhotoUrl = photoUrl;
+        let finalRgaUrl = rgaUrl;
 
         // Execute uploads in parallel
         const uploadPromises = [];
         if (photoFile) {
             uploadPromises.push(uploadFile(photoFile, 'photos').then(url => {
                 finalPhotoUrl = url;
-                if (originalPhotoUrl) deleteFile(originalPhotoUrl);
+                if (isEditing && photoUrl !== finalPhotoUrl) deleteFile(photoUrl);
             }));
         }
         if (rgaFile) {
             uploadPromises.push(uploadFile(rgaFile, 'rga').then(url => {
                 finalRgaUrl = url;
-                if (originalRgaUrl) deleteFile(originalRgaUrl);
+                if (isEditing && rgaUrl !== finalRgaUrl) deleteFile(rgaUrl);
             }));
         }
         
@@ -395,3 +391,4 @@ export default function NewPetPage() {
     </div>
   );
 }
+    
