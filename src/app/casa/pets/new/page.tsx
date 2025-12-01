@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarIcon, ArrowLeft, Image as ImageIcon, Plus, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, ArrowLeft, Image as ImageIcon, Plus, Trash2, Upload } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -32,7 +32,8 @@ export default function NewPetPage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const storage = getStorage();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoFileInputRef = useRef<HTMLInputElement>(null);
+  const rgaFileInputRef = useRef<HTMLInputElement>(null);
   
   const [name, setName] = useState('');
   const [breed, setBreed] = useState('');
@@ -43,12 +44,18 @@ export default function NewPetPage() {
   const [gender, setGender] = useState<'Macho' | 'Fêmea' | null>(null);
   const [isNeutered, setIsNeutered] = useState(false);
   const [vaccines, setVaccines] = useState<Vaccine[]>([]);
+  const [microchipNumber, setMicrochipNumber] = useState('');
+  const [rgaFile, setRgaFile] = useState<File | null>(null);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, fileType: 'photo' | 'rga') => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setPhotoFile(file);
-      setPhotoUrl(URL.createObjectURL(file));
+      if(fileType === 'photo') {
+        setPhotoFile(file);
+        setPhotoUrl(URL.createObjectURL(file));
+      } else {
+        setRgaFile(file);
+      }
     }
   };
 
@@ -81,20 +88,28 @@ export default function NewPetPage() {
     }
     
     setIsUploading(true);
-
     let finalPhotoUrl = photoUrl;
-    if (photoFile) {
-        const filePath = `pets/${user.uid}/${uuidv4()}-${photoFile.name}`;
-        const storageRef = ref(storage, filePath);
-        try {
+    let finalRgaUrl = '';
+
+    try {
+        if (photoFile) {
+            const filePath = `pets/${user.uid}/photos/${uuidv4()}-${photoFile.name}`;
+            const storageRef = ref(storage, filePath);
             const snapshot = await uploadBytes(storageRef, photoFile);
             finalPhotoUrl = await getDownloadURL(snapshot.ref);
-        } catch (error) {
-            console.error("Upload error:", error);
-            toast({ variant: 'destructive', title: 'Erro no Upload', description: 'Não foi possível enviar a imagem.'});
-            setIsUploading(false);
-            return;
         }
+
+        if (rgaFile) {
+            const filePath = `pets/${user.uid}/rga/${uuidv4()}-${rgaFile.name}`;
+            const storageRef = ref(storage, filePath);
+            const snapshot = await uploadBytes(storageRef, rgaFile);
+            finalRgaUrl = await getDownloadURL(snapshot.ref);
+        }
+    } catch (error) {
+        console.error("Upload error:", error);
+        toast({ variant: 'destructive', title: 'Erro no Upload', description: 'Não foi possível enviar um dos arquivos.'});
+        setIsUploading(false);
+        return;
     }
 
     const petData = {
@@ -105,6 +120,8 @@ export default function NewPetPage() {
         gender,
         isNeutered,
         vaccines,
+        microchipNumber,
+        rgaUrl: finalRgaUrl,
         userId: user.uid,
     };
     
@@ -139,15 +156,15 @@ export default function NewPetPage() {
          <div className="flex justify-center">
             <input 
                 type="file" 
-                ref={fileInputRef}
-                onChange={handleFileChange}
+                ref={photoFileInputRef}
+                onChange={(e) => handleFileChange(e, 'photo')}
                 accept="image/*"
                 className="hidden"
             />
              <Button
                 variant="ghost"
                 className="relative h-32 w-32 rounded-full border-2 border-dashed border-muted-foreground flex items-center justify-center"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => photoFileInputRef.current?.click()}
              >
                 {photoUrl ? (
                     <Image src={photoUrl} alt="Pré-visualização" layout="fill" className="rounded-full object-cover" />
@@ -235,6 +252,37 @@ export default function NewPetPage() {
                 <Switch id="neutered" checked={isNeutered} onCheckedChange={setIsNeutered} />
             </div>
         </div>
+        
+        <div className="space-y-2">
+            <Label htmlFor="microchip">Nº do Microchip (opcional)</Label>
+            <Input
+                id="microchip"
+                placeholder="000.000.000"
+                value={microchipNumber}
+                onChange={(e) => setMicrochipNumber(e.target.value)}
+                className="bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-md"
+            />
+        </div>
+
+        <div className="space-y-3">
+             <Label>RGA do animal (opcional)</Label>
+            <input 
+                type="file" 
+                ref={rgaFileInputRef}
+                onChange={(e) => handleFileChange(e, 'rga')}
+                accept=".pdf,image/*"
+                className="hidden"
+            />
+            <Button
+                variant="outline"
+                className="w-full justify-start font-normal"
+                onClick={() => rgaFileInputRef.current?.click()}
+            >
+                <Upload className="mr-2 h-4 w-4"/>
+                {rgaFile ? rgaFile.name : 'Anexar documento'}
+            </Button>
+        </div>
+
 
          <div className="space-y-4">
             <Label className="text-base font-semibold">Carteira de Vacinação</Label>

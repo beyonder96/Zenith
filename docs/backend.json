@@ -433,6 +433,15 @@
           },
           "description": "A list of vaccines the pet has received."
         },
+        "microchipNumber": {
+          "type": "string",
+          "description": "The pet's microchip number."
+        },
+        "rgaUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL for the pet's RGA document."
+        },
         "userId": {
           "type": "string",
           "description": "The ID of the user who owns the pet data."
@@ -510,7 +519,7 @@
   },
    "storage": {
     "/pets/{userId}/{fileName}": {
-      "description": "Stores pet photos. Only the owner can upload.",
+      "description": "Stores pet photos and documents. Only the owner can upload.",
       "rules": {
         "read": "if true",
         "write": "if request.auth != null && request.auth.uid == userId"
