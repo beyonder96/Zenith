@@ -71,8 +71,8 @@ service cloud.firestore {
 
     // /pets/{petId}
     match /pets/{petId} {
-      allow get, create, update, delete: if isOwner(request.auth.uid);
-      allow list: if request.auth != null && request.query.where.size() > 0 && request.query.where[0].field == 'userId' && request.query.where[0].value == request.auth.uid;
+      allow read, create, update, delete: if request.auth != null && isOwner(request.resource.data.userId);
+      allow list: if request.auth != null && isOwner(request.query.filters.userId);
     }
   }
 }
