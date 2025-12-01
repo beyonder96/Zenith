@@ -88,56 +88,75 @@ export default function NewPetPage() {
     }
     
     setIsUploading(true);
-    let finalPhotoUrl = photoUrl;
-    let finalRgaUrl = '';
-
+    
     try {
+        const uploadPromises: Promise<[string, string] | void>[] = [];
+
         if (photoFile) {
-            const filePath = `pets/${user.uid}/photos/${uuidv4()}-${photoFile.name}`;
-            const storageRef = ref(storage, filePath);
-            const snapshot = await uploadBytes(storageRef, photoFile);
-            finalPhotoUrl = await getDownloadURL(snapshot.ref);
+            const photoPath = `pets/${user.uid}/photos/${uuidv4()}-${photoFile.name}`;
+            const photoStorageRef = ref(storage, photoPath);
+            uploadPromises.push(
+                uploadBytes(photoStorageRef, photoFile).then(snapshot => 
+                    getDownloadURL(snapshot.ref).then(url => ['photo', url])
+                )
+            );
         }
 
         if (rgaFile) {
-            const filePath = `pets/${user.uid}/rga/${uuidv4()}-${rgaFile.name}`;
-            const storageRef = ref(storage, filePath);
-            const snapshot = await uploadBytes(storageRef, rgaFile);
-            finalRgaUrl = await getDownloadURL(snapshot.ref);
+            const rgaPath = `pets/${user.uid}/rga/${uuidv4()}-${rgaFile.name}`;
+            const rgaStorageRef = ref(storage, rgaPath);
+            uploadPromises.push(
+                uploadBytes(rgaStorageRef, rgaFile).then(snapshot => 
+                    getDownloadURL(snapshot.ref).then(url => ['rga', url])
+                )
+            );
         }
-    } catch (error) {
-        console.error("Upload error:", error);
-        toast({ variant: 'destructive', title: 'Erro no Upload', description: 'Não foi possível enviar um dos arquivos.'});
-        setIsUploading(false);
-        return;
-    }
 
-    const petData = {
-        name,
-        breed,
-        birthDate: format(birthDate, 'yyyy-MM-dd'),
-        photoUrl: finalPhotoUrl,
-        gender,
-        isNeutered,
-        vaccines,
-        microchipNumber,
-        rgaUrl: finalRgaUrl,
-        userId: user.uid,
-    };
-    
-    addDoc(collection(firestore, 'pets'), petData).then(() => {
+        const uploadResults = await Promise.all(uploadPromises);
+
+        let finalPhotoUrl = photoUrl;
+        let finalRgaUrl = '';
+
+        uploadResults.forEach(result => {
+            if(result) {
+                const [type, url] = result;
+                if(type === 'photo') finalPhotoUrl = url;
+                if(type === 'rga') finalRgaUrl = url;
+            }
+        });
+
+        const petData = {
+            name,
+            breed,
+            birthDate: format(birthDate, 'yyyy-MM-dd'),
+            photoUrl: finalPhotoUrl,
+            gender,
+            isNeutered,
+            vaccines,
+            microchipNumber,
+            rgaUrl: finalRgaUrl,
+            userId: user.uid,
+        };
+        
+        await addDoc(collection(firestore, 'pets'), petData);
+        
         toast({ title: "Pet adicionado!" });
         router.push('/projects');
-    }).catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-            path: 'pets',
-            operation: 'create',
-            requestResourceData: petData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    }).finally(() => {
+
+    } catch (error: any) {
+        console.error("Save/Upload error:", error);
+        if (error.code?.includes('permission-denied')) {
+             const permissionError = new FirestorePermissionError({
+                path: 'pets',
+                operation: 'create',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar os dados do pet.'});
+        }
+    } finally {
         setIsUploading(false);
-    });
+    }
   };
 
   return (
