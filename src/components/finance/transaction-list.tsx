@@ -15,11 +15,13 @@ import {
   MoreHorizontal,
   ShoppingBag,
   Check,
+  ArrowUpCircle,
+  ArrowDownCircle,
 } from 'lucide-react';
 import { useFirestore, useUser } from '@/firebase';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Skeleton } from '../ui/skeleton';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isToday, isYesterday, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { SwipeableListItem } from './swipeable-list-item';
 import {
@@ -48,6 +50,10 @@ type Transaction = {
   type: 'income' | 'expense';
   category: string;
   completed: boolean;
+};
+
+type GroupedTransactions = {
+  [date: string]: Transaction[];
 };
 
 const categoryIcons: { [key: string]: React.ElementType } = {
@@ -93,12 +99,19 @@ export function TransactionList() {
     }
   }, [user, firestore]);
   
-  const sortedTransactions = [...transactions].sort((a, b) => {
-    if (a.completed !== b.completed) {
-      return a.completed ? 1 : -1;
-    }
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
-  });
+  const groupedTransactions = useMemo(() => {
+    const sorted = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return sorted.reduce((acc: GroupedTransactions, transaction) => {
+      const date = transaction.date.split('T')[0]; // Group by day
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(transaction);
+      return acc;
+    }, {});
+  }, [transactions]);
+  
+  const sortedDates = useMemo(() => Object.keys(groupedTransactions).sort((a, b) => new Date(b).getTime() - new Date(a).getTime()), [groupedTransactions]);
 
   const handleEdit = (id: string) => {
     router.push(`/finance/new?id=${id}`);
@@ -146,12 +159,64 @@ export function TransactionList() {
     }
   };
 
+  const formatDateHeader = (dateString: string) => {
+    const date = parseISO(dateString);
+    if (isToday(date)) return 'Hoje';
+    if (isYesterday(date)) return 'Ontem';
+    return format(date, "d 'de' MMMM", { locale: ptBR });
+  };
+
+  const renderTransactionItem = (transaction: Transaction) => {
+      const Icon = categoryIcons[transaction.category] || MoreHorizontal;
+      return (
+        <SwipeableListItem
+            key={transaction.id}
+            onSwipeLeft={() => handleDeleteInitiate(transaction.id)}
+            onSwipeRight={() => handleEdit(transaction.id)}
+        >
+            <div className={cn("flex items-center w-full p-2 rounded-lg", !transaction.completed && "opacity-60")}>
+                <div className="p-3 bg-muted dark:bg-white/10 rounded-lg mr-4">
+                <Icon className="h-5 w-5 text-foreground" />
+                </div>
+                <div className="flex-grow min-w-0">
+                <p className="font-semibold truncate">{transaction.description}</p>
+                <p className="text-sm text-muted-foreground">
+                    {transaction.category}
+                </p>
+                </div>
+                <div className="flex items-center flex-shrink-0 ml-4">
+                    <div
+                    className={cn('font-semibold text-right text-nowrap',
+                        transaction.type === "income"
+                        ? "text-cyan-500"
+                        : "text-pink-500"
+                    )}
+                    >
+                    {transaction.type === 'expense' ? "-" : "+"}R$ {Math.abs(transaction.amount).toFixed(2).replace(".", ",")}
+                    </div>
+                    <div className="w-8 flex justify-center">
+                    {!transaction.completed ? (
+                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => handleMarkAsCompleted(transaction.id)}>
+                        <Check className="h-5 w-5 text-green-500" />
+                    </Button>
+                    ) : (
+                    <div className='h-8 w-8 flex items-center justify-center'>
+                        <Check className='h-5 w-5 text-green-500 opacity-50'/>
+                    </div>
+                    )}
+                    </div>
+                </div>
+            </div>
+        </SwipeableListItem>
+      )
+  };
+
   return (
     <>
       <Card className="bg-card/80 dark:bg-black/20 border-border dark:border-white/10 backdrop-blur-md text-card-foreground">
         <CardHeader>
           <CardTitle className="text-lg font-medium text-muted-foreground">
-            Transações Recentes
+            Histórico de Transações
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -168,57 +233,32 @@ export function TransactionList() {
                       </div>
                   ))}
               </div>
-          ) : sortedTransactions.length === 0 ? (
+          ) : transactions.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                   <p>Nenhuma transação registrada ainda.</p>
                   <p className="text-sm">Clique no botão "+" para adicionar uma.</p>
               </div>
           ) : (
-            <div className="space-y-2">
-              {sortedTransactions.map((transaction) => {
-                const Icon = categoryIcons[transaction.category] || MoreHorizontal;
-                const formattedDate = format(parseISO(transaction.date), "dd/MM/yyyy", { locale: ptBR });
+            <div className="space-y-4">
+              {sortedDates.map(date => {
+                 const dailyTransactions = groupedTransactions[date];
+                 const dailyIncome = dailyTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+                 const dailyExpenses = dailyTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+
                 return (
-                  <SwipeableListItem
-                    key={transaction.id}
-                    onSwipeLeft={() => handleDeleteInitiate(transaction.id)}
-                    onSwipeRight={() => handleEdit(transaction.id)}
-                  >
-                    <div className={cn("flex items-center w-full p-2 rounded-lg", !transaction.completed && "opacity-60")}>
-                      <div className="p-3 bg-muted dark:bg-white/10 rounded-lg mr-4">
-                        <Icon className="h-5 w-5 text-foreground" />
-                      </div>
-                      <div className="flex-grow min-w-0">
-                        <p className="font-semibold truncate">{transaction.description}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formattedDate}
-                        </p>
-                      </div>
-                      <div className="flex items-center flex-shrink-0 ml-4">
-                          <div
-                            className={cn('font-semibold text-right text-nowrap',
-                              transaction.type === "income"
-                                ? "text-cyan-500"
-                                : "text-pink-500"
-                            )}
-                          >
-                            {transaction.type === 'expense' ? "-" : "+"}R$ {Math.abs(transaction.amount).toFixed(2).replace(".", ",")}
-                          </div>
-                          <div className="w-8 flex justify-center">
-                          {!transaction.completed ? (
-                            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => handleMarkAsCompleted(transaction.id)}>
-                                <Check className="h-5 w-5 text-green-500" />
-                            </Button>
-                          ) : (
-                            <div className='h-8 w-8 flex items-center justify-center'>
-                                <Check className='h-5 w-5 text-green-500 opacity-50'/>
-                            </div>
-                          )}
-                          </div>
-                      </div>
+                  <div key={date}>
+                    <div className="flex justify-between items-center mb-2 px-1">
+                        <h3 className="font-semibold text-foreground capitalize">{formatDateHeader(date)}</h3>
+                        <div className='flex gap-3 text-xs'>
+                            {dailyIncome > 0 && <span className='flex items-center gap-1 text-cyan-500'><ArrowUpCircle size={14}/> {dailyIncome.toFixed(2).replace('.', ',')}</span>}
+                            {dailyExpenses < 0 && <span className='flex items-center gap-1 text-pink-500'><ArrowDownCircle size={14}/> {Math.abs(dailyExpenses).toFixed(2).replace('.', ',')}</span>}
+                        </div>
                     </div>
-                  </SwipeableListItem>
-                );
+                    <div className="space-y-2">
+                      {dailyTransactions.map(renderTransactionItem)}
+                    </div>
+                  </div>
+                )
               })}
             </div>
           )}
