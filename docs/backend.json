@@ -377,6 +377,23 @@
       },
       "required": ["name", "link", "price", "importance", "imageUrl", "userId"]
     },
+    "Vaccine": {
+      "title": "Vaccine",
+      "description": "Represents a vaccine administered to a pet.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the vaccine."
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "The date the vaccine was administered."
+        }
+      },
+      "required": ["name", "date"]
+    },
     "Pet": {
       "title": "Pet",
       "description": "Represents a user's pet.",
@@ -399,6 +416,22 @@
           "type": "string",
           "format": "uri",
           "description": "URL for the pet's photo."
+        },
+        "gender": {
+          "type": "string",
+          "enum": ["Macho", "Fêmea"],
+          "description": "The pet's gender."
+        },
+        "isNeutered": {
+          "type": "boolean",
+          "description": "Indicates if the pet is neutered."
+        },
+        "vaccines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/backend/entities/Vaccine"
+          },
+          "description": "A list of vaccines the pet has received."
         },
         "userId": {
           "type": "string",
@@ -473,6 +506,15 @@
         "$ref": "#/backend/entities/Pet"
       },
       "description": "Stores information about user's pets."
+    }
+  },
+   "storage": {
+    "/pets/{userId}/{fileName}": {
+      "description": "Stores pet photos. Only the owner can upload.",
+      "rules": {
+        "read": "if true",
+        "write": "if request.auth != null && request.auth.uid == userId"
+      }
     }
   }
 }
