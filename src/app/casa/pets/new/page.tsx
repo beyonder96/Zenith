@@ -1,20 +1,20 @@
 'use client';
 
-import { useState, useRef, type ChangeEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useRef, type ChangeEvent, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarIcon, ArrowLeft, Image as ImageIcon, Plus, Trash2, Upload } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, addDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import Image from 'next/image';
@@ -26,8 +26,24 @@ type Vaccine = {
     date: string;
 };
 
+type Pet = {
+    id: string;
+    name: string;
+    breed: string;
+    birthDate: string;
+    photoUrl: string;
+    gender: 'Macho' | 'Fêmea';
+    isNeutered: boolean;
+    vaccines: Vaccine[];
+    microchipNumber: string;
+    rgaUrl: string;
+    userId: string;
+};
+
+
 export default function NewPetPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
@@ -35,17 +51,52 @@ export default function NewPetPage() {
   const photoFileInputRef = useRef<HTMLInputElement>(null);
   const rgaFileInputRef = useRef<HTMLInputElement>(null);
   
+  const [petId, setPetId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [breed, setBreed] = useState('');
   const [birthDate, setBirthDate] = useState<Date | undefined>();
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [originalPhotoUrl, setOriginalPhotoUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [gender, setGender] = useState<'Macho' | 'Fêmea' | null>(null);
   const [isNeutered, setIsNeutered] = useState(false);
   const [vaccines, setVaccines] = useState<Vaccine[]>([]);
   const [microchipNumber, setMicrochipNumber] = useState('');
+  const [rgaUrl, setRgaUrl] = useState('');
   const [rgaFile, setRgaFile] = useState<File | null>(null);
+  const [originalRgaUrl, setOriginalRgaUrl] = useState('');
+
+  const isEditing = petId !== null;
+
+  useEffect(() => {
+    const id = searchParams.get('id');
+    if (id && user && firestore) {
+      setPetId(id);
+      const fetchPet = async () => {
+        const docRef = doc(firestore, 'pets', id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists() && docSnap.data().userId === user.uid) {
+            const petToEdit = docSnap.data() as Omit<Pet, 'id'>;
+            setName(petToEdit.name);
+            setBreed(petToEdit.breed || '');
+            if(petToEdit.birthDate) setBirthDate(parseISO(petToEdit.birthDate));
+            setPhotoUrl(petToEdit.photoUrl);
+            setOriginalPhotoUrl(petToEdit.photoUrl);
+            setGender(petToEdit.gender || null);
+            setIsNeutered(petToEdit.isNeutered || false);
+            setVaccines(petToEdit.vaccines || []);
+            setMicrochipNumber(petToEdit.microchipNumber || '');
+            setRgaUrl(petToEdit.rgaUrl || '');
+            setOriginalRgaUrl(petToEdit.rgaUrl || '');
+        } else {
+             toast({ variant: 'destructive', title: 'Erro', description: 'Pet não encontrado ou você não tem permissão para editá-lo.' });
+             router.push('/projects');
+        }
+      };
+      fetchPet();
+    }
+  }, [searchParams, user, firestore, router, toast]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>, fileType: 'photo' | 'rga') => {
     if (e.target.files && e.target.files[0]) {
@@ -55,6 +106,7 @@ export default function NewPetPage() {
         setPhotoUrl(URL.createObjectURL(file));
       } else {
         setRgaFile(file);
+        setRgaUrl(file.name); // Show file name as placeholder
       }
     }
   };
@@ -75,11 +127,7 @@ export default function NewPetPage() {
 
   const handleSave = async () => {
     if (!name.trim() || !birthDate) {
-      toast({
-        variant: "destructive",
-        title: "Campos obrigatórios",
-        description: "Nome e data de nascimento são obrigatórios.",
-      });
+      toast({ variant: "destructive", title: "Campos obrigatórios", description: "Nome e data de nascimento são obrigatórios." });
       return;
     }
     if (!user || !firestore) {
@@ -90,84 +138,78 @@ export default function NewPetPage() {
     setIsSaving(true);
     
     try {
+        let finalPhotoUrl = originalPhotoUrl;
+        let finalRgaUrl = originalRgaUrl;
+
+        // Upload new photo if provided
+        if (photoFile) {
+            const photoPath = `pets/${user.uid}/photos/${uuidv4()}-${photoFile.name}`;
+            const photoStorageRef = ref(storage, photoPath);
+            const photoSnapshot = await uploadBytes(photoStorageRef, photoFile);
+            finalPhotoUrl = await getDownloadURL(photoSnapshot.ref);
+            // Optionally delete old photo if it exists and is different
+            if(originalPhotoUrl && originalPhotoUrl !== finalPhotoUrl) {
+                try {
+                    const oldPhotoRef = ref(storage, originalPhotoUrl);
+                    await deleteObject(oldPhotoRef);
+                } catch(e) {
+                    console.warn("Could not delete old photo, it might not exist.", e);
+                }
+            }
+        }
+
+        // Upload new RGA if provided
+        if (rgaFile) {
+            const rgaPath = `pets/${user.uid}/rga/${uuidv4()}-${rgaFile.name}`;
+            const rgaStorageRef = ref(storage, rgaPath);
+            const rgaSnapshot = await uploadBytes(rgaStorageRef, rgaFile);
+            finalRgaUrl = await getDownloadURL(rgaSnapshot.ref);
+             if(originalRgaUrl && originalRgaUrl !== finalRgaUrl) {
+                 try {
+                    const oldRgaRef = ref(storage, originalRgaUrl);
+                    await deleteObject(oldRgaRef);
+                 } catch(e) {
+                    console.warn("Could not delete old RGA file, it might not exist.", e);
+                 }
+            }
+        }
+
         const petData = {
             name,
             breed,
             birthDate: format(birthDate, 'yyyy-MM-dd'),
-            photoUrl: '', // Will be updated later
+            photoUrl: finalPhotoUrl,
             gender,
             isNeutered,
             vaccines,
             microchipNumber,
-            rgaUrl: '', // Will be updated later
+            rgaUrl: finalRgaUrl,
             userId: user.uid,
         };
-        
-        // 1. Add document with text data immediately
-        const docRef = await addDoc(collection(firestore, 'pets'), petData);
-        toast({ title: "Pet adicionado!", description: "Salvando mídias em segundo plano..." });
-        
-        // 2. Redirect user immediately
-        router.push('/projects');
-        
-        // 3. Handle uploads in the background
-        const uploadAndUpdate = async () => {
-            let finalPhotoUrl = '';
-            let finalRgaUrl = '';
 
-            const uploadPromises = [];
-
-            if (photoFile) {
-                const photoPath = `pets/${user.uid}/photos/${uuidv4()}-${photoFile.name}`;
-                const photoStorageRef = ref(storage, photoPath);
-                uploadPromises.push(
-                    uploadBytes(photoStorageRef, photoFile).then(snapshot => getDownloadURL(snapshot.ref))
-                    .then(url => { finalPhotoUrl = url; })
-                );
-            }
-
-            if (rgaFile) {
-                const rgaPath = `pets/${user.uid}/rga/${uuidv4()}-${rgaFile.name}`;
-                const rgaStorageRef = ref(storage, rgaPath);
-                uploadPromises.push(
-                     uploadBytes(rgaStorageRef, rgaFile).then(snapshot => getDownloadURL(snapshot.ref))
-                    .then(url => { finalRgaUrl = url; })
-                );
-            }
-            
-            await Promise.all(uploadPromises);
-
-            const updateData: { photoUrl?: string, rgaUrl?: string } = {};
-            if (finalPhotoUrl) updateData.photoUrl = finalPhotoUrl;
-            if (finalRgaUrl) updateData.rgaUrl = finalRgaUrl;
-
-            if (Object.keys(updateData).length > 0) {
-              await updateDoc(docRef, updateData);
-            }
-        };
-
-        // Execute uploads without awaiting in the main function flow
-        uploadAndUpdate().catch(error => {
-            console.error("Background upload/update error:", error);
-            // Optionally, show a non-blocking toast notification about the background failure
-            toast({ variant: 'destructive', title: 'Erro no Upload', description: 'Não foi possível salvar os arquivos de mídia do pet.'});
-        });
-
+        if (isEditing && petId) {
+            await updateDoc(doc(firestore, 'pets', petId), petData);
+            toast({ title: "Pet atualizado!", description: "As informações foram salvas com sucesso." });
+            router.push(`/casa/pets/${petId}`);
+        } else {
+            await addDoc(collection(firestore, 'pets'), petData);
+            toast({ title: "Pet adicionado!", description: "Seu novo pet foi salvo." });
+            router.push('/projects');
+        }
 
     } catch (error: any) {
         console.error("Save error:", error);
-        setIsSaving(false); // only stop loading on initial save error
+        const operation = isEditing ? 'update' : 'create';
+        const path = isEditing ? `pets/${petId}` : 'pets';
         if (error.code?.includes('permission-denied')) {
-             const permissionError = new FirestorePermissionError({
-                path: 'pets',
-                operation: 'create',
-            });
+             const permissionError = new FirestorePermissionError({ path, operation });
             errorEmitter.emit('permission-error', permissionError);
         } else {
             toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar os dados do pet.'});
         }
+    } finally {
+      setIsSaving(false);
     }
-    // No `finally` block to set isSaving to false, as we've already navigated away.
   };
 
   return (
@@ -176,7 +218,7 @@ export default function NewPetPage() {
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft />
         </Button>
-        <h1 className="font-bold text-lg">Novo Pet</h1>
+        <h1 className="font-bold text-lg">{isEditing ? 'Editar Pet' : 'Novo Pet'}</h1>
         <Button variant="link" onClick={handleSave} disabled={isSaving} className="font-bold text-orange-500">
           {isSaving ? 'Salvando...' : 'Salvar'}
         </Button>
@@ -309,8 +351,9 @@ export default function NewPetPage() {
                 onClick={() => rgaFileInputRef.current?.click()}
             >
                 <Upload className="mr-2 h-4 w-4"/>
-                {rgaFile ? rgaFile.name : 'Anexar documento'}
+                {rgaFile ? rgaFile.name : (rgaUrl ? 'Substituir documento' : 'Anexar documento')}
             </Button>
+             {rgaUrl && !rgaFile && <p className='text-xs text-muted-foreground'>Documento atual: <a href={rgaUrl} target='_blank' rel='noopener noreferrer' className='text-primary underline'>Visualizar</a></p>}
         </div>
 
 
