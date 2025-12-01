@@ -19,11 +19,11 @@ export function NoteCard({ note, onView }: NoteCardProps) {
   // Firestore Timestamps can be objects, so we need to handle them.
   if (typeof note.createdAt === 'string') {
     date = parseISO(note.createdAt);
-  } else if (note.createdAt && 'toDate' in note.createdAt) {
+  } else if (note.createdAt && typeof note.createdAt === 'object' && 'toDate' in note.createdAt) {
     // This handles the Firebase Timestamp object
     date = (note.createdAt as any).toDate();
   } else {
-    // Fallback if the date is invalid, though it shouldn't happen
+    // Fallback if the date is invalid or another type, though it shouldn't happen with valid data
     date = new Date();
   }
 
