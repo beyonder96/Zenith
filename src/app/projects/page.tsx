@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Loader2, StickyNote, ListTodo, Edit, Trash2, X, CalendarDays } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useUser } from '@/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +51,7 @@ export default function ProjectsPage() {
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
+  const [showDeleteCompletedDialog, setShowDeleteCompletedDialog] = useState(false);
   const [viewingNote, setViewingNote] = useState<Note | null>(null);
   const [loadingProjectId, setLoadingProjectId] = useState<string | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
@@ -80,7 +81,12 @@ export default function ProjectsPage() {
       const unsubscribeNotes = onSnapshot(notesQuery, (querySnapshot) => {
         const userNotes: Note[] = [];
         querySnapshot.forEach((doc) => {
-          userNotes.push({ id: doc.id, ...doc.data() } as Note);
+          const data = doc.data();
+          userNotes.push({ 
+              id: doc.id,
+              ...data,
+              createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt
+            } as Note);
         });
         setNotes(userNotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
       },
@@ -176,6 +182,27 @@ export default function ProjectsPage() {
     }
   };
 
+    const handleDeleteCompletedConfirm = () => {
+        if (!firestore) return;
+        const completedProjects = projects.filter(p => p.completed);
+        if (completedProjects.length === 0) return;
+
+        const batch = writeBatch(firestore);
+        completedProjects.forEach(project => {
+            const docRef = doc(firestore, "projects", project.id);
+            batch.delete(docRef);
+        });
+
+        batch.commit().then(() => {
+            toast({ title: "Tarefas concluídas foram limpas." });
+            setShowDeleteCompletedDialog(false);
+        }).catch(serverError => {
+            const permissionError = new FirestorePermissionError({ path: 'projects', operation: 'delete' });
+            errorEmitter.emit('permission-error', permissionError);
+            setShowDeleteCompletedDialog(false);
+        });
+    };
+
   const handleEditProject = (id: string) => {
     router.push(`/tasks/new?id=${id}`);
   };
@@ -254,6 +281,8 @@ export default function ProjectsPage() {
         return newSet;
     });
   };
+  
+  const hasCompletedProjects = projects.some(p => p.completed);
 
   return (
     <>
@@ -299,6 +328,19 @@ export default function ProjectsPage() {
                     Eventos
                   </Button>
                 </div>
+                
+                 {activeView === 'projects' && hasCompletedProjects && (
+                    <div className="mb-4 flex justify-end">
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => setShowDeleteCompletedDialog(true)}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Limpar Concluídas
+                        </Button>
+                    </div>
+                )}
 
                 {activeView === 'projects' && (
                   <div className="w-full space-y-4">
@@ -308,8 +350,8 @@ export default function ProjectsPage() {
                         </div>
                       ) : projects.length === 0 ? (
                         <div className="text-center py-10 text-muted-foreground">
-                          <p>Nenhum projeto ainda.</p>
-                          <p className="text-sm">Crie seu primeiro projeto.</p>
+                          <p>Nenhuma tarefa ainda.</p>
+                          <p className="text-sm">Crie sua primeira tarefa.</p>
                         </div>
                       ) : (
                         projects.map(project => (
@@ -462,8 +504,26 @@ export default function ProjectsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+       <AlertDialog open={showDeleteCompletedDialog} onOpenChange={setShowDeleteCompletedDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Limpar Tarefas Concluídas?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação removerá permanentemente todas as tarefas marcadas como concluídas. Você não poderá desfazer isso.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCompletedConfirm}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Confirmar e Limpar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
-
-    
