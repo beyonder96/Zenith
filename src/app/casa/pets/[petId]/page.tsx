@@ -150,8 +150,12 @@ export default function PetDetailPage() {
 
             <main className="p-6">
                 <div className="flex flex-col items-center -mt-16">
-                    <div className="relative h-32 w-32">
-                        <Image src={pet.photoUrl} alt={pet.name} layout="fill" className="rounded-full object-cover border-4 border-background shadow-md" />
+                    <div className="relative h-32 w-32 rounded-full border-4 border-background shadow-md bg-secondary flex items-center justify-center">
+                        {pet.photoUrl ? (
+                            <Image src={pet.photoUrl} alt={pet.name} layout="fill" className="rounded-full object-cover" />
+                        ) : (
+                            <Cat className="w-16 h-16 text-muted-foreground" />
+                        )}
                     </div>
                     <h1 className="text-3xl font-bold mt-4">{pet.name}</h1>
                     <p className="text-muted-foreground">{pet.breed || 'Raça não informada'}</p>
@@ -242,5 +246,3 @@ export default function PetDetailPage() {
         </>
     );
 }
-
-    
