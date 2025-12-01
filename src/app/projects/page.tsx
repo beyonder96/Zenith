@@ -2,11 +2,11 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { ProjectCard, Project, Subtask } from "@/components/projects/project-card";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, StickyNote, ListTodo, Edit, Trash2, X, CalendarDays } from "lucide-react";
+import { Plus, Loader2, StickyNote, ListTodo, Edit, Trash2, X, CalendarDays, Search } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useUser } from '@/firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
@@ -40,6 +40,7 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import type { Event } from '@/components/events/events';
 import { EventCard } from '@/components/events/event-card';
+import { Input } from '@/components/ui/input';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -58,6 +59,7 @@ export default function ProjectsPage() {
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
   const [activeView, setActiveView] = useState<'projects' | 'notes' | 'events'>('projects');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     setIsClient(true);
@@ -116,6 +118,33 @@ export default function ProjectsPage() {
       };
     }
   }, [user, firestore]);
+
+  const filteredProjects = useMemo(() => {
+    if (!searchTerm) return projects;
+    return projects.filter(p => 
+      p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.details?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.subtasks?.some(s => s.text.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [projects, searchTerm]);
+  
+  const filteredNotes = useMemo(() => {
+    if (!searchTerm) return notes;
+    return notes.filter(n =>
+      n.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      n.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      n.tags?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [notes, searchTerm]);
+
+  const filteredEvents = useMemo(() => {
+    if (!searchTerm) return events;
+    return events.filter(e =>
+      e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      e.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      e.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [events, searchTerm]);
 
   const handleToggleComplete = (id: string) => {
     const project = projects.find(p => p.id === id);
@@ -296,6 +325,16 @@ export default function ProjectsPage() {
           
           <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-4 pb-28 overflow-y-auto">
               <div className="w-full max-w-md">
+                 <div className="relative w-full max-w-md mb-4">
+                    <Input
+                        placeholder="Pesquisar em tarefas, notas e eventos..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 bg-card dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-lg h-11"
+                    />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                 </div>
+
                  <div className="flex w-full items-center justify-center gap-2 mb-4">
                   <Button
                     onClick={() => setActiveView('projects')}
@@ -348,13 +387,13 @@ export default function ProjectsPage() {
                         <div className="flex justify-center items-center h-48">
                             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                         </div>
-                      ) : projects.length === 0 ? (
+                      ) : filteredProjects.length === 0 ? (
                         <div className="text-center py-10 text-muted-foreground">
-                          <p>Nenhuma tarefa ainda.</p>
-                          <p className="text-sm">Crie sua primeira tarefa.</p>
+                          <p>Nenhuma tarefa encontrada.</p>
+                          {searchTerm ? <p className="text-sm">Tente uma busca diferente.</p> : <p className="text-sm">Crie sua primeira tarefa.</p>}
                         </div>
                       ) : (
-                        projects.map(project => (
+                        filteredProjects.map(project => (
                           <ProjectCard 
                             key={project.id}
                             project={project}
@@ -377,14 +416,14 @@ export default function ProjectsPage() {
                             <div className="flex justify-center items-center h-48">
                                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                             </div>
-                        ) : notes.length === 0 ? (
+                        ) : filteredNotes.length === 0 ? (
                             <div className="text-center py-10 text-muted-foreground">
-                            <p>Nenhuma nota ainda.</p>
-                            <p className="text-sm">Crie sua primeira nota.</p>
+                              <p>Nenhuma nota encontrada.</p>
+                              {searchTerm ? <p className="text-sm">Tente uma busca diferente.</p> : <p className="text-sm">Crie sua primeira nota.</p>}
                             </div>
                         ) : (
                            <div className="columns-2 gap-4">
-                             {notes.map(note => (
+                             {filteredNotes.map(note => (
                                 <NoteCard 
                                     key={note.id}
                                     note={note}
@@ -401,13 +440,13 @@ export default function ProjectsPage() {
                         <div className="flex justify-center items-center h-48">
                             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                         </div>
-                      ) : events.length === 0 ? (
+                      ) : filteredEvents.length === 0 ? (
                         <div className="text-center py-10 text-muted-foreground">
-                          <p>Nenhum evento agendado.</p>
-                          <p className="text-sm">Crie seu primeiro evento.</p>
+                           <p>Nenhum evento encontrado.</p>
+                          {searchTerm ? <p className="text-sm">Tente uma busca diferente.</p> : <p className="text-sm">Crie seu primeiro evento.</p>}
                         </div>
                       ) : (
-                        events.map(event => (
+                        filteredEvents.map(event => (
                           <EventCard 
                             key={event.id}
                             event={event}
