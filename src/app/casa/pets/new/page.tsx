@@ -13,7 +13,7 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -40,7 +40,7 @@ export default function NewPetPage() {
   const [birthDate, setBirthDate] = useState<Date | undefined>();
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [gender, setGender] = useState<'Macho' | 'Fêmea' | null>(null);
   const [isNeutered, setIsNeutered] = useState(false);
   const [vaccines, setVaccines] = useState<Vaccine[]>([]);
@@ -74,11 +74,11 @@ export default function NewPetPage() {
   };
 
   const handleSave = async () => {
-    if (!name.trim() || !birthDate || (!photoUrl && !photoFile)) {
+    if (!name.trim() || !birthDate) {
       toast({
         variant: "destructive",
         title: "Campos obrigatórios",
-        description: "Nome, data de nascimento e foto são obrigatórios.",
+        description: "Nome e data de nascimento são obrigatórios.",
       });
       return;
     }
@@ -87,64 +87,76 @@ export default function NewPetPage() {
         return;
     }
     
-    setIsUploading(true);
+    setIsSaving(true);
     
     try {
-        const uploadPromises: Promise<[string, string] | void>[] = [];
-
-        if (photoFile) {
-            const photoPath = `pets/${user.uid}/photos/${uuidv4()}-${photoFile.name}`;
-            const photoStorageRef = ref(storage, photoPath);
-            uploadPromises.push(
-                uploadBytes(photoStorageRef, photoFile).then(snapshot => 
-                    getDownloadURL(snapshot.ref).then(url => ['photo', url])
-                )
-            );
-        }
-
-        if (rgaFile) {
-            const rgaPath = `pets/${user.uid}/rga/${uuidv4()}-${rgaFile.name}`;
-            const rgaStorageRef = ref(storage, rgaPath);
-            uploadPromises.push(
-                uploadBytes(rgaStorageRef, rgaFile).then(snapshot => 
-                    getDownloadURL(snapshot.ref).then(url => ['rga', url])
-                )
-            );
-        }
-
-        const uploadResults = await Promise.all(uploadPromises);
-
-        let finalPhotoUrl = photoUrl;
-        let finalRgaUrl = '';
-
-        uploadResults.forEach(result => {
-            if(result) {
-                const [type, url] = result;
-                if(type === 'photo') finalPhotoUrl = url;
-                if(type === 'rga') finalRgaUrl = url;
-            }
-        });
-
         const petData = {
             name,
             breed,
             birthDate: format(birthDate, 'yyyy-MM-dd'),
-            photoUrl: finalPhotoUrl,
+            photoUrl: '', // Will be updated later
             gender,
             isNeutered,
             vaccines,
             microchipNumber,
-            rgaUrl: finalRgaUrl,
+            rgaUrl: '', // Will be updated later
             userId: user.uid,
         };
         
-        await addDoc(collection(firestore, 'pets'), petData);
+        // 1. Add document with text data immediately
+        const docRef = await addDoc(collection(firestore, 'pets'), petData);
+        toast({ title: "Pet adicionado!", description: "Salvando mídias em segundo plano..." });
         
-        toast({ title: "Pet adicionado!" });
+        // 2. Redirect user immediately
         router.push('/projects');
+        
+        // 3. Handle uploads in the background
+        const uploadAndUpdate = async () => {
+            let finalPhotoUrl = '';
+            let finalRgaUrl = '';
+
+            const uploadPromises = [];
+
+            if (photoFile) {
+                const photoPath = `pets/${user.uid}/photos/${uuidv4()}-${photoFile.name}`;
+                const photoStorageRef = ref(storage, photoPath);
+                uploadPromises.push(
+                    uploadBytes(photoStorageRef, photoFile).then(snapshot => getDownloadURL(snapshot.ref))
+                    .then(url => { finalPhotoUrl = url; })
+                );
+            }
+
+            if (rgaFile) {
+                const rgaPath = `pets/${user.uid}/rga/${uuidv4()}-${rgaFile.name}`;
+                const rgaStorageRef = ref(storage, rgaPath);
+                uploadPromises.push(
+                     uploadBytes(rgaStorageRef, rgaFile).then(snapshot => getDownloadURL(snapshot.ref))
+                    .then(url => { finalRgaUrl = url; })
+                );
+            }
+            
+            await Promise.all(uploadPromises);
+
+            const updateData: { photoUrl?: string, rgaUrl?: string } = {};
+            if (finalPhotoUrl) updateData.photoUrl = finalPhotoUrl;
+            if (finalRgaUrl) updateData.rgaUrl = finalRgaUrl;
+
+            if (Object.keys(updateData).length > 0) {
+              await updateDoc(docRef, updateData);
+            }
+        };
+
+        // Execute uploads without awaiting in the main function flow
+        uploadAndUpdate().catch(error => {
+            console.error("Background upload/update error:", error);
+            // Optionally, show a non-blocking toast notification about the background failure
+            toast({ variant: 'destructive', title: 'Erro no Upload', description: 'Não foi possível salvar os arquivos de mídia do pet.'});
+        });
+
 
     } catch (error: any) {
-        console.error("Save/Upload error:", error);
+        console.error("Save error:", error);
+        setIsSaving(false); // only stop loading on initial save error
         if (error.code?.includes('permission-denied')) {
              const permissionError = new FirestorePermissionError({
                 path: 'pets',
@@ -154,9 +166,8 @@ export default function NewPetPage() {
         } else {
             toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar os dados do pet.'});
         }
-    } finally {
-        setIsUploading(false);
     }
+    // No `finally` block to set isSaving to false, as we've already navigated away.
   };
 
   return (
@@ -166,8 +177,8 @@ export default function NewPetPage() {
             <ArrowLeft />
         </Button>
         <h1 className="font-bold text-lg">Novo Pet</h1>
-        <Button variant="link" onClick={handleSave} disabled={isUploading} className="font-bold text-orange-500">
-          {isUploading ? 'Salvando...' : 'Salvar'}
+        <Button variant="link" onClick={handleSave} disabled={isSaving} className="font-bold text-orange-500">
+          {isSaving ? 'Salvando...' : 'Salvar'}
         </Button>
       </header>
 
