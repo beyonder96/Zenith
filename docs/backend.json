@@ -376,6 +376,36 @@
         }
       },
       "required": ["name", "link", "price", "importance", "imageUrl", "userId"]
+    },
+    "Pet": {
+      "title": "Pet",
+      "description": "Represents a user's pet.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The pet's name."
+        },
+        "breed": {
+          "type": "string",
+          "description": "The pet's breed."
+        },
+        "birthDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The pet's date of birth."
+        },
+        "photoUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL for the pet's photo."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns the pet data."
+        }
+      },
+      "required": ["name", "birthDate", "userId", "photoUrl"]
     }
   },
   "auth": {
@@ -437,6 +467,12 @@
         "$ref": "#/backend/entities/WishlistItem"
       },
       "description": "Stores user wishlist items."
+    },
+    "/pets/{petId}": {
+      "schema": {
+        "$ref": "#/backend/entities/Pet"
+      },
+      "description": "Stores information about user's pets."
     }
   }
 }

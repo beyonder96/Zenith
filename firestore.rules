@@ -68,5 +68,10 @@ service cloud.firestore {
       allow create, update: if isOwner(request.resource.data.userId);
       allow list: if request.auth != null;
     }
+
+    // /pets/{petId}
+    match /pets/{petId} {
+      allow read, create, update, delete: if isOwner(request.resource.data.userId);
+    }
   }
 }

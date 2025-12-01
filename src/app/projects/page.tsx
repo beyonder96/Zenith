@@ -41,6 +41,7 @@ import { cn } from '@/lib/utils';
 import type { Event } from '@/components/events/events';
 import { EventCard } from '@/components/events/event-card';
 import { Input } from '@/components/ui/input';
+import { PetsSection } from '@/components/casa/pets-section';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -330,7 +331,7 @@ export default function ProjectsPage() {
                         placeholder="Pesquisar..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 bg-card/50 dark:bg-black/20 border-none rounded-full h-11 backdrop-blur-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                        className="pl-10 bg-card/30 dark:bg-black/20 border-none rounded-full h-11 backdrop-blur-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                  </div>
@@ -468,9 +469,7 @@ export default function ProjectsPage() {
                   </div>
                 )}
                 {activeView === 'casa' && (
-                    <div className="text-center py-10 text-muted-foreground">
-                        <p>Seção em construção.</p>
-                    </div>
+                  <PetsSection />
                 )}
               </div>
           </main>
