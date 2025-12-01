@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Pencil, Trash2, MapPin, Clock } from "lucide-react";
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isPast, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import type { Event } from "./events";
@@ -20,8 +20,13 @@ export function EventCard({ event, onEdit, onDelete }: EventCardProps) {
     const month = format(date, 'MMM', { locale: ptBR }).toUpperCase();
     const fullDate = format(date, "EEEE, d 'de' MMMM", { locale: ptBR });
 
+    const hasPassed = isPast(date) && !isToday(date);
+
     return (
-        <Card className="w-full max-w-md bg-white dark:bg-zinc-800 border-none shadow-sm rounded-xl relative overflow-hidden">
+        <Card className={cn(
+            "w-full max-w-md bg-white dark:bg-zinc-800 border-none shadow-sm rounded-xl relative overflow-hidden transition-opacity",
+             hasPassed && "opacity-60"
+        )}>
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-blue-400 to-purple-500"></div>
             <CardContent className="p-4 ml-1.5">
                 <div className="flex items-start justify-between">
