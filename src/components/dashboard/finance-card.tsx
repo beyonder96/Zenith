@@ -99,7 +99,7 @@ export function FinanceCard() {
               <p
                 className={cn(
                   'text-2xl font-bold transition-all duration-300',
-                  totalBalance >= 0 ? 'text-cyan-500' : 'text-pink-500',
+                  totalBalance >= 0 ? 'text-green-400' : 'text-red-400',
                   !isBalanceVisible && 'blur-md select-none'
                 )}
               >
