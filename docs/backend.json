@@ -515,15 +515,6 @@
       },
       "description": "Stores information about user's pets."
     }
-  },
-   "storage": {
-    "/pets/{userId}/{fileName}": {
-      "description": "Stores pet photos and documents. Only the owner can upload.",
-      "rules": {
-        "read": "if true",
-        "write": "if request.auth != null && request.auth.uid == userId"
-      }
-    }
   }
 }
     
