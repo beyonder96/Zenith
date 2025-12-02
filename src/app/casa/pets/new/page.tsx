@@ -136,9 +136,10 @@ export default function NewPetPage() {
       await deleteObject(fileRef);
     } catch (e) {
       if (e instanceof Error && (e as any).code === 'storage/object-not-found') {
-        console.warn("Could not delete file, it might not exist or has a different path structure.", e);
+        console.warn("Could not delete old file, it might have been already deleted or not exist.", e);
       } else {
-        console.error("Error deleting file", e);
+        console.error("Error deleting old file", e);
+        // Do not re-throw, allow the process to continue.
       }
     }
   };
@@ -159,28 +160,30 @@ export default function NewPetPage() {
         let finalPhotoUrl = photoUrl;
         let finalRgaUrl = rgaUrl;
         
-        const currentData = isEditing ? (await getDoc(doc(firestore, 'pets', petId!))).data() as Pet : null;
-
-        // Wait for all uploads to finish before proceeding
-        const uploadResults = await Promise.all([
-            photoFile ? uploadFile(photoFile, 'photos') : Promise.resolve(null),
-            rgaFile ? uploadFile(rgaFile, 'rga') : Promise.resolve(null)
-        ]);
-
-        const newPhotoUrl = uploadResults[0];
-        const newRgaUrl = uploadResults[1];
-
-        if (newPhotoUrl) {
-            finalPhotoUrl = newPhotoUrl;
-            if (isEditing && currentData?.photoUrl && currentData.photoUrl !== finalPhotoUrl) {
-                await deleteFile(currentData.photoUrl);
+        if (isEditing) {
+            const currentData = (await getDoc(doc(firestore, 'pets', petId!))).data() as Pet;
+            
+            if (photoFile) {
+                const newPhotoUrl = await uploadFile(photoFile, 'photos');
+                if (currentData?.photoUrl && currentData.photoUrl !== newPhotoUrl) {
+                    await deleteFile(currentData.photoUrl);
+                }
+                finalPhotoUrl = newPhotoUrl;
             }
-        }
+            if (rgaFile) {
+                const newRgaUrl = await uploadFile(rgaFile, 'rga');
+                if (currentData?.rgaUrl && currentData.rgaUrl !== newRgaUrl) {
+                    await deleteFile(currentData.rgaUrl);
+                }
+                finalRgaUrl = newRgaUrl;
+            }
 
-        if (newRgaUrl) {
-            finalRgaUrl = newRgaUrl;
-            if (isEditing && currentData?.rgaUrl && currentData.rgaUrl !== finalRgaUrl) {
-                await deleteFile(currentData.rgaUrl);
+        } else {
+             if (photoFile) {
+                finalPhotoUrl = await uploadFile(photoFile, 'photos');
+            }
+            if (rgaFile) {
+                finalRgaUrl = await uploadFile(rgaFile, 'rga');
             }
         }
         
