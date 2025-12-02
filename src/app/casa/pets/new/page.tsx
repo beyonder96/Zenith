@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
 import { collection, addDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL, StorageReference } from 'firebase/storage';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import Image from 'next/image';
@@ -40,6 +40,14 @@ type Pet = {
     userId: string;
 };
 
+const uploadFile = async (storage: any, user: any, file: File, folder: 'photos' | 'rga'): Promise<string> => {
+    if (!user) throw new Error("Usuário não autenticado para upload.");
+    const filePath = `pets/${user.uid}/${folder}/${uuidv4()}-${file.name}`;
+    const storageRef = ref(storage, filePath);
+    await uploadBytes(storageRef, file);
+    return getDownloadURL(storageRef);
+};
+
 
 export default function NewPetPage() {
   const router = useRouter();
@@ -55,15 +63,18 @@ export default function NewPetPage() {
   const [name, setName] = useState('');
   const [breed, setBreed] = useState('');
   const [birthDate, setBirthDate] = useState<Date | undefined>();
-  const [photoUrl, setPhotoUrl] = useState('');
+  
+  const [photoUrl, setPhotoUrl] = useState(''); // Holds URL for preview or existing URL
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+
   const [isSaving, setIsSaving] = useState(false);
   const [gender, setGender] = useState<'Macho' | 'Fêmea' | null>(null);
   const [isNeutered, setIsNeutered] = useState(false);
   const [vaccines, setVaccines] = useState<Vaccine[]>([]);
   const [microchipNumber, setMicrochipNumber] = useState('');
-  const [rgaUrl, setRgaUrl] = useState('');
+  
   const [rgaFile, setRgaFile] = useState<File | null>(null);
+  const [existingRgaUrl, setExistingRgaUrl] = useState(''); // Holds existing URL
   
   const isEditing = petId !== null;
 
@@ -84,7 +95,7 @@ export default function NewPetPage() {
             setIsNeutered(petToEdit.isNeutered || false);
             setVaccines(petToEdit.vaccines || []);
             setMicrochipNumber(petToEdit.microchipNumber || '');
-            setRgaUrl(petToEdit.rgaUrl || '');
+            setExistingRgaUrl(petToEdit.rgaUrl || '');
         } else {
              toast({ variant: 'destructive', title: 'Erro', description: 'Pet não encontrado ou você não tem permissão para editá-lo.' });
              router.push('/projects');
@@ -99,10 +110,9 @@ export default function NewPetPage() {
       const file = e.target.files[0];
       if(fileType === 'photo') {
         setPhotoFile(file);
-        setPhotoUrl(URL.createObjectURL(file));
+        setPhotoUrl(URL.createObjectURL(file)); // Update preview URL
       } else {
         setRgaFile(file);
-        setRgaUrl(file.name); // Show file name as placeholder
       }
     }
   };
@@ -121,15 +131,6 @@ export default function NewPetPage() {
     setVaccines(vaccines.filter((_, i) => i !== index));
   };
   
-  const uploadFile = async (file: File, folder: 'photos' | 'rga'): Promise<string> => {
-    if (!user) throw new Error("Usuário não autenticado");
-    const filePath = `pets/${user.uid}/${folder}/${uuidv4()}-${file.name}`;
-    const storageRef = ref(storage, filePath);
-    await uploadBytes(storageRef, file);
-    return getDownloadURL(storageRef);
-  };
-
-
   const handleSave = async () => {
     if (!name.trim() || !birthDate) {
       toast({ variant: "destructive", title: "Campos obrigatórios", description: "Nome e data de nascimento são obrigatórios." });
@@ -144,15 +145,26 @@ export default function NewPetPage() {
     
     try {
         let finalPhotoUrl = photoUrl;
-        let finalRgaUrl = rgaUrl;
+        let finalRgaUrl = existingRgaUrl;
 
         // --- UPLOAD PHASE ---
+        const uploadPromises: Promise<void>[] = [];
         if (photoFile) {
-            finalPhotoUrl = await uploadFile(photoFile, 'photos');
+            uploadPromises.push(
+                uploadFile(storage, user, photoFile, 'photos').then(url => {
+                    finalPhotoUrl = url;
+                })
+            );
         }
         if (rgaFile) {
-            finalRgaUrl = await uploadFile(rgaFile, 'rga');
+            uploadPromises.push(
+                uploadFile(storage, user, rgaFile, 'rga').then(url => {
+                    finalRgaUrl = url;
+                })
+            );
         }
+
+        await Promise.all(uploadPromises);
 
         // --- DATABASE WRITE PHASE ---
         const petData = {
@@ -186,7 +198,7 @@ export default function NewPetPage() {
              const permissionError = new FirestorePermissionError({ path, operation });
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            toast({ variant: 'destructive', title: 'Erro ao Salvar', description: `Não foi possível salvar os dados do pet. Tente novamente. Detalhe: ${error.message}`});
+            toast({ variant: 'destructive', title: 'Erro ao Salvar', description: `Não foi possível salvar os dados do pet. Detalhe: ${error.message}`});
         }
     } finally {
       setIsSaving(false);
@@ -333,9 +345,9 @@ export default function NewPetPage() {
                 onClick={() => rgaFileInputRef.current?.click()}
             >
                 <Upload className="mr-2 h-4 w-4"/>
-                {rgaFile ? rgaFile.name : (rgaUrl ? 'Substituir documento' : 'Anexar documento')}
+                {rgaFile ? rgaFile.name : (existingRgaUrl ? 'Substituir documento' : 'Anexar documento')}
             </Button>
-             {rgaUrl && !rgaFile && <p className='text-xs text-muted-foreground'>Documento atual: <a href={rgaUrl} target='_blank' rel='noopener noreferrer' className='text-primary underline'>Visualizar</a></p>}
+             {existingRgaUrl && !rgaFile && <p className='text-xs text-muted-foreground'>Documento atual: <a href={existingRgaUrl} target='_blank' rel='noopener noreferrer' className='text-primary underline'>Visualizar</a></p>}
         </div>
 
 
@@ -371,3 +383,5 @@ export default function NewPetPage() {
     </div>
   );
 }
+
+    
