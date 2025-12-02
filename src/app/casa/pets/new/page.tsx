@@ -161,26 +161,29 @@ export default function NewPetPage() {
         
         const currentData = isEditing ? (await getDoc(doc(firestore, 'pets', petId!))).data() as Pet : null;
 
-        const uploadPromises = [];
-        if (photoFile) {
-            uploadPromises.push(uploadFile(photoFile, 'photos').then(url => {
-                finalPhotoUrl = url;
-                if (isEditing && currentData?.photoUrl && currentData.photoUrl !== url) {
-                    return deleteFile(currentData.photoUrl);
-                }
-            }));
+        // Wait for all uploads to finish before proceeding
+        const uploadResults = await Promise.all([
+            photoFile ? uploadFile(photoFile, 'photos') : Promise.resolve(null),
+            rgaFile ? uploadFile(rgaFile, 'rga') : Promise.resolve(null)
+        ]);
+
+        const newPhotoUrl = uploadResults[0];
+        const newRgaUrl = uploadResults[1];
+
+        if (newPhotoUrl) {
+            finalPhotoUrl = newPhotoUrl;
+            if (isEditing && currentData?.photoUrl && currentData.photoUrl !== finalPhotoUrl) {
+                await deleteFile(currentData.photoUrl);
+            }
         }
-        if (rgaFile) {
-            uploadPromises.push(uploadFile(rgaFile, 'rga').then(url => {
-                finalRgaUrl = url;
-                 if (isEditing && currentData?.rgaUrl && currentData.rgaUrl !== url) {
-                    return deleteFile(currentData.rgaUrl);
-                }
-            }));
+
+        if (newRgaUrl) {
+            finalRgaUrl = newRgaUrl;
+            if (isEditing && currentData?.rgaUrl && currentData.rgaUrl !== finalRgaUrl) {
+                await deleteFile(currentData.rgaUrl);
+            }
         }
         
-        await Promise.all(uploadPromises);
-
         const petData = {
             name,
             breed,
