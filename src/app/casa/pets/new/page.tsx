@@ -129,20 +129,20 @@ export default function NewPetPage() {
     return getDownloadURL(snapshot.ref);
   };
   
-  const deleteFile = async (url: string) => {
-    if (!url || !url.startsWith('https://firebasestorage.googleapis.com')) return;
+  const deleteFile = async (fileUrl: string) => {
+    if (!fileUrl.startsWith('https://firebasestorage.googleapis.com')) return;
     try {
-      const fileRef = ref(storage, url);
-      await deleteObject(fileRef);
-    } catch (e) {
-      if (e instanceof Error && (e as any).code === 'storage/object-not-found') {
-        console.warn("Could not delete old file, it might have been already deleted or not exist.", e);
-      } else {
-        console.error("Error deleting old file", e);
-        // Do not re-throw, allow the process to continue.
-      }
+        const fileRef = ref(storage, fileUrl);
+        await deleteObject(fileRef);
+    } catch (error: any) {
+        if (error.code === 'storage/object-not-found') {
+            console.warn('Old file not found, it might have been already deleted.');
+        } else {
+            console.error('Error deleting old file:', error);
+            // Non-fatal, so we don't re-throw. The user can proceed.
+        }
     }
-  };
+};
 
   const handleSave = async () => {
     if (!name.trim() || !birthDate) {
@@ -159,23 +159,22 @@ export default function NewPetPage() {
     try {
         let finalPhotoUrl = photoUrl;
         let finalRgaUrl = rgaUrl;
-        
+
         if (isEditing) {
             const currentData = (await getDoc(doc(firestore, 'pets', petId!))).data() as Pet;
             
             if (photoFile) {
-                const newPhotoUrl = await uploadFile(photoFile, 'photos');
-                if (currentData?.photoUrl && currentData.photoUrl !== newPhotoUrl) {
+                // If there's an old photo, delete it before uploading new one
+                if (currentData?.photoUrl) {
                     await deleteFile(currentData.photoUrl);
                 }
-                finalPhotoUrl = newPhotoUrl;
+                finalPhotoUrl = await uploadFile(photoFile, 'photos');
             }
             if (rgaFile) {
-                const newRgaUrl = await uploadFile(rgaFile, 'rga');
-                if (currentData?.rgaUrl && currentData.rgaUrl !== newRgaUrl) {
+                 if (currentData?.rgaUrl) {
                     await deleteFile(currentData.rgaUrl);
                 }
-                finalRgaUrl = newRgaUrl;
+                finalRgaUrl = await uploadFile(rgaFile, 'rga');
             }
 
         } else {
