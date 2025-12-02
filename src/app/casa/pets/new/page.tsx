@@ -121,29 +121,6 @@ export default function NewPetPage() {
     setVaccines(vaccines.filter((_, i) => i !== index));
   };
 
-  const uploadFile = async (file: File, folder: string): Promise<string> => {
-    if (!user) throw new Error("User not authenticated for upload.");
-    const filePath = `pets/${user.uid}/${folder}/${uuidv4()}-${file.name}`;
-    const storageRef = ref(storage, filePath);
-    const snapshot = await uploadBytes(storageRef, file);
-    return getDownloadURL(snapshot.ref);
-  };
-  
-  const deleteFile = async (fileUrl: string) => {
-    if (!fileUrl || !fileUrl.startsWith('https://firebasestorage.googleapis.com')) return;
-    try {
-        const fileRef = ref(storage, fileUrl);
-        await deleteObject(fileRef);
-    } catch (error: any) {
-        if (error.code === 'storage/object-not-found') {
-            console.warn('Old file not found, it might have been already deleted.');
-        } else {
-            console.error('Error deleting old file:', error);
-            // Non-fatal, so we don't re-throw. The user can proceed.
-        }
-    }
-  };
-
   const handleSave = async () => {
     if (!name.trim() || !birthDate) {
       toast({ variant: "destructive", title: "Campos obrigatórios", description: "Nome e data de nascimento são obrigatórios." });
@@ -159,34 +136,35 @@ export default function NewPetPage() {
     try {
         let finalPhotoUrl = photoUrl;
         let finalRgaUrl = rgaUrl;
-        
-        let existingPetData: Pet | null = null;
+
+        // Fetch existing data only if we are editing
+        let oldPhotoUrl: string | undefined;
+        let oldRgaUrl: string | undefined;
         if (isEditing && petId) {
             const docRef = doc(firestore, 'pets', petId);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
-                existingPetData = docSnap.data() as Pet;
+                oldPhotoUrl = docSnap.data().photoUrl;
+                oldRgaUrl = docSnap.data().rgaUrl;
             }
         }
         
-        const uploadPromises: Promise<any>[] = [];
-
+        // --- UPLOAD PHASE ---
         if (photoFile) {
-            if (existingPetData?.photoUrl) {
-                uploadPromises.push(deleteFile(existingPetData.photoUrl));
-            }
-            uploadPromises.push(uploadFile(photoFile, 'photos').then(url => finalPhotoUrl = url));
+            const photoPath = `pets/${user.uid}/photos/${uuidv4()}-${photoFile.name}`;
+            const photoStorageRef = ref(storage, photoPath);
+            await uploadBytes(photoStorageRef, photoFile);
+            finalPhotoUrl = await getDownloadURL(photoStorageRef);
         }
 
         if (rgaFile) {
-            if (existingPetData?.rgaUrl) {
-                uploadPromises.push(deleteFile(existingPetData.rgaUrl));
-            }
-            uploadPromises.push(uploadFile(rgaFile, 'rga').then(url => finalRgaUrl = url));
+            const rgaPath = `pets/${user.uid}/rga/${uuidv4()}-${rgaFile.name}`;
+            const rgaStorageRef = ref(storage, rgaPath);
+            await uploadBytes(rgaStorageRef, rgaFile);
+            finalRgaUrl = await getDownloadURL(rgaStorageRef);
         }
 
-        await Promise.all(uploadPromises);
-
+        // --- DATABASE WRITE PHASE ---
         const petData = {
             name,
             breed,
@@ -210,6 +188,17 @@ export default function NewPetPage() {
             router.push(`/casa/pets/${docRef.id}`);
         }
 
+        // --- CLEANUP PHASE ---
+        const cleanupPromises = [];
+        if (photoFile && oldPhotoUrl && oldPhotoUrl.startsWith('https://firebasestorage.googleapis.com')) {
+             cleanupPromises.push(deleteObject(ref(storage, oldPhotoUrl)).catch(e => console.warn("Could not delete old photo", e)));
+        }
+        if (rgaFile && oldRgaUrl && oldRgaUrl.startsWith('https://firebasestorage.googleapis.com')) {
+            cleanupPromises.push(deleteObject(ref(storage, oldRgaUrl)).catch(e => console.warn("Could not delete old RGA", e)));
+        }
+        await Promise.all(cleanupPromises);
+
+
     } catch (error: any) {
         console.error("Save error:", error);
         const operation = isEditing ? 'update' : 'create';
@@ -218,7 +207,7 @@ export default function NewPetPage() {
              const permissionError = new FirestorePermissionError({ path, operation });
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar os dados do pet.'});
+            toast({ variant: 'destructive', title: 'Erro ao Salvar', description: `Não foi possível salvar os dados do pet. ${error.message}`});
         }
     } finally {
       setIsSaving(false);
