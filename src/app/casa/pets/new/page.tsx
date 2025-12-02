@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
 import { collection, addDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, uploadBytes, getDownloadURL, StorageReference } from 'firebase/storage';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import Image from 'next/image';
@@ -120,6 +120,15 @@ export default function NewPetPage() {
   const handleRemoveVaccine = (index: number) => {
     setVaccines(vaccines.filter((_, i) => i !== index));
   };
+  
+  const uploadFile = async (file: File, folder: 'photos' | 'rga'): Promise<string> => {
+    if (!user) throw new Error("Usuário não autenticado");
+    const filePath = `pets/${user.uid}/${folder}/${uuidv4()}-${file.name}`;
+    const storageRef = ref(storage, filePath);
+    await uploadBytes(storageRef, file);
+    return getDownloadURL(storageRef);
+  };
+
 
   const handleSave = async () => {
     if (!name.trim() || !birthDate) {
@@ -139,17 +148,10 @@ export default function NewPetPage() {
 
         // --- UPLOAD PHASE ---
         if (photoFile) {
-            const photoPath = `pets/${user.uid}/photos/${uuidv4()}-${photoFile.name}`;
-            const photoStorageRef = ref(storage, photoPath);
-            await uploadBytes(photoStorageRef, photoFile);
-            finalPhotoUrl = await getDownloadURL(photoStorageRef);
+            finalPhotoUrl = await uploadFile(photoFile, 'photos');
         }
-
         if (rgaFile) {
-            const rgaPath = `pets/${user.uid}/rga/${uuidv4()}-${rgaFile.name}`;
-            const rgaStorageRef = ref(storage, rgaPath);
-            await uploadBytes(rgaStorageRef, rgaFile);
-            finalRgaUrl = await getDownloadURL(rgaStorageRef);
+            finalRgaUrl = await uploadFile(rgaFile, 'rga');
         }
 
         // --- DATABASE WRITE PHASE ---
@@ -184,12 +186,13 @@ export default function NewPetPage() {
              const permissionError = new FirestorePermissionError({ path, operation });
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            toast({ variant: 'destructive', title: 'Erro ao Salvar', description: `Não foi possível salvar os dados do pet. Tente novamente.`});
+            toast({ variant: 'destructive', title: 'Erro ao Salvar', description: `Não foi possível salvar os dados do pet. Tente novamente. Detalhe: ${error.message}`});
         }
     } finally {
       setIsSaving(false);
     }
   };
+
 
   return (
     <div className="bg-background h-screen text-foreground flex flex-col">
