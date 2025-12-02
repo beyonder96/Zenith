@@ -13,7 +13,7 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -130,7 +130,7 @@ export default function NewPetPage() {
   };
   
   const deleteFile = async (url: string) => {
-    if (!url) return;
+    if (!url || !url.startsWith('https://firebasestorage.googleapis.com')) return;
     try {
       const fileRef = ref(storage, url);
       await deleteObject(fileRef);
@@ -141,7 +141,7 @@ export default function NewPetPage() {
         console.error("Error deleting file", e);
       }
     }
-  }
+  };
 
   const handleSave = async () => {
     if (!name.trim() || !birthDate) {
@@ -158,19 +158,24 @@ export default function NewPetPage() {
     try {
         let finalPhotoUrl = photoUrl;
         let finalRgaUrl = rgaUrl;
+        
+        const currentData = isEditing ? (await getDoc(doc(firestore, 'pets', petId!))).data() as Pet : null;
 
-        // Execute uploads in parallel
         const uploadPromises = [];
         if (photoFile) {
             uploadPromises.push(uploadFile(photoFile, 'photos').then(url => {
                 finalPhotoUrl = url;
-                if (isEditing && photoUrl !== finalPhotoUrl) deleteFile(photoUrl);
+                if (isEditing && currentData?.photoUrl && currentData.photoUrl !== url) {
+                    return deleteFile(currentData.photoUrl);
+                }
             }));
         }
         if (rgaFile) {
             uploadPromises.push(uploadFile(rgaFile, 'rga').then(url => {
                 finalRgaUrl = url;
-                if (isEditing && rgaUrl !== finalRgaUrl) deleteFile(rgaUrl);
+                 if (isEditing && currentData?.rgaUrl && currentData.rgaUrl !== url) {
+                    return deleteFile(currentData.rgaUrl);
+                }
             }));
         }
         
@@ -194,9 +199,9 @@ export default function NewPetPage() {
             toast({ title: "Pet atualizado!", description: "As informações foram salvas com sucesso." });
             router.push(`/casa/pets/${petId}`);
         } else {
-            await addDoc(collection(firestore, 'pets'), petData);
+            const docRef = await addDoc(collection(firestore, 'pets'), petData);
             toast({ title: "Pet adicionado!", description: "Seu novo pet foi salvo." });
-            router.push('/projects');
+            router.push(`/casa/pets/${docRef.id}`);
         }
 
     } catch (error: any) {
@@ -215,8 +220,8 @@ export default function NewPetPage() {
   };
 
   return (
-    <div className="bg-background min-h-screen text-foreground">
-      <header className="flex items-center justify-between p-4 border-b border-border">
+    <div className="bg-background h-screen text-foreground flex flex-col">
+      <header className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-background/80 backdrop-blur-sm z-10">
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft />
         </Button>
@@ -226,7 +231,7 @@ export default function NewPetPage() {
         </Button>
       </header>
 
-      <main className="p-6 space-y-8">
+      <main className="p-6 space-y-8 flex-grow overflow-y-auto">
          <div className="flex justify-center">
             <input 
                 type="file" 
@@ -359,7 +364,7 @@ export default function NewPetPage() {
         </div>
 
 
-         <div className="space-y-4">
+         <div className="space-y-4 pb-8">
             <Label className="text-base font-semibold">Carteira de Vacinação</Label>
             <div className="space-y-3">
                 {vaccines.map((vaccine, index) => (
@@ -391,4 +396,3 @@ export default function NewPetPage() {
     </div>
   );
 }
-    
