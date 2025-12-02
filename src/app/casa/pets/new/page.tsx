@@ -121,7 +121,7 @@ export default function NewPetPage() {
     setVaccines(vaccines.filter((_, i) => i !== index));
   };
 
-  const uploadFile = async (file: File, folder: string) => {
+  const uploadFile = async (file: File, folder: string): Promise<string> => {
     if (!user) throw new Error("User not authenticated for upload.");
     const filePath = `pets/${user.uid}/${folder}/${uuidv4()}-${file.name}`;
     const storageRef = ref(storage, filePath);
@@ -130,7 +130,7 @@ export default function NewPetPage() {
   };
   
   const deleteFile = async (fileUrl: string) => {
-    if (!fileUrl.startsWith('https://firebasestorage.googleapis.com')) return;
+    if (!fileUrl || !fileUrl.startsWith('https://firebasestorage.googleapis.com')) return;
     try {
         const fileRef = ref(storage, fileUrl);
         await deleteObject(fileRef);
@@ -142,7 +142,7 @@ export default function NewPetPage() {
             // Non-fatal, so we don't re-throw. The user can proceed.
         }
     }
-};
+  };
 
   const handleSave = async () => {
     if (!name.trim() || !birthDate) {
@@ -159,33 +159,34 @@ export default function NewPetPage() {
     try {
         let finalPhotoUrl = photoUrl;
         let finalRgaUrl = rgaUrl;
-
-        if (isEditing) {
-            const currentData = (await getDoc(doc(firestore, 'pets', petId!))).data() as Pet;
-            
-            if (photoFile) {
-                // If there's an old photo, delete it before uploading new one
-                if (currentData?.photoUrl) {
-                    await deleteFile(currentData.photoUrl);
-                }
-                finalPhotoUrl = await uploadFile(photoFile, 'photos');
-            }
-            if (rgaFile) {
-                 if (currentData?.rgaUrl) {
-                    await deleteFile(currentData.rgaUrl);
-                }
-                finalRgaUrl = await uploadFile(rgaFile, 'rga');
-            }
-
-        } else {
-             if (photoFile) {
-                finalPhotoUrl = await uploadFile(photoFile, 'photos');
-            }
-            if (rgaFile) {
-                finalRgaUrl = await uploadFile(rgaFile, 'rga');
+        
+        let existingPetData: Pet | null = null;
+        if (isEditing && petId) {
+            const docRef = doc(firestore, 'pets', petId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                existingPetData = docSnap.data() as Pet;
             }
         }
         
+        const uploadPromises: Promise<any>[] = [];
+
+        if (photoFile) {
+            if (existingPetData?.photoUrl) {
+                uploadPromises.push(deleteFile(existingPetData.photoUrl));
+            }
+            uploadPromises.push(uploadFile(photoFile, 'photos').then(url => finalPhotoUrl = url));
+        }
+
+        if (rgaFile) {
+            if (existingPetData?.rgaUrl) {
+                uploadPromises.push(deleteFile(existingPetData.rgaUrl));
+            }
+            uploadPromises.push(uploadFile(rgaFile, 'rga').then(url => finalRgaUrl = url));
+        }
+
+        await Promise.all(uploadPromises);
+
         const petData = {
             name,
             breed,
