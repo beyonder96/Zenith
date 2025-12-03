@@ -7,7 +7,7 @@ import { isToday, isTomorrow, parseISO } from 'date-fns';
 import type { Project } from '../projects/project-card';
 import { useNotifications } from '@/context/notification-context';
 
-function requestNotificationPermission() {
+export function requestNotificationPermission() {
   if (typeof window !== 'undefined' && "Notification" in window) {
     if (Notification.permission !== "denied") {
       Notification.requestPermission();
@@ -33,10 +33,8 @@ export function NotificationManager() {
   const { addNotification } = useNotifications();
 
   useEffect(() => {
-    requestNotificationPermission();
-  }, []);
-
-  useEffect(() => {
+    // A permissão agora é solicitada no login
+    // Apenas mantemos o listener do Firestore aqui
     if (!user || !firestore) return;
 
     const projectsQuery = query(
@@ -69,13 +67,11 @@ export function NotificationManager() {
         }
 
         if (notificationTitle) {
-          showNotification(notificationTitle, notificationDescription);
+          // Apenas adiciona ao centro de notificações interno do app.
           addNotification({
             id: `task-${taskId}-${Date.now()}`,
             title: notificationTitle,
             body: notificationDescription,
-            read: false,
-            timestamp: new Date().toISOString(),
           });
           newNotifiedTasks.add(taskId);
         }
