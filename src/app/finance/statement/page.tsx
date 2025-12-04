@@ -1,257 +1,127 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useFirestore, useUser } from '@/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { format, parseISO, isWithinInterval } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Printer, ArrowUpCircle, ArrowDownCircle, Scale } from 'lucide-react';
-import { FirestorePermissionError } from '@/firebase/errors';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { useState } from "react";
+import { Plus, PiggyBank, LayoutGrid, Landmark, Settings, ShoppingBag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BottomNav } from "@/components/dashboard/bottom-nav";
+import { FinanceSummary } from "@/components/finance/finance-summary";
+import { FinanceChart } from "@/components/finance/finance-chart";
+import { TransactionList } from "@/components/finance/transaction-list";
+import Link from "next/link";
+import { GoalsList } from "@/components/finance/goals-list";
+import { cn } from "@/lib/utils";
+import { SavingsList } from "@/components/finance/savings-list";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { CategoryChart } from "@/components/finance/category-chart";
+import { Wishlist } from "@/components/finance/wishlist";
 
-type Transaction = {
-  id: string;
-  description: string;
-  amount: number;
-  date: string;
-  type: 'income' | 'expense';
-  category: string;
-};
+export default function FinancePage() {
+  const [activeView, setActiveView] = useState<'overview' | 'goals' | 'savings' | 'wishlist'>('overview');
 
-function StatementContent() {
-  const firestore = useFirestore();
-  const { user, loading: userLoading } = useUser();
-  const searchParams = useSearchParams();
+  const getFabLink = () => {
+    switch (activeView) {
+      case 'goals':
+        return "/finance/goals/new";
+      case 'wishlist':
+        return "/finance/wishlist/new";
+      case 'savings':
+        return "/finance/goals"; // Maybe link to goals page to deposit
+      case 'overview':
+      default:
+        return "/finance/new";
+    }
+  }
   
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const startDateParam = searchParams.get('start');
-  const endDateParam = searchParams.get('end');
-  const statementType = searchParams.get('type') as 'detailed' | 'summary';
-  const period = searchParams.get('period');
-
-  const getPeriodText = () => {
-    if (!startDateParam || !endDateParam) return "Período inválido";
-
-    const formattedStart = format(parseISO(startDateParam), 'dd/MM/yy');
-    const formattedEnd = format(parseISO(endDateParam), 'dd/MM/yy');
-    
-    switch (period) {
-        case '3d': return 'Últimos 3 dias';
-        case '7d': return 'Últimos 7 dias';
-        case '2w': return 'Últimas 2 semanas';
-        case '1m': return 'Último mês';
-        default: return `De ${formattedStart} a ${formattedEnd}`;
-    }
-  };
-
-  useEffect(() => {
-    if (userLoading) {
-      return;
-    }
-
-    if (!startDateParam || !endDateParam) {
-        setError("Período inválido. Por favor, gere o extrato novamente.");
-        setLoading(false);
-        return;
-    }
-
-    if (!user) {
-      setError("Você precisa estar logado para ver o extrato.");
-      setLoading(false);
-      return;
-    }
-    
-    if (!firestore) {
-      setError("Não foi possível conectar ao banco de dados.");
-      setLoading(false);
-      return;
-    }
-
-    const fetchTransactions = async () => {
-      setError(null);
-      setLoading(true);
-      try {
-        const q = query(
-          collection(firestore, 'transactions'),
-          where('userId', '==', user.uid)
-        );
-
-        const querySnapshot = await getDocs(q);
-        const fetchedTransactions: Transaction[] = [];
-        querySnapshot.forEach((doc) => {
-          fetchedTransactions.push({ id: doc.id, ...doc.data() } as Transaction);
-        });
-        
-        const start = parseISO(startDateParam);
-        const end = parseISO(endDateParam);
-        end.setHours(23, 59, 59, 999); // Include the whole end day
-
-        const filteredTransactions = fetchedTransactions.filter(t => 
-            isWithinInterval(parseISO(t.date), { start, end })
-        );
-
-        setTransactions(filteredTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
-      } catch (err: any) {
-        console.error(err);
-         if (err.code === 'permission-denied') {
-            const permissionError = new FirestorePermissionError({
-                path: 'transactions',
-                operation: 'list',
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            setError("Você não tem permissão para acessar estas transações.");
-        } else {
-            setError("Ocorreu um erro ao buscar as transações.");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTransactions();
-  }, [user, userLoading, firestore, startDateParam, endDateParam]);
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  if (loading || userLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Gerando seu extrato...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
-            <h2 className="text-xl font-semibold text-destructive">{error}</h2>
-            <Button onClick={() => window.close()} className="mt-4">Fechar</Button>
-        </div>
-    );
-  }
-
-  if (!startDateParam || !endDateParam) {
-    return null;
-  }
-
-  const income = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-  const expenses = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-  const balance = income + expenses;
-  
-  const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-  const summaryCards = [
-    { title: 'Total Receitas', value: formatCurrency(income), icon: ArrowUpCircle, color: 'text-cyan-500' },
-    { title: 'Total Despesas', value: formatCurrency(Math.abs(expenses)), icon: ArrowDownCircle, color: 'text-pink-500' },
-    { title: 'Saldo do Período', value: formatCurrency(balance), icon: Scale, color: balance >= 0 ? 'text-cyan-500' : 'text-pink-500' },
-  ];
+  const navItems = [
+    { id: 'overview', label: 'Visão Geral', icon: LayoutGrid },
+    { id: 'goals', label: 'Metas', icon: PiggyBank },
+    { id: 'savings', label: 'Poupança', icon: Landmark },
+    { id: 'wishlist', label: 'Desejos', icon: ShoppingBag },
+  ] as const;
 
   return (
-    <div className="bg-background text-foreground min-h-screen p-4 sm:p-8 print:p-0">
-        <header className="mb-8 print:hidden">
-            <div className="max-w-5xl mx-auto flex justify-between items-center">
-                 <div>
-                    <h1 className="text-3xl font-bold">Extrato Financeiro</h1>
-                    <p className="text-muted-foreground">
-                        {getPeriodText()}
-                    </p>
-                </div>
-                <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Imprimir ou Salvar PDF</Button>
-            </div>
-        </header>
+    <>
+      <div className="relative min-h-screen w-full bg-background dark:bg-zinc-900">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('https://i.pinimg.com/originals/a1/83/83/a183833f4a38543d3513aa67c130b05b.jpg')" }}
+          data-ai-hint="mountain landscape"
+        ></div>
+        <div className="absolute inset-0 bg-white/10 dark:bg-black/10 backdrop-blur-sm"></div>
 
-        {/* Print Header */}
-        <div className="hidden print:block mb-8">
-            <h1 className="text-3xl font-bold">Extrato Financeiro</h1>
-            <p className="text-muted-foreground">
-                Período: {getPeriodText()}
-            </p>
-            <p className="text-sm text-muted-foreground">Gerado em: {format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
+        <div className="relative z-10 flex flex-col h-screen text-foreground">
+          <header className="p-4 sm:p-6 lg:p-8 flex-shrink-0 flex items-center justify-between">
+            <h1 className="text-4xl font-light tracking-wider bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 bg-clip-text text-transparent">
+              Finanças
+            </h1>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="ghost" size="icon" className="text-foreground/80">
+                <Link href="/finance/categories"><Settings /></Link>
+              </Button>
+            </div>
+          </header>
+          
+          <main className="flex-grow p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center gap-6 pb-28 overflow-y-auto">
+            <div className="w-full max-w-lg">
+                <Carousel opts={{ align: "start", dragFree: true }} className="w-full mb-6">
+                    <CarouselContent className="-ml-2">
+                        {navItems.map((item) => (
+                        <CarouselItem key={item.id} className="basis-auto pl-2">
+                            <Button
+                                onClick={() => setActiveView(item.id)}
+                                variant={activeView === item.id ? 'default' : 'ghost'}
+                                className={cn('rounded-full transition-all flex items-center gap-2 text-xs h-9 px-4',
+                                activeView === item.id ? 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black' : 'bg-gray-200 dark:bg-zinc-800 text-foreground')}
+                            >
+                                <item.icon size={16} /> {item.label}
+                            </Button>
+                        </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                </Carousel>
+
+                {activeView === 'overview' && (
+                    <div className="space-y-6">
+                        <FinanceSummary />
+                        <Carousel>
+                            <CarouselContent>
+                                <CarouselItem>
+                                    <FinanceChart />
+                                </CarouselItem>
+                                <CarouselItem>
+                                    <CategoryChart />
+                                </CarouselItem>
+                            </CarouselContent>
+                        </Carousel>
+                        <TransactionList />
+                    </div>
+                )}
+
+                {activeView === 'goals' && (
+                   <GoalsList />
+                )}
+                
+                {activeView === 'savings' && (
+                    <SavingsList />
+                )}
+
+                {activeView === 'wishlist' && (
+                    <Wishlist />
+                )}
+            </div>
+          </main>
+          
+          <Button asChild className="fixed z-20 bottom-28 right-6 w-16 h-16 rounded-full bg-gradient-to-r from-orange-400 to-pink-500 text-white shadow-lg transition-transform hover:scale-110 active:scale-100">
+            <Link href={getFabLink()}>
+              <Plus size={32} />
+            </Link>
+          </Button>
+
+          <div className="flex-shrink-0">
+            <BottomNav active="financas" />
+          </div>
         </div>
-
-        <main className="max-w-5xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                {summaryCards.map(card => (
-                    <Card key={card.title} className="bg-card dark:bg-zinc-800/50">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
-                            <card.icon className={`h-5 w-5 ${card.color}`} />
-                        </CardHeader>
-                        <CardContent>
-                            <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-
-            {statementType === 'detailed' && (
-              <Card className="bg-card dark:bg-zinc-800/50">
-                <CardHeader>
-                    <CardTitle>Transações Detalhadas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {transactions.length > 0 ? transactions.map(t => (
-                      <div key={t.id} className="flex justify-between items-center p-3 rounded-lg border border-border bg-background dark:bg-zinc-800">
-                        <div>
-                          <p className="font-semibold">{t.description}</p>
-                          <p className="text-sm text-muted-foreground">{format(parseISO(t.date), "dd 'de' MMM, yyyy", { locale: ptBR })} - {t.category}</p>
-                        </div>
-                        <p className={`font-semibold ${t.type === 'income' ? 'text-cyan-500' : 'text-pink-500'}`}>{formatCurrency(t.amount)}</p>
-                      </div>
-                    )) : (
-                      <p className="text-center text-muted-foreground py-8">Nenhuma transação encontrada no período selecionado.</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-             {statementType === 'summary' && (
-              <Card className="bg-card dark:bg-zinc-800/50">
-                <CardHeader>
-                    <CardTitle>Transações Resumidas por Categoria</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                     {Object.entries(transactions.reduce((acc, t) => {
-                        if (!acc[t.category]) acc[t.category] = 0;
-                        acc[t.category] += t.amount;
-                        return acc;
-                      }, {} as Record<string, number>)).map(([category, total]) => (
-                      <div key={category} className="flex justify-between items-center p-3 rounded-lg border border-border bg-background dark:bg-zinc-800">
-                        <p className="font-semibold">{category}</p>
-                        <p className={`font-semibold ${total >= 0 ? 'text-cyan-500' : 'text-pink-500'}`}>{formatCurrency(total)}</p>
-                      </div>
-                    ))}
-                    {transactions.length === 0 && (
-                      <p className="text-center text-muted-foreground py-8">Nenhuma transação encontrada no período selecionado.</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-        </main>
-    </div>
+      </div>
+    </>
   );
-}
-
-export default function StatementPage() {
-    return (
-        <FirebaseClientProvider>
-            <Suspense fallback={<div>Carregando...</div>}>
-                <StatementContent />
-            </Suspense>
-        </FirebaseClientProvider>
-    )
 }

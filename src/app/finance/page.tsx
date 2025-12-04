@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { Plus, PiggyBank, LayoutGrid, FileText, Landmark, Settings, ShoppingBag } from "lucide-react";
+import { Plus, PiggyBank, LayoutGrid, Landmark, Settings, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { FinanceSummary } from "@/components/finance/finance-summary";
@@ -10,7 +10,6 @@ import { TransactionList } from "@/components/finance/transaction-list";
 import Link from "next/link";
 import { GoalsList } from "@/components/finance/goals-list";
 import { cn } from "@/lib/utils";
-import { StatementOptionsDialog } from "@/components/finance/statement-options-dialog";
 import { SavingsList } from "@/components/finance/savings-list";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { CategoryChart } from "@/components/finance/category-chart";
@@ -18,7 +17,6 @@ import { Wishlist } from "@/components/finance/wishlist";
 
 export default function FinancePage() {
   const [activeView, setActiveView] = useState<'overview' | 'goals' | 'savings' | 'wishlist'>('overview');
-  const [isStatementDialogOpen, setIsStatementDialogOpen] = useState(false);
 
   const getFabLink = () => {
     switch (activeView) {
@@ -59,9 +57,6 @@ export default function FinancePage() {
             <div className="flex items-center gap-2">
               <Button asChild variant="ghost" size="icon" className="text-foreground/80">
                 <Link href="/finance/categories"><Settings /></Link>
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => setIsStatementDialogOpen(true)} className="text-foreground/80">
-                  <FileText />
               </Button>
             </div>
           </header>
@@ -127,7 +122,6 @@ export default function FinancePage() {
           </div>
         </div>
       </div>
-      <StatementOptionsDialog open={isStatementDialogOpen} onOpenChange={setIsStatementDialogOpen} />
     </>
   );
 }
