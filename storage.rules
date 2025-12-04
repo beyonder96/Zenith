@@ -2,13 +2,9 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     
-    // Corrigido: A estrutura do caminho
     match /pets/{userId}/{folder}/{fileName} {
-      
-      // A condição do folder deve vir AQUI dentro
       allow read: if true;
-      
-      allow write: if request.auth != null 
+      allow write: if request.auth != null && request.auth.uid == userId 
                    && (folder == 'photos' || folder == 'rga');
     }
   }
