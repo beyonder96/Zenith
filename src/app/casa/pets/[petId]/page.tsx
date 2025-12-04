@@ -94,7 +94,7 @@ export default function PetDetailPage() {
         deleteDoc(doc(firestore, 'pets', petId))
             .then(() => {
                 toast({ title: "Pet removido", description: `${pet?.name} foi removido com sucesso.`});
-                router.push('/projects');
+                router.back();
             })
             .catch(error => {
                  const permissionError = new FirestorePermissionError({
