@@ -16,7 +16,6 @@ import { Moon, Sun, LogOut } from 'lucide-react';
 import { useUser } from '@/firebase/auth/use-user';
 import { getAuth, signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { NotificationBell } from '../notifications/notification-bell';
 
 const CelestialIcon = ({ type }: { type: 'rising-sun' | 'setting-sun' | 'moon' }) => {
     const typeClasses = {
@@ -72,7 +71,6 @@ export function GreetingHeader() {
       </div>
       
       <div className="flex items-center gap-2">
-        <NotificationBell />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
