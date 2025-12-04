@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { useUser } from "@/firebase/auth/use-user";
 import { Loader2 } from "lucide-react";
-import { requestNotificationPermission } from "@/components/notifications/notification-manager";
 
 
 export default function LoginPage() {
@@ -24,7 +23,6 @@ export default function LoginPage() {
         .then((result) => {
           if (result) {
             // User has successfully signed in.
-            requestNotificationPermission(); // Solicita permissão após o login
             router.push('/dashboard');
           } else {
             // This is the initial page load, not a redirect.
