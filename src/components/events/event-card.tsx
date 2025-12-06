@@ -5,7 +5,7 @@ import { Pencil, Trash2, MapPin, Clock } from "lucide-react";
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
-import type { Event } from "./events";
+import type { Event } from "@/app/projects/types";
 import { Button } from "../ui/button";
 
 type EventCardProps = {

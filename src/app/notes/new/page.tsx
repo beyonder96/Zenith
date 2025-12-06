@@ -11,7 +11,7 @@ import { useFirestore, useUser } from '@/firebase';
 import { collection, doc, getDoc, setDoc, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
-import type { Note } from '@/components/notes/notes';
+import type { Note } from '@/app/projects/types';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 

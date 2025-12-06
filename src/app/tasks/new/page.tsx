@@ -11,7 +11,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import type { Project, Subtask } from '@/components/projects/project-card';
+import type { Project, Subtask } from '@/app/projects/types';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
 import { collection, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';

@@ -6,22 +6,7 @@ import { CheckCircle2, Circle, Loader2, Pencil, Sparkles, Trash2, ChevronDown, A
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
-
-export type Subtask = {
-    id: number;
-    text: string;
-    completed: boolean;
-};
-
-export type Project = {
-    id: string;
-    title: string;
-    details?: string;
-    dueDate: string; // YYYY-MM-DD
-    completed: boolean;
-    subtasks?: Subtask[];
-    userId: string;
-};
+import type { Project, Subtask } from "@/app/projects/types";
 
 type ProjectCardProps = {
     project: Project;

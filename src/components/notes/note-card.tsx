@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
-import type { Note } from "./notes";
+import type { Note } from "@/app/projects/types";
 import { Badge } from "@/components/ui/badge";
 
 type NoteCardProps = {
