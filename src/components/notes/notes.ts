@@ -5,5 +5,5 @@ export type Note = {
     color: string;
     tags?: string[];
     userId: string;
-    createdAt: string; // ISO 8601 string
+    createdAt: any; // Can be string or Firestore Timestamp
 };
