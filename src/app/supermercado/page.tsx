@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { BottomNav } from "@/components/dashboard/bottom-nav";
 import { ShoppingList, type ShoppingItem } from "@/components/shopping/shopping-list";
 import { Button } from "@/components/ui/button";
@@ -26,25 +26,7 @@ export default function ShoppingPage() {
 
   useEffect(() => {
     setIsClient(true);
-    if (user && firestore) {
-      const q = query(collection(firestore, "shoppingItems"), where("userId", "==", user.uid));
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const userItems: ShoppingItem[] = [];
-        querySnapshot.forEach((doc) => {
-          userItems.push({ id: doc.id, ...doc.data() } as ShoppingItem);
-        });
-        setItems(userItems.sort((a, b) => (a.completed ? 1 : -1) - (b.completed ? 1 : -1) || a.name.localeCompare(b.name)));
-      },
-      (serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: 'shoppingItems',
-          operation: 'list',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
-      return () => unsubscribe();
-    }
-  }, [user, firestore]);
+  }, []);
 
   const totalCost = items.reduce((acc, item) => {
     if (item.completed && item.quantity && typeof item.price !== 'undefined') {
@@ -211,7 +193,7 @@ export default function ShoppingPage() {
             </Card>
 
             <div className="w-full max-w-md">
-                <ShoppingList items={items} setItems={setItems} />
+                <ShoppingList />
             </div>
 
             <TooltipProvider>

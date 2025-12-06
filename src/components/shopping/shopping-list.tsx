@@ -4,14 +4,15 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, X, Circle, CheckCircle2, Star } from 'lucide-react';
+import { Plus, X, Circle, CheckCircle2, Star, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '../ui/skeleton';
 import { ItemDetailsModal } from './item-details-modal';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useCollection } from '@/firebase/firestore/use-collection';
 
 export type ShoppingItem = {
   id: string;
@@ -27,12 +28,18 @@ type ShoppingListProps = {
   setItems: React.Dispatch<React.SetStateAction<ShoppingItem[]>>;
 };
 
-export function ShoppingList({ items, setItems }: ShoppingListProps) {
+export function ShoppingList() {
   const [newItem, setNewItem] = useState('');
   const [isClient, setIsClient] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const firestore = useFirestore();
   const { user } = useUser();
+
+  const itemsQuery = user && firestore ? query(collection(firestore, "shoppingItems"), where("userId", "==", user.uid)) : null;
+  const { data: items, loading, hasMore, loadMore, setData: setItems } = useCollection<ShoppingItem>(itemsQuery, {
+      limit: 15,
+      orderBy: ['name', 'asc']
+  });
 
   useEffect(() => {
     setIsClient(true);
@@ -127,6 +134,8 @@ export function ShoppingList({ items, setItems }: ShoppingListProps) {
     }
     return `${quantity}x`;
   }
+
+  const sortedItems = [...items].sort((a, b) => (a.completed ? 1 : -1) - (b.completed ? 1 : -1) || a.name.localeCompare(b.name));
   
   return (
     <>
@@ -152,7 +161,7 @@ export function ShoppingList({ items, setItems }: ShoppingListProps) {
 
         <Card className="bg-card dark:bg-zinc-800 border-none shadow-sm rounded-xl min-h-[300px]">
           <CardContent className="p-4 space-y-3">
-            {!isClient ? (
+            {!isClient || (loading && items.length === 0) ? (
               <div className="space-y-3 pt-2">
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />
@@ -165,31 +174,38 @@ export function ShoppingList({ items, setItems }: ShoppingListProps) {
                 <p className="text-sm">Adicione um item para começar!</p>
               </div>
             ) : (
-              items.map(item => (
-                <div key={item.id} className="flex items-center gap-4 p-3 bg-background dark:bg-zinc-700/50 rounded-lg">
-                  <button onClick={() => handleToggleItem(item)}>
-                    {item.completed ? <CheckCircle2 className="text-green-500" /> : <Circle className="text-gray-400" />}
-                  </button>
-                  <div className="flex-grow">
-                    <span className={cn('text-foreground', item.completed && 'line-through text-muted-foreground')}>
-                      {item.name}
-                    </span>
-                    {item.completed && item.quantity && typeof item.price !== 'undefined' && (
-                       <p className="text-xs text-muted-foreground">
-                         {formatQuantity(item.quantity)} @ R$ {item.price.toFixed(2).replace('.',',')} = R$ {(item.quantity * item.price).toFixed(2).replace('.',',')}
-                       </p>
-                    )}
+              <>
+                {sortedItems.map(item => (
+                  <div key={item.id} className="flex items-center gap-4 p-3 bg-background dark:bg-zinc-700/50 rounded-lg">
+                    <button onClick={() => handleToggleItem(item)}>
+                      {item.completed ? <CheckCircle2 className="text-green-500" /> : <Circle className="text-gray-400" />}
+                    </button>
+                    <div className="flex-grow">
+                      <span className={cn('text-foreground', item.completed && 'line-through text-muted-foreground')}>
+                        {item.name}
+                      </span>
+                      {item.completed && item.quantity && typeof item.price !== 'undefined' && (
+                         <p className="text-xs text-muted-foreground">
+                           {formatQuantity(item.quantity)} @ R$ {item.price.toFixed(2).replace('.',',')} = R$ {(item.quantity * item.price).toFixed(2).replace('.',',')}
+                         </p>
+                      )}
+                    </div>
+                    <Button
+                      onClick={() => handleRemoveItem(item.id)}
+                      variant="ghost"
+                      size="icon"
+                      className="w-8 h-8 rounded-full text-gray-400 hover:bg-red-500/10 hover:text-red-500"
+                    >
+                      <X size={16} />
+                    </Button>
                   </div>
-                  <Button
-                    onClick={() => handleRemoveItem(item.id)}
-                    variant="ghost"
-                    size="icon"
-                    className="w-8 h-8 rounded-full text-gray-400 hover:bg-red-500/10 hover:text-red-500"
-                  >
-                    <X size={16} />
+                ))}
+                {hasMore && (
+                  <Button onClick={loadMore} disabled={loading} className="w-full mt-2">
+                    {loading ? <Loader2 className="animate-spin" /> : 'Carregar mais'}
                   </Button>
-                </div>
-              ))
+                )}
+              </>
             )}
           </CardContent>
         </Card>

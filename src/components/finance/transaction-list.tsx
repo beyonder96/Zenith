@@ -17,6 +17,7 @@ import {
   Check,
   ArrowUpCircle,
   ArrowDownCircle,
+  Loader2,
 } from 'lucide-react';
 import { useFirestore, useUser } from '@/firebase';
 import { useEffect, useState, useMemo } from 'react';
@@ -36,11 +37,13 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { collection, query, where, onSnapshot, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
+import { useCollection } from '@/firebase/firestore/use-collection';
+
 
 type Transaction = {
   id: string;
@@ -73,31 +76,22 @@ export function TransactionList() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isClient, setIsClient] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
 
+  const transactionsQuery = useMemo(() => {
+    if (!user || !firestore) return null;
+    return query(collection(firestore, "transactions"), where("userId", "==", user.uid));
+  }, [user, firestore]);
+
+  const { data: transactions, loading, hasMore, loadMore } = useCollection<Transaction>(transactionsQuery, {
+      limit: 10,
+      orderBy: ['date', 'desc']
+  });
+
   useEffect(() => {
     setIsClient(true);
-    if(user && firestore) {
-        const q = query(collection(firestore, "transactions"), where("userId", "==", user.uid));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const userTransactions: Transaction[] = [];
-            snapshot.forEach(doc => {
-                userTransactions.push({ id: doc.id, ...doc.data() } as Transaction);
-            });
-            setTransactions(userTransactions);
-        },
-        (serverError) => {
-          const permissionError = new FirestorePermissionError({
-            path: `transactions`,
-            operation: 'list',
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        });
-        return () => unsubscribe();
-    }
-  }, [user, firestore]);
+  }, []);
   
   const groupedTransactions = useMemo(() => {
     const sorted = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -220,7 +214,7 @@ export function TransactionList() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {!isClient ? (
+          {!isClient || (loading && transactions.length === 0) ? (
               <div className="space-y-4">
                   {Array.from({ length: 3 }).map((_, i) => (
                       <div key={i} className="flex items-center">
@@ -260,6 +254,11 @@ export function TransactionList() {
                   </div>
                 )
               })}
+              {hasMore && (
+                <Button onClick={loadMore} disabled={loading} className="w-full mt-4">
+                  {loading ? <Loader2 className="animate-spin" /> : 'Carregar mais'}
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
