@@ -9,10 +9,11 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '../ui/skeleton';
 import { ItemDetailsModal } from './item-details-modal';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, writeBatch } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useCollection } from '@/firebase/firestore/use-collection';
+import { useToast } from '@/hooks/use-toast';
 
 export type ShoppingItem = {
   id: string;
@@ -34,6 +35,7 @@ export function ShoppingList() {
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const firestore = useFirestore();
   const { user } = useUser();
+  const { toast } = useToast();
 
   const itemsQuery = user && firestore ? query(collection(firestore, "shoppingItems"), where("userId", "==", user.uid)) : null;
   const { data: items, loading, hasMore, loadMore, setData: setItems } = useCollection<ShoppingItem>(itemsQuery, {
@@ -45,25 +47,33 @@ export function ShoppingList() {
     setIsClient(true);
   }, []);
 
-  const handleAddItem = () => {
+  const handleAddItem = async () => {
     if (newItem.trim() && user && firestore) {
       const itemData = {
         name: newItem.trim(),
         completed: false,
         userId: user.uid,
       };
-      addDoc(collection(firestore, 'shoppingItems'), itemData)
-        .then(() => {
-          setNewItem('');
-        })
-        .catch(serverError => {
+      try {
+        await addDoc(collection(firestore, 'shoppingItems'), itemData)
+        setNewItem('');
+      } catch (error: any) {
+        console.error("Add item error:", error);
+        if (error.code === 'permission-denied') {
           const permissionError = new FirestorePermissionError({
               path: 'shoppingItems',
               operation: 'create',
               requestResourceData: itemData,
           });
           errorEmitter.emit('permission-error', permissionError);
-        });
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Erro ao Adicionar',
+            description: `Não foi possível adicionar o item. Detalhe: ${error.message}`
+          });
+        }
+      }
     }
   };
 
@@ -74,17 +84,23 @@ export function ShoppingList() {
     if (item.completed) {
       const updateData = {
         completed: false,
-        quantity: undefined,
-        price: undefined,
       };
-      updateDoc(itemRef, Object.assign({}, updateData)) // Use Object.assign to create a plain object
-        .catch(serverError => {
+       updateDoc(itemRef, { ...updateData, price: null, quantity: null })
+        .catch(error => {
+          if (error.code === 'permission-denied') {
             const permissionError = new FirestorePermissionError({
                 path: `shoppingItems/${item.id}`,
                 operation: 'update',
                 requestResourceData: updateData
             });
             errorEmitter.emit('permission-error', permissionError);
+          } else {
+             toast({
+              variant: 'destructive',
+              title: 'Erro ao Desmarcar',
+              description: `Não foi possível desmarcar o item. Detalhe: ${error.message}`
+            });
+          }
         });
     } else {
       setEditingItem(item);
@@ -103,13 +119,21 @@ export function ShoppingList() {
       .then(() => {
         setEditingItem(null);
       })
-      .catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-            path: `shoppingItems/${item.id}`,
-            operation: 'update',
-            requestResourceData: updateData
-        });
-        errorEmitter.emit('permission-error', permissionError);
+      .catch(error => {
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: `shoppingItems/${item.id}`,
+                operation: 'update',
+                requestResourceData: updateData
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+          toast({
+              variant: 'destructive',
+              title: 'Erro ao Marcar',
+              description: `Não foi possível marcar o item. Detalhe: ${error.message}`
+            });
+        }
         setEditingItem(null);
       });
   };
@@ -118,12 +142,20 @@ export function ShoppingList() {
     if (!firestore) return;
     const docRef = doc(firestore, 'shoppingItems', id);
     deleteDoc(docRef)
-      .catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-            path: `shoppingItems/${id}`,
-            operation: 'delete',
-        });
-        errorEmitter.emit('permission-error', permissionError);
+      .catch(error => {
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: `shoppingItems/${id}`,
+                operation: 'delete',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            toast({
+              variant: 'destructive',
+              title: 'Erro ao Remover',
+              description: `Não foi possível remover o item. Detalhe: ${error.message}`
+            });
+        }
       });
   };
   

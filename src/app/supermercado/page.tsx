@@ -6,7 +6,7 @@ import { ShoppingList, type ShoppingItem } from "@/components/shopping/shopping-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Trash2, Loader2, Link2, FileDown } from "lucide-react";
-import { useFirestore, useUser } from '@/firebase';
+import { useFirestore, useUser, useCollection } from '@/firebase';
 import { collection, query, where, onSnapshot, doc, writeBatch, addDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
@@ -19,10 +19,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 export default function ShoppingPage() {
   const firestore = useFirestore();
   const { user } = useUser();
-  const [items, setItems] = useState<ShoppingItem[]>([]);
-  const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+
+  const itemsQuery = useMemo(() => {
+    if (!user || !firestore) return null;
+    return query(collection(firestore, "shoppingItems"), where("userId", "==", user.uid));
+  }, [user, firestore]);
+  
+  const { data: items, loading } = useCollection<ShoppingItem>(itemsQuery);
 
   useEffect(() => {
     setIsClient(true);
@@ -38,22 +44,35 @@ export default function ShoppingPage() {
   const hasCompletedItems = items.some(item => item.completed);
   const hasPendingItems = items.some(item => !item.completed);
 
-  const handleClearCompleted = () => {
-    if (!firestore) return;
+  const handleClearCompleted = async () => {
+    if (!firestore || !user) return;
+    const completedItems = items.filter(item => item.completed);
+    if (completedItems.length === 0) return;
+    
     const batch = writeBatch(firestore);
-    items.forEach(item => {
-      if (item.completed) {
-        batch.delete(doc(firestore, "shoppingItems", item.id));
-      }
+    completedItems.forEach(item => {
+      batch.delete(doc(firestore, "shoppingItems", item.id));
     });
-    batch.commit()
-      .catch(serverError => {
+    
+    try {
+      await batch.commit();
+      toast({ title: "Itens concluídos foram limpos." });
+    } catch (error: any) {
+      console.error("Clear completed error:", error);
+      if (error.code === 'permission-denied') {
         const permissionError = new FirestorePermissionError({
           path: 'shoppingItems',
           operation: 'delete',
         });
         errorEmitter.emit('permission-error', permissionError);
-      });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro ao limpar",
+          description: `Não foi possível remover os itens. Detalhe: ${error.message}`
+        });
+      }
+    }
   };
   
   const handleShareList = async () => {
@@ -90,20 +109,21 @@ export default function ShoppingPage() {
         description: "O link para sua lista de compras foi copiado para a área de transferência.",
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sharing list: ", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao compartilhar",
-        description: "Não foi possível criar o link compartilhável. Tente novamente.",
-      });
-      if (error instanceof Error && error.message.includes('permission-denied')) {
+       if (error.code === 'permission-denied') {
           const permissionError = new FirestorePermissionError({
             path: 'sharedLists',
             operation: 'create',
             requestResourceData: { ownerId: user.uid },
           });
           errorEmitter.emit('permission-error', permissionError);
+      } else {
+        toast({
+            variant: "destructive",
+            title: "Erro ao compartilhar",
+            description: "Não foi possível criar o link compartilhável. Tente novamente.",
+        });
       }
     } finally {
         setIsSharing(false);
@@ -112,7 +132,7 @@ export default function ShoppingPage() {
 
 
   const handleFinishShopping = async () => {
-    if (!firestore) return;
+    if (!firestore || !user) return;
     const completedItems = items.filter(item => item.completed && item.price);
     if (completedItems.length === 0) {
         toast({
@@ -160,14 +180,23 @@ export default function ShoppingPage() {
     items.forEach(item => {
       batch.delete(doc(firestore, "shoppingItems", item.id));
     });
-    await batch.commit()
-      .catch(serverError => {
+    try {
+      await batch.commit()
+    } catch (error: any) {
+       if (error.code === 'permission-denied') {
         const permissionError = new FirestorePermissionError({
           path: 'shoppingItems',
           operation: 'delete',
         });
         errorEmitter.emit('permission-error', permissionError);
-      });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao Finalizar',
+          description: 'Não foi possível limpar a lista após gerar o recibo.'
+        })
+      }
+    }
   };
 
   return (
@@ -184,7 +213,7 @@ export default function ShoppingPage() {
             <Card className="w-full max-w-md bg-card dark:bg-zinc-800/50 border-none shadow-sm rounded-xl">
                 <CardContent className="p-4 text-center">
                     <p className="text-sm text-muted-foreground">Total Gasto na Compra</p>
-                     {!isClient ? (
+                     {!isClient || loading ? (
                         <Loader2 className="h-8 w-8 mx-auto animate-spin text-muted-foreground mt-1" />
                     ) : (
                         <p className="text-3xl font-bold text-foreground">R$ {totalCost.toFixed(2).replace('.', ',')}</p>

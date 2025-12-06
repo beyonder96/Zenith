@@ -131,28 +131,39 @@ export default function NewTransactionPage() {
       userId: user.uid,
     };
     
-    const operation = isEditing && transactionId ? 'update' : 'create';
+    try {
+      if (isEditing && transactionId) {
+        await setDoc(doc(firestore, 'transactions', transactionId), transactionData, { merge: true });
+      } else {
+        await addDoc(collection(firestore, 'transactions'), transactionData);
+      }
 
-    const promise = isEditing && transactionId
-      ? setDoc(doc(firestore, 'transactions', transactionId), transactionData, { merge: true })
-      : addDoc(collection(firestore, 'transactions'), transactionData);
-      
-    promise.then(() => {
-        setShowSuccessAnimation(true);
-        setTimeout(() => {
-            router.push('/finance');
-        }, 1500);
-        setTimeout(() => {
-          setShowSuccessAnimation(false)
-        }, 2000);
-    }).catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-            path: isEditing && transactionId ? `transactions/${transactionId}` : 'transactions',
-            operation: operation,
-            requestResourceData: transactionData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    });
+      setShowSuccessAnimation(true);
+      setTimeout(() => {
+          router.push('/finance');
+      }, 1500);
+      setTimeout(() => {
+        setShowSuccessAnimation(false)
+      }, 2000);
+    } catch (error: any) {
+        console.error("Save error:", error);
+        const operation = isEditing ? 'update' : 'create';
+        const path = isEditing && transactionId ? `transactions/${transactionId}` : 'transactions';
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path,
+                operation,
+                requestResourceData: transactionData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao Salvar',
+                description: `Não foi possível salvar a transação. Detalhe: ${error.message}`
+            });
+        }
+    }
   };
 
   if (showSuccessAnimation) {

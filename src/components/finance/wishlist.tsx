@@ -72,9 +72,17 @@ export function Wishlist() {
         deleteDoc(docRef).then(() => {
             toast({ title: "Item removido da lista de desejos." });
             setItemToDelete(null);
-        }).catch(serverError => {
-            const permissionError = new FirestorePermissionError({ path: `wishlistItems/${itemToDelete}`, operation: 'delete' });
-            errorEmitter.emit('permission-error', permissionError);
+        }).catch(error => {
+            if (error.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: `wishlistItems/${itemToDelete}`, operation: 'delete' });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Erro ao Remover",
+                    description: `Não foi possível remover o item. Detalhe: ${error.message}`
+                });
+            }
             setItemToDelete(null);
         })
     }

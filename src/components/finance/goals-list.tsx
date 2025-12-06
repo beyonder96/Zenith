@@ -102,12 +102,20 @@ export function GoalsList() {
       });
       setDialogState({ isOpen: false, type: 'deposit', goal: null });
     } catch (error: any) {
-      console.error('Goal transaction failed: ', error);
-      const permissionError = new FirestorePermissionError({
-        path: `goals/${goal.id} or transactions`,
-        operation: 'update',
-      });
-      errorEmitter.emit('permission-error', permissionError);
+        console.error("Goal transaction failed:", error);
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: `goals/${goal.id} or transactions`,
+                operation: 'update', // This is a transaction, could be create or update
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Erro na Transação',
+                description: `Não foi possível concluir a operação. Detalhe: ${error.message}`
+            });
+        }
     }
   };
 

@@ -96,34 +96,44 @@ export default function NewGoalPage() {
         userId: user.uid,
     };
     
-    let promise;
-    if (isEditing && goalId) {
-        promise = setDoc(doc(firestore, 'goals', goalId), goalData, { merge: true });
-    } else {
-        promise = addDoc(collection(firestore, 'goals'), { ...goalData, currentAmount: 0 });
-    }
+    try {
+      if (isEditing && goalId) {
+          await setDoc(doc(firestore, 'goals', goalId), goalData, { merge: true });
+      } else {
+          await addDoc(collection(firestore, 'goals'), { ...goalData, currentAmount: 0 });
+      }
 
-    promise.then(() => {
-        if (isEditing) {
-            toast({ title: "Meta atualizada!" });
-            router.push('/finance/goals');
+      if (isEditing) {
+          toast({ title: "Meta atualizada!" });
+          router.push('/finance/goals');
+      } else {
+          setShowSuccessAnimation(true);
+          setTimeout(() => {
+              router.push('/finance/goals');
+          }, 1500);
+          setTimeout(() => {
+            setShowSuccessAnimation(false)
+          }, 2000);
+      }
+    } catch (error: any) {
+        console.error("Save error:", error);
+        const operation = isEditing ? 'update' : 'create';
+        const path = isEditing && goalId ? `goals/${goalId}` : 'goals';
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path,
+                operation,
+                requestResourceData: goalData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
         } else {
-            setShowSuccessAnimation(true);
-            setTimeout(() => {
-                router.push('/finance/goals');
-            }, 1500);
-            setTimeout(() => {
-              setShowSuccessAnimation(false)
-            }, 2000);
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao Salvar',
+                description: `Não foi possível salvar a meta. Detalhe: ${error.message}`
+            });
         }
-    }).catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-            path: isEditing && goalId ? `goals/${goalId}` : 'goals',
-            operation: isEditing ? 'update' : 'create',
-            requestResourceData: goalData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    });
+    }
   };
 
   const handleDelete = async () => {
@@ -139,18 +149,28 @@ export default function NewGoalPage() {
         return;
     }
 
-    deleteDoc(doc(firestore, 'goals', goalId)).then(() => {
+    try {
+        await deleteDoc(doc(firestore, 'goals', goalId));
         toast({
             title: "Meta excluída!",
         });
         router.push('/finance/goals');
-    }).catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-            path: `goals/${goalId}`,
-            operation: 'delete',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    });
+    } catch (error: any) {
+        console.error("Delete error:", error);
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: `goals/${goalId}`,
+                operation: 'delete',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao Excluir',
+                description: `Não foi possível excluir a meta. Detalhe: ${error.message}`
+            });
+        }
+    }
   };
 
 

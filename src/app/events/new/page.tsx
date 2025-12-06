@@ -80,25 +80,36 @@ export default function NewEventPage() {
         userId: user.uid,
     };
     
-    const operation = isEditing && eventId ? 'update' : 'create';
+    try {
+      if (isEditing && eventId) {
+        await setDoc(doc(firestore, 'events', eventId), eventData, { merge: true });
+      } else {
+        await addDoc(collection(firestore, 'events'), eventData);
+      }
+      toast({
+          title: isEditing ? "Evento atualizado!" : "Evento criado!",
+      });
+      router.push('/projects');
+    } catch (error: any) {
+        console.error("Save error:", error);
+        const operation = isEditing ? 'update' : 'create';
+        const path = isEditing && eventId ? `events/${eventId}` : 'events';
 
-    const promise = isEditing && eventId
-      ? setDoc(doc(firestore, 'events', eventId), eventData, { merge: true })
-      : addDoc(collection(firestore, 'events'), eventData);
-
-    promise.then(() => {
-        toast({
-            title: isEditing ? "Evento atualizado!" : "Evento criado!",
-        });
-        router.push('/projects');
-    }).catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-            path: isEditing && eventId ? `events/${eventId}` : 'events',
-            operation: operation,
-            requestResourceData: eventData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    });
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path,
+                operation,
+                requestResourceData: eventData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao Salvar',
+                description: `Não foi possível salvar o evento. Detalhe: ${error.message}`
+            });
+        }
+    }
   };
 
   return (

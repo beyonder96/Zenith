@@ -97,11 +97,19 @@ export default function PetDetailPage() {
                 router.back();
             })
             .catch(error => {
-                 const permissionError = new FirestorePermissionError({
-                    path: `pets/${petId}`,
-                    operation: 'delete',
-                });
-                errorEmitter.emit('permission-error', permissionError);
+                if (error.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError({
+                        path: `pets/${petId}`,
+                        operation: 'delete',
+                    });
+                    errorEmitter.emit('permission-error', permissionError);
+                } else {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Erro ao Excluir',
+                        description: `Não foi possível excluir o pet. Detalhe: ${error.message}`
+                    });
+                }
             })
     };
     
@@ -248,4 +256,3 @@ export default function PetDetailPage() {
         </>
     );
 }
-    

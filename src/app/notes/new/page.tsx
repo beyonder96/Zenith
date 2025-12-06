@@ -98,37 +98,44 @@ export default function NewNotePage() {
         userId: user.uid,
     };
     
-    const operation = isEditing && noteId ? 'update' : 'create';
-    
-    let promise;
+    try {
+      if (isEditing && noteId) {
+          const docRef = doc(firestore, 'notes', noteId);
+          await updateDoc(docRef, {
+              ...noteData,
+              updatedAt: serverTimestamp(),
+          });
+      } else {
+          await addDoc(collection(firestore, 'notes'), {
+              ...noteData,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+          });
+      }
 
-    if (isEditing && noteId) {
-        const docRef = doc(firestore, 'notes', noteId);
-        promise = updateDoc(docRef, {
-            ...noteData,
-            updatedAt: serverTimestamp(),
-        });
-    } else {
-        promise = addDoc(collection(firestore, 'notes'), {
-            ...noteData,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
+      toast({
+          title: isEditing ? "Nota atualizada!" : "Nota criada!",
+      });
+      router.back();
+    } catch (error: any) {
+        console.error("Save error:", error);
+        const operation = isEditing ? 'update' : 'create';
+        const path = isEditing && noteId ? `notes/${noteId}` : 'notes';
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path,
+                operation,
+                requestResourceData: noteData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao Salvar',
+                description: `Não foi possível salvar a nota. Detalhe: ${error.message}`
+            });
+        }
     }
-
-    promise.then(() => {
-        toast({
-            title: isEditing ? "Nota atualizada!" : "Nota criada!",
-        });
-        router.back();
-    }).catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-            path: isEditing && noteId ? `notes/${noteId}` : 'notes',
-            operation: operation,
-            requestResourceData: noteData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    });
   };
 
   return (

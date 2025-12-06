@@ -92,13 +92,22 @@ export default function NewWishlistItemPage() {
       await addDoc(collection(firestore, 'wishlistItems'), wishlistItemData);
       toast({ title: "Item adicionado à sua lista de desejos!" });
       router.push('/finance');
-    } catch (serverError) {
-      const permissionError = new FirestorePermissionError({
-        path: 'wishlistItems',
-        operation: 'create',
-        requestResourceData: wishlistItemData,
-      });
-      errorEmitter.emit('permission-error', permissionError);
+    } catch (error: any) {
+        console.error("Save error:", error);
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: 'wishlistItems',
+                operation: 'create',
+                requestResourceData: wishlistItemData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao Salvar',
+                description: `Não foi possível adicionar o item. Detalhe: ${error.message}`
+            });
+        }
     } finally {
         setIsSaving(false);
     }

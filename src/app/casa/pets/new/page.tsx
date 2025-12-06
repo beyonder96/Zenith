@@ -143,42 +143,31 @@ export default function NewPetPage() {
     
     setIsSaving(true);
     
+    const petData = {
+      name,
+      breed,
+      birthDate: format(birthDate, 'yyyy-MM-dd'),
+      photoUrl: photoUrl, // Start with current URL
+      gender,
+      isNeutered,
+      vaccines,
+      microchipNumber,
+      rgaUrl: existingRgaUrl, // Start with current URL
+      userId: user.uid,
+    };
+    
     try {
         let finalPhotoUrl = photoUrl;
-        let finalRgaUrl = existingRgaUrl;
-
-        // --- UPLOAD PHASE ---
-        const uploadPromises: Promise<void>[] = [];
         if (photoFile) {
-            uploadPromises.push(
-                uploadFile(storage, user, photoFile, 'photos').then(url => {
-                    finalPhotoUrl = url;
-                })
-            );
+            finalPhotoUrl = await uploadFile(storage, user, photoFile, 'photos');
         }
+        petData.photoUrl = finalPhotoUrl;
+
+        let finalRgaUrl = existingRgaUrl;
         if (rgaFile) {
-            uploadPromises.push(
-                uploadFile(storage, user, rgaFile, 'rga').then(url => {
-                    finalRgaUrl = url;
-                })
-            );
+            finalRgaUrl = await uploadFile(storage, user, rgaFile, 'rga');
         }
-
-        await Promise.all(uploadPromises);
-
-        // --- DATABASE WRITE PHASE ---
-        const petData = {
-            name,
-            breed,
-            birthDate: format(birthDate, 'yyyy-MM-dd'),
-            photoUrl: finalPhotoUrl,
-            gender,
-            isNeutered,
-            vaccines,
-            microchipNumber,
-            rgaUrl: finalRgaUrl,
-            userId: user.uid,
-        };
+        petData.rgaUrl = finalRgaUrl;
 
         if (isEditing && petId) {
             await updateDoc(doc(firestore, 'pets', petId), petData);
@@ -194,8 +183,9 @@ export default function NewPetPage() {
         console.error("Save error:", error);
         const operation = isEditing ? 'update' : 'create';
         const path = isEditing ? `pets/${petId}` : 'pets';
-        if (error.code?.includes('permission-denied') || error.message.includes('permission-denied')) {
-             const permissionError = new FirestorePermissionError({ path, operation });
+
+        if (error.code === 'permission-denied') {
+             const permissionError = new FirestorePermissionError({ path, operation, requestResourceData: petData });
             errorEmitter.emit('permission-error', permissionError);
         } else {
             toast({ variant: 'destructive', title: 'Erro ao Salvar', description: `Não foi possível salvar os dados do pet. Detalhe: ${error.message}`});
@@ -383,5 +373,3 @@ export default function NewPetPage() {
     </div>
   );
 }
-
-    

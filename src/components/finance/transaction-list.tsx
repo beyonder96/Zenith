@@ -123,13 +123,21 @@ export function TransactionList() {
       .then(() => {
         toast({ title: "Transação efetuada!" });
       })
-      .catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-            path: `transactions/${id}`,
-            operation: 'update',
-            requestResourceData: updateData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
+      .catch(error => {
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: `transactions/${id}`,
+                operation: 'update',
+                requestResourceData: updateData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao Efetuar',
+                description: `Não foi possível marcar a transação. Detalhe: ${error.message}`
+            });
+        }
       });
   };
 
@@ -142,12 +150,20 @@ export function TransactionList() {
           title: "Transação deletada",
           description: "A transação foi removida com sucesso.",
         });
-      }).catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-            path: `transactions/${transactionToDelete}`,
-            operation: 'delete',
-        });
-        errorEmitter.emit('permission-error', permissionError);
+      }).catch(error => {
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: `transactions/${transactionToDelete}`,
+                operation: 'delete',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao Deletar',
+                description: `Não foi possível deletar a transação. Detalhe: ${error.message}`
+            });
+        }
         setTransactionToDelete(null);
       });
     }

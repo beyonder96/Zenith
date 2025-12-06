@@ -98,25 +98,36 @@ export default function NewTaskPage() {
         userId: user.uid,
     };
     
-    const operation = isEditing && projectId ? 'update' : 'create';
+    try {
+      if (isEditing && projectId) {
+        await setDoc(doc(firestore, 'projects', projectId), projectData, { merge: true });
+      } else {
+        await addDoc(collection(firestore, 'projects'), projectData);
+      }
 
-    const promise = isEditing && projectId
-      ? setDoc(doc(firestore, 'projects', projectId), projectData, { merge: true })
-      : addDoc(collection(firestore, 'projects'), projectData);
-
-    promise.then(() => {
-        toast({
-            title: isEditing ? "Projeto atualizado!" : "Projeto criado!",
-        });
-        router.back();
-    }).catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-            path: isEditing && projectId ? `projects/${projectId}` : 'projects',
-            operation: operation,
-            requestResourceData: projectData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    });
+      toast({
+          title: isEditing ? "Projeto atualizado!" : "Projeto criado!",
+      });
+      router.back();
+    } catch (error: any) {
+        console.error("Save error:", error);
+        const operation = isEditing ? 'update' : 'create';
+        const path = isEditing && projectId ? `projects/${projectId}` : 'projects';
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path,
+                operation,
+                requestResourceData: projectData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao Salvar',
+                description: `Não foi possível salvar o projeto. Detalhe: ${error.message}`
+            });
+        }
+    }
   };
 
   return (
