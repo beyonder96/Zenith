@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useFirestore, useUser } from '@/firebase';
 import type { Note } from '../types';
+import { NoteSchema } from '../types';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
@@ -19,12 +20,12 @@ export function useNotes() {
             const unsubscribeNotes = onSnapshot(notesQuery, (querySnapshot) => {
                 const userNotes: Note[] = [];
                 querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    userNotes.push({ 
-                        id: doc.id,
-                        ...data,
-                        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt
-                    } as Note);
+                    try {
+                        const validatedNote = NoteSchema.parse({ id: doc.id, ...doc.data() });
+                        userNotes.push(validatedNote);
+                    } catch (error) {
+                        console.error('Invalid note data:', { id: doc.id, error });
+                    }
                 });
                 setNotes(userNotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
                 setLoading(false);

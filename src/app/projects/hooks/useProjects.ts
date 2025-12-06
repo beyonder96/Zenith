@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useFirestore, useUser } from '@/firebase';
 import type { Project } from '../types';
+import { ProjectSchema } from '../types';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
@@ -19,7 +20,12 @@ export function useProjects() {
             const unsubscribeProjects = onSnapshot(projectsQuery, (querySnapshot) => {
                 const userProjects: Project[] = [];
                 querySnapshot.forEach((doc) => {
-                    userProjects.push({ id: doc.id, ...doc.data() } as Project);
+                    try {
+                        const validatedProject = ProjectSchema.parse({ id: doc.id, ...doc.data() });
+                        userProjects.push(validatedProject);
+                    } catch (error) {
+                        console.error("Invalid project data:", { id: doc.id, error });
+                    }
                 });
                 setProjects(userProjects.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()));
                 setLoading(false);

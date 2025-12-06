@@ -1,35 +1,53 @@
-export type Subtask = {
-    id: number;
-    text: string;
-    completed: boolean;
-};
+'use client';
 
-export type Project = {
-    id: string;
-    title: string;
-    details?: string;
-    dueDate: string; // YYYY-MM-DD
-    completed: boolean;
-    subtasks?: Subtask[];
-    userId: string;
-};
+import { z } from 'zod';
 
-export type Note = {
-    id: string;
-    title: string;
-    content: string;
-    color: string;
-    tags?: string[];
-    userId: string;
-    createdAt: any; // Can be string or Firestore Timestamp
-};
+// Schema for Subtask
+export const SubtaskSchema = z.object({
+    id: z.number(),
+    text: z.string(),
+    completed: z.boolean(),
+});
+export type Subtask = z.infer<typeof SubtaskSchema>;
 
-export type Event = {
-    id: string;
-    title: string;
-    date: string; // YYYY-MM-DD
-    time?: string; // HH:mm
-    location?: string;
-    description?: string;
-    userId: string;
-};
+// Schema for Project
+export const ProjectSchema = z.object({
+    id: z.string(),
+    title: z.string().min(1, { message: "Title is required" }),
+    details: z.string().optional(),
+    dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Invalid date format" }),
+    completed: z.boolean(),
+    subtasks: z.array(SubtaskSchema).optional(),
+    userId: z.string(),
+});
+export type Project = z.infer<typeof ProjectSchema>;
+
+
+// Schema for Note
+export const NoteSchema = z.object({
+    id: z.string(),
+    title: z.string(),
+    content: z.string(),
+    color: z.string(),
+    tags: z.array(z.string()).optional(),
+    userId: z.string(),
+    createdAt: z.any().transform((val) => {
+        if (typeof val === 'string') return val;
+        if (val && typeof val.toDate === 'function') return val.toDate().toISOString();
+        return new Date().toISOString();
+    }),
+});
+export type Note = z.infer<typeof NoteSchema>;
+
+
+// Schema for Event
+export const EventSchema = z.object({
+    id: z.string(),
+    title: z.string(),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    time: z.string().optional(),
+    location: z.string().optional(),
+    description: z.string().optional(),
+    userId: z.string(),
+});
+export type Event = z.infer<typeof EventSchema>;

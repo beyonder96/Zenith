@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useFirestore, useUser } from '@/firebase';
 import type { Event } from '../types';
+import { EventSchema } from '../types';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
@@ -19,7 +20,12 @@ export function useEvents() {
             const unsubscribeEvents = onSnapshot(eventsQuery, (querySnapshot) => {
                 const userEvents: Event[] = [];
                 querySnapshot.forEach((doc) => {
-                    userEvents.push({ id: doc.id, ...doc.data() } as Event);
+                    try {
+                        const validatedEvent = EventSchema.parse({ id: doc.id, ...doc.data() });
+                        userEvents.push(validatedEvent);
+                    } catch (error) {
+                        console.error("Invalid event data:", { id: doc.id, error });
+                    }
                 });
                 setEvents(userEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
                 setLoading(false);
